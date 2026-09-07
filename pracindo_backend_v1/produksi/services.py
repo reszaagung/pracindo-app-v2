@@ -5,19 +5,14 @@ from django.db.models import DecimalField, Sum, Value, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-# Impor Model Produksi
 from .models import Batch, BatchInputRaw, Tangki, TransferWip, TipeProses
 
-# Impor Lintas-Aplikasi (Inventory & Core)
 from inventory.models import (
     MutasiKlaim, Packing, Pembelian, SaldoEntitas,
     StatusDokumen, SumberPembelian, TipeMutasi, PoolResource, PoolKemasan
 )
 from core.models import CounterDokumen, PeriodeAkuntansi
 
-# ==========================================
-# KONSTANTA & EXCEPTION
-# ==========================================
 D0 = Decimal("0")
 D0_RP = Decimal("0.00")
 D0_QTY = Decimal("0.000")
@@ -43,7 +38,6 @@ class GalatProduksi(ValidationError):
 class KonflikBatch(GalatProduksi):
     http = 409
 
-
 def rp(x):
     return Decimal(str(x)).quantize(Q_RP, rounding=ROUND_HALF_UP)
 
@@ -68,10 +62,6 @@ def _kunci_saldo(entitas_id):
     except SaldoEntitas.DoesNotExist:
         raise InvariantMelenceng(f"Entitas id {entitas_id} tidak punya baris SaldoEntitas.")
 
-
-# ==========================================
-# MANAJEMEN POOL RESOURCE (BAHAN BAKU & KEMASAN)
-# ==========================================
 def tambah_ke_pool_resource(produk_id, q, nilai_tambahan):
     pool, _ = PoolResource.objects.select_for_update().get_or_create(produk_id=produk_id)
     pool.qty_kg = qty(pool.qty_kg + q)
@@ -115,10 +105,6 @@ def potong_dari_pool_kemasan(produk_id, q_unit, nilai_potongan):
         pool.nilai = D0_RP   
     pool.save(update_fields=["qty_unit", "nilai"])
 
-
-# ==========================================
-# GENERATOR ID BATCH (MIX-DDMMYY-XXXX)
-# ==========================================
 def _nomor_batch(jenis, tanggal=None):
     if tanggal is None:
         tanggal = timezone.localdate()
@@ -138,10 +124,6 @@ def _nomor_batch(jenis, tanggal=None):
                 
     return f"{awalan}-{tgl_str}-{urut:04d}"
 
-
-# ==========================================
-# KALKULASI SALDO BATCH
-# ==========================================
 class SaldoBatchData:
     def __init__(self, sisa_qty, sisa_nilai, harga_per_kg):
         self.sisa_qty = sisa_qty
@@ -162,10 +144,6 @@ def saldo_batch(batch):
     sisa_nilai = rp(sisa_qty * batch.harga_per_kg)
     return SaldoBatchData(sisa_qty, sisa_nilai, batch.harga_per_kg)
 
-
-# ==========================================
-# PRATINJAU BATCH PRODUKSI
-# ==========================================
 def pratinjau_mixing(baris, susut_kg):
     total_qty_masuk = D0_QTY
     total_nilai_masuk = D0_RP
@@ -273,10 +251,6 @@ def pratinjau_blending(baris_sumber, susut_kg):
         "wip_cost_per_kg": str(cost_per_kg)
     }
 
-
-# ==========================================
-# POSTING BATCH PRODUKSI
-# ==========================================
 @transaction.atomic
 def simpan_dan_posting_mixing(nama_hasil, tangki_id, baris, susut_kg=0, tanggal=None, user=None, nomor_custom=None):
     user = _wajib_user(user)
@@ -313,7 +287,6 @@ def simpan_dan_posting_mixing(nama_hasil, tangki_id, baris, susut_kg=0, tanggal=
         
     return posting_mixing(batch, user)
 
-
 @transaction.atomic
 def posting_mixing(batch, user=None):
     user = _wajib_user(user)
@@ -336,8 +309,13 @@ def posting_mixing(batch, user=None):
     batch.nilai_hasil = total_nilai_masuk
     batch.posted_at = timezone.now()
     batch.save()
-    return batch
 
+    tangki = Tangki.objects.select_for_update().get(pk=batch.tangki_id)
+    tangki.saldo_kg += batch.qty_hasil
+    tangki.saldo_nilai += batch.nilai_hasil
+    tangki.save(update_fields=['saldo_kg', 'saldo_nilai'])
+
+    return batch
 
 @transaction.atomic
 def simpan_dan_posting_blending(nama_hasil, tangki_id, baris_sumber, susut_kg=0, tanggal=None, user=None, nomor_custom=None):
@@ -376,7 +354,6 @@ def simpan_dan_posting_blending(nama_hasil, tangki_id, baris_sumber, susut_kg=0,
         
     return posting_blending(batch, user)
 
-
 @transaction.atomic
 def posting_blending(batch, user=None):
     user = _wajib_user(user)
@@ -398,17 +375,18 @@ def posting_blending(batch, user=None):
     batch.nilai_hasil = total_nilai_masuk
     batch.posted_at = timezone.now()
     batch.save()
-    return batch
 
+    tangki = Tangki.objects.select_for_update().get(pk=batch.tangki_id)
+    tangki.saldo_kg += batch.qty_hasil
+    tangki.saldo_nilai += batch.nilai_hasil
+    tangki.save(update_fields=['saldo_kg', 'saldo_nilai'])
+
+    return batch
 
 @transaction.atomic
 def hapus_batch_dan_kembalikan_stok(batch_id, user=None):
     raise GalatProduksi("Operasi penghapusan batch produksi dilarang. Lakukan jurnal pembalik jika terjadi kesalahan.")
 
-
-# ==========================================
-# FUNGSI PEMBELIAN & PACKING LAMA
-# ==========================================
 @transaction.atomic
 def posting_pembelian(pembelian, user=None):
     user = _wajib_user(user)
@@ -454,7 +432,7 @@ def posting_pembelian(pembelian, user=None):
 @transaction.atomic
 def posting_packing(packing, user=None):
     user = _wajib_user(user)
-    packing = Packing.objects.select_for_update().select_related("entitas", "kemasan").get(pk=packing.pk)
+    packing = Packing.objects.select_for_update().select_related("entitas", "kemasan", "batch").get(pk=packing.pk)
 
     if packing.status != StatusDokumen.DRAFT:
         raise KonflikSaldo(f"Packing {packing.nomor} sudah {packing.status}.")
@@ -462,16 +440,18 @@ def posting_packing(packing, user=None):
         raise GalatInventory(f"Entitas {packing.entitas.kode} nonaktif.")
 
     _pastikan_periode_terbuka(packing.entitas, packing.tanggal)
-    batch = Batch.objects.select_for_update().get(pk=packing.batch_id)
-    s = saldo_batch(batch)
 
-    if s.sisa_qty <= 0:
-        raise KonflikSaldo(f"Batch {batch.nomor} sudah kosong.")
-    if packing.qty_kg > s.sisa_qty + TOL_QTY:
-        raise KonflikSaldo(f"Batch {batch.nomor} tinggal {s.sisa_qty:,.3f} Kg. Anda mengambil {packing.qty_kg:,.3f} Kg.")
+    tangki = Tangki.objects.select_for_update().get(id=packing.batch.tangki_id)
 
-    menghabiskan = abs(packing.qty_kg - s.sisa_qty) <= TOL_QTY
-    cost_nom_bahan = s.sisa_nilai if menghabiskan else rp(packing.qty_kg * s.harga_per_kg)
+    if tangki.saldo_kg <= D0_QTY:
+        raise KonflikSaldo(f"Tangki {tangki.kode} sudah kosong.")
+    if packing.qty_kg > tangki.saldo_kg + TOL_QTY:
+        raise KonflikSaldo(f"Tangki {tangki.kode} sisa {tangki.saldo_kg:,.3f} Kg. Anda mengambil {packing.qty_kg:,.3f} Kg.")
+
+    menghabiskan = abs(packing.qty_kg - tangki.saldo_kg) <= TOL_QTY
+    harga_rata_tangki = rp(tangki.saldo_nilai / tangki.saldo_kg)
+    cost_nom_bahan = tangki.saldo_nilai if menghabiskan else rp(packing.qty_kg * harga_rata_tangki)
+
     pool_kem = PoolKemasan.objects.select_for_update().select_related("produk").get(pk=packing.kemasan_id)
 
     if pool_kem.qty_unit < packing.total_unit:
@@ -481,18 +461,25 @@ def posting_packing(packing, user=None):
     potong_dari_pool_kemasan(pool_kem.produk_id, packing.total_unit, nilai_kemasan)
     total_cost_nom = rp(cost_nom_bahan + nilai_kemasan)
 
-    packing.harga_per_kg = s.harga_per_kg
+    packing.harga_per_kg = harga_rata_tangki
     packing.cost_nom = total_cost_nom
     packing.menghabiskan = menghabiskan
     packing.status = StatusDokumen.POSTED
     packing.posted_at = timezone.now()
     packing.save(update_fields=["harga_per_kg", "cost_nom", "menghabiskan", "status", "posted_at"])
 
+    tangki.saldo_kg -= packing.qty_kg
+    tangki.saldo_nilai -= cost_nom_bahan
+    if tangki.saldo_kg <= D0_QTY:
+        tangki.saldo_kg = D0_QTY
+        tangki.saldo_nilai = D0_RP
+    tangki.save(update_fields=["saldo_kg", "saldo_nilai"])
+
     MutasiKlaim.objects.create(
         entitas=packing.entitas, grup_bahan=packing.entitas.grup_bahan,
         tipe=TipeMutasi.TARIK, arah=-1, qty_kg=packing.qty_kg, nilai=total_cost_nom,
         ref_type="Packing", ref_id=packing.id,
-        keterangan=f"{packing.nomor} - {batch.nomor} - {pool_kem.produk.nama}",
+        keterangan=f"{packing.nomor} - {packing.batch.nomor} - {pool_kem.produk.nama}",
         waktu=packing.waktu, dibuat_oleh=user,
     )
 
@@ -503,10 +490,6 @@ def posting_packing(packing, user=None):
     se.save(update_fields=["total_tarik", "qty_tarik", "saldo"])
     return packing
 
-
-# ==========================================
-# PENGECEKAN INVARIAN DAN LAPORAN (OPTIONAL)
-# ==========================================
 def jalankan_pemeriksaan_invarian():
     try:
         res = assert_invarian(raise_on_fail=False)
@@ -521,9 +504,7 @@ def assert_invarian(raise_on_fail=True):
     pool_kemasan_total = PoolKemasan.objects.aggregate(t=Coalesce(Sum("nilai"), Value(D0_RP), output_field=F_RP))["t"]
     pool_total = rp(pool_res_total + pool_kemasan_total)
     
-    wip_total = D0_RP
-    for b in Batch.objects.filter(posted_at__isnull=False):
-        wip_total += saldo_batch(b).sisa_nilai
+    wip_total = Tangki.objects.aggregate(t=Coalesce(Sum("saldo_nilai"), Value(D0_RP), output_field=F_RP))["t"]
         
     fisik_total = rp(pool_total + wip_total)
     selisih = rp(hak_total - fisik_total)

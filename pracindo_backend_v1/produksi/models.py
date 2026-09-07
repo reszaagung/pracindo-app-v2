@@ -36,6 +36,9 @@ class Tangki(TimeStampedModel):
     nama         = models.CharField(max_length=80, blank=True, default="")
     kapasitas_kg = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True)
     aktif        = models.BooleanField(default=True)
+    
+    saldo_kg     = models.DecimalField(max_digits=18, decimal_places=3, default=D0)
+    saldo_nilai  = models.DecimalField(max_digits=20, decimal_places=2, default=D0)
 
     class Meta:
         db_table = "produksi_tangki"
@@ -47,16 +50,15 @@ class Tangki(TimeStampedModel):
 
 
 class Batch(DiauditModel):
-    nomor      = models.CharField(max_length=48, unique=True, editable=False)   # Batch ID (Auto-Gen)
-    jenis      = models.CharField(max_length=10, choices=TipeProses.choices)    # MIXING / BLENDING
-    nama_hasil = models.CharField(max_length=120)                                # Yield Nomenclature — label bebas
-    tangki     = models.ForeignKey(Tangki, on_delete=models.PROTECT, related_name="batch_set")  # Destination Tank
+    nomor      = models.CharField(max_length=48, unique=True, editable=False) 
+    jenis      = models.CharField(max_length=10, choices=TipeProses.choices)    
+    nama_hasil = models.CharField(max_length=120)                              
+    tangki     = models.ForeignKey(Tangki, on_delete=models.PROTECT, related_name="batch_set")  
+    qty_hasil   = models.DecimalField(max_digits=18, decimal_places=3, default=D0) 
+    nilai_hasil = models.DecimalField(max_digits=20, decimal_places=2, default=D0)  
 
-    qty_hasil   = models.DecimalField(max_digits=18, decimal_places=3, default=D0)  # output aktual setelah posting
-    nilai_hasil = models.DecimalField(max_digits=20, decimal_places=2, default=D0)  # nilai WIP batch ini
-
-    susut_kg    = models.DecimalField(max_digits=18, decimal_places=3, default=D0)  # Shrinkage/Deficit (Kg), input user
-    nilai_susut = models.DecimalField(max_digits=20, decimal_places=2, default=D0)  # dihitung services saat posting
+    susut_kg    = models.DecimalField(max_digits=18, decimal_places=3, default=D0)  
+    nilai_susut = models.DecimalField(max_digits=20, decimal_places=2, default=D0) 
 
     tanggal   = models.DateField(default=timezone.localdate, db_index=True)
     waktu     = models.DateTimeField(default=timezone.now, db_index=True)
