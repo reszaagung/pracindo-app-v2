@@ -238,23 +238,20 @@ export function useBlendingForm() {
     }
   }
 
-  // FUNGSI SIMPAN DRAFT DIHAPUS
-
   async function simpanDanPosting(batchId = null) {
     errorMsg.value = validasiForm()
     if (errorMsg.value) return false
+    
     submitting.value = true
     try {
       const payload = susunPayload()
-      let targetId = batchId
-      if (targetId) {
-        await apiBatch.ubah(targetId, payload)
+      
+      if (batchId) {
+        await apiBatch.ubah(batchId, payload)
       } else {
-        const res = await apiBatch.buat(payload)
-        targetId = res?.id ?? res?.data?.id ?? res
+        await apiBatch.buat(payload)
       }
-      // Langsung tembak endpoint posting
-      await apiBatch.posting(targetId)
+      
       return true
     } catch (e) {
       const data = e?.response?.data

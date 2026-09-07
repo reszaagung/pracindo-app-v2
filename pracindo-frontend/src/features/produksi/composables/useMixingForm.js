@@ -186,32 +186,29 @@ export function useMixingForm() {
     }
   }
 
-  // FUNGSI SIMPAN DRAFT DIHAPUS
-
   async function simpanDanPosting(batchId = null) {
-    errorMsg.value = validasiForm()
-    if (errorMsg.value) return false
-    submitting.value = true
-    try {
-      const payload = susunPayload()
-      let targetId = batchId
-      if (targetId) {
-        await apiBatch.ubah(targetId, payload)
-      } else {
-        const res = await apiBatch.buat(payload)
-        targetId = res?.id ?? res?.data?.id ?? res
+      errorMsg.value = validasiForm()
+      if (errorMsg.value) return false
+      
+      submitting.value = true
+      try {
+        const payload = susunPayload()
+        
+        if (batchId) {
+          await apiBatch.ubah(batchId, payload)
+        } else {
+          await apiBatch.buat(payload)
+        }
+              
+        return true
+      } catch (e) {
+        const data = e?.response?.data
+        errorMsg.value = data?.detail || data?.pesan || 'Gagal memposting batch produksi'
+        return false
+      } finally {
+        submitting.value = false
       }
-      // Langsung tembak endpoint posting
-      await apiBatch.posting(targetId)
-      return true
-    } catch (e) {
-      const data = e?.response?.data
-      errorMsg.value = data?.detail || data?.pesan || 'Gagal memposting batch produksi'
-      return false
-    } finally {
-      submitting.value = false
     }
-  }
 
   watch(
     bomRows,

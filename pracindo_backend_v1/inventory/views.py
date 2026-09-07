@@ -195,14 +195,14 @@ class PackingViewSet(viewsets.ModelViewSet):
         packing = serializer.save(nomor=nomor, tanggal=tgl, dibuat_oleh=self.request.user)
         try:
             services.eksekusi_packing_langsung(packing, self.request.user)
-        except services.GALAT_TERTANGANI as e:
+        except GALAT_TERTANGANI as e: 
             raise DRFValidationError({"kode": "GAGAL_POSTING", "pesan": str(e)})
 
     @transaction.atomic
     def perform_destroy(self, instance):
         try:
             services.rollback_hapus_packing(instance, self.request.user)
-        except services.GALAT_TERTANGANI as e:
+        except GALAT_TERTANGANI as e: 
             raise DRFValidationError({"kode": "GAGAL_ROLLBACK", "pesan": str(e)})
         instance.delete()
 

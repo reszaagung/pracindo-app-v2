@@ -7,7 +7,7 @@
             <div v-if="modeForm" key="form" class="w-full">
                 <div class="mb-4 flex items-center gap-3">
                     <button @click="modeForm = false"
-                        class="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shadow-sm">
+                        class="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shadow-sm shrink-0">
                         <i class="pi pi-arrow-left text-slate-600 text-sm"></i>
                     </button>
                     <div>
@@ -63,18 +63,18 @@
                 <!-- Area Filter & Tabel -->
                 <div class="bg-white border border-slate-200 rounded-[24px] p-4 md:p-6 shadow-sm w-full min-h-[400px]">
                     <!-- Header Kartu & Pencarian -->
-                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
                         <div>
                             <h3 class="text-sm font-bold text-slate-800">Daftar Penerimaan Suplier</h3>
                             <p class="text-xs text-slate-500">Menampilkan riwayat barang masuk</p>
                         </div>
-                        <div class="flex items-center gap-2 w-full xl:w-auto">
+                        <div class="flex items-center gap-2 w-full md:w-auto">
                             <div class="relative w-full md:w-64">
-                                <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                                 <input type="text" v-model="kataKunci" @keyup.enter="cari" placeholder="Cari No. SJ / No. PO..."
-                                    class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-700" />
+                                    class="w-full pl-11 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-700" />
                             </div>
-                            <button @click="cari" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                            <button @click="cari" class="shrink-0 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
                                 Cari
                             </button>
                         </div>
@@ -95,8 +95,8 @@
                         <p class="text-xs text-slate-500">Tidak ada data yang cocok dengan kriteria Anda.</p>
                     </div>
 
-                    <!-- Tampilan Tabel (Desktop) -->
-                    <div v-else class="hidden md:block overflow-x-auto custom-scrollbar">
+                    <!-- Tampilan Tabel (Desktop, lg ke atas) -->
+                    <div v-else class="hidden lg:block overflow-x-auto custom-scrollbar">
                         <table class="w-full text-left text-sm table-fixed">
                             <thead class="text-slate-500 bg-slate-50/50">
                                 <tr>
@@ -109,16 +109,16 @@
                             </thead>
                             <tbody>
                                 <tr v-for="p in daftarPenerimaan" :key="p.id" @click="bukaDetail(p.id)" class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer">
-                                    <td class="py-3 px-4">
+                                    <td class="py-3.5 px-4 align-top break-words">
                                         <div class="font-bold text-slate-800">{{ p.nomor }}</div>
-                                        <div class="text-[11px] font-medium text-slate-400 mt-0.5">
-                                            <i class="pi pi-calendar text-[10px] mr-1"></i>{{ tanggal(p.tanggal) }}
+                                        <div class="text-[11px] font-medium text-slate-400 mt-1 flex items-center gap-1">
+                                            <i class="pi pi-calendar text-[10px]"></i>{{ tanggal(p.tanggal) }}
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4 text-slate-700 truncate font-medium" :title="p.suplier_nama">{{ p.suplier_nama }}</td>
-                                    <td class="py-3 px-4 text-slate-600">{{ p.po_nomor }}</td>
-                                    <td class="py-3 px-4 text-slate-600">{{ p.no_surat_jalan }}</td>
-                                    <td class="py-3 px-4 text-center">
+                                    <td class="py-3.5 px-4 align-top text-slate-700 truncate font-medium" :title="p.suplier_nama">{{ p.suplier_nama }}</td>
+                                    <td class="py-3.5 px-4 align-top text-slate-600 break-words">{{ p.po_nomor }}</td>
+                                    <td class="py-3.5 px-4 align-top text-slate-600 break-words">{{ p.no_surat_jalan }}</td>
+                                    <td class="py-3.5 px-4 align-top text-center">
                                         <span v-if="p.ada_selisih" class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase inline-flex items-center gap-1">
                                             <i class="pi pi-exclamation-circle text-[10px]"></i> Ada Selisih
                                         </span>
@@ -131,8 +131,8 @@
                         </table>
                     </div>
 
-                    <!-- Tampilan Card (Mobile) -->
-                    <div v-if="!sedangProses && daftarPenerimaan.length > 0" class="md:hidden flex flex-col gap-3">
+                    <!-- Tampilan Card (Mobile & Tablet, di bawah lg) -->
+                    <div v-if="!sedangProses && daftarPenerimaan.length > 0" class="lg:hidden flex flex-col gap-3">
                         <div v-for="p in daftarPenerimaan" :key="p.id" @click="bukaDetail(p.id)" class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
                             <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
                                 <div>
@@ -141,22 +141,22 @@
                                         <i class="pi pi-calendar text-[10px]"></i>{{ tanggal(p.tanggal) }}
                                     </div>
                                 </div>
-                                <span v-if="p.ada_selisih" class="bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
+                                <span v-if="p.ada_selisih" class="bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded text-[9px] font-bold uppercase shrink-0">
                                     Ada Selisih
                                 </span>
                             </div>
                             <div class="text-xs text-slate-600 flex flex-col gap-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 font-semibold">Suplier</span>
-                                    <span class="font-bold text-slate-700 truncate max-w-[150px]">{{ p.suplier_nama }}</span>
+                                <div class="flex justify-between items-center gap-3">
+                                    <span class="text-slate-400 font-semibold shrink-0">Suplier</span>
+                                    <span class="font-bold text-slate-700 truncate">{{ p.suplier_nama }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 font-semibold">No. PO</span>
-                                    <span class="font-medium bg-slate-50 px-2 py-0.5 rounded text-[11px]">{{ p.po_nomor }}</span>
+                                <div class="flex justify-between items-center gap-3">
+                                    <span class="text-slate-400 font-semibold shrink-0">No. PO</span>
+                                    <span class="font-medium bg-slate-50 px-2 py-0.5 rounded text-[11px] break-words text-right">{{ p.po_nomor }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 font-semibold">Surat Jalan</span>
-                                    <span class="font-medium bg-slate-50 px-2 py-0.5 rounded text-[11px]">{{ p.no_surat_jalan }}</span>
+                                <div class="flex justify-between items-center gap-3">
+                                    <span class="text-slate-400 font-semibold shrink-0">Surat Jalan</span>
+                                    <span class="font-medium bg-slate-50 px-2 py-0.5 rounded text-[11px] break-words text-right">{{ p.no_surat_jalan }}</span>
                                 </div>
                             </div>
                         </div>

@@ -18,6 +18,7 @@
       {{ errorMsg }}
     </p>
 
+    <!-- FILTER PENCARIAN -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] p-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
        <div class="relative lg:col-span-2">
@@ -42,78 +43,35 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden">
+      <!-- Tampilan Desktop -->
       <div v-if="!isMobile" class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="bg-slate-50 border-b border-slate-100">
-              <th
-                v-for="col in BATCH_TABLE_COLUMNS"
-                :key="col.key"
-                class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide whitespace-nowrap"
-                :class="alignClass(col.align)"
-              >
-                {{ col.label }}
-              </th>
+              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-left">Nomor Batch</th>
+              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-left">Tangki Tujuan</th>
+              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-left">Nama Hasil</th>
+              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-right">Qty Hasil (Kg)</th>
+              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-right">Harga Per Kg</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
             <tr v-if="loading">
-              <td :colspan="BATCH_TABLE_COLUMNS.length" class="px-4 py-10 text-center text-slate-400">
+              <td colspan="5" class="px-4 py-10 text-center text-slate-400">
                 <i class="pi pi-spin pi-spinner mr-2"></i>Memuat data...
               </td>
             </tr>
             <tr v-else-if="baris.length === 0">
-              <td :colspan="BATCH_TABLE_COLUMNS.length" class="px-4 py-10 text-center text-slate-400">
+              <td colspan="5" class="px-4 py-10 text-center text-slate-400">
                 Belum ada batch produksi yang cocok dengan filter.
               </td>
             </tr>
             <tr v-for="row in baris" :key="row.id" class="hover:bg-slate-50/70 transition-colors">
-              <template v-for="col in BATCH_TABLE_COLUMNS" :key="col.key">
-                <td v-if="col.key === 'aksi'" class="px-4 py-3 whitespace-nowrap" :class="alignClass(col.align)">
-                  <div class="flex items-center gap-1.5 justify-center">
-                    <button
-                      title="Lihat Detail"
-                      class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                      @click="router.push({ name: 'produksi-batch-detail', params: { id: row.id } })"
-                    >
-                      <i class="pi pi-eye text-sm"></i>
-                    </button>
-                  </div>
-                </td>
-                
-                <td v-else-if="col.key === 'status'" class="px-4 py-3 whitespace-nowrap" :class="alignClass(col.align)">
-                  <span
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
-                    :class="Number(row.qty_hasil) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-                  >
-                    {{ Number(row.qty_hasil) > 0 ? 'SELESAI' : 'PROSES' }}
-                  </span>
-                </td>
-
-                <td v-else-if="col.key === 'jenis'" class="px-4 py-3 whitespace-nowrap text-slate-600" :class="alignClass(col.align)">
-                  {{ JENIS_BATCH_LABELS[row.jenis] || row.jenis }}
-                </td>
-                
-                <td v-else-if="col.key === 'waktu'" class="px-4 py-3 whitespace-nowrap text-slate-500" :class="alignClass(col.align)">
-                  {{ formatTanggal(row.waktu) }}
-                </td>
-                
-                <td v-else-if="col.key === 'qty_hasil'" class="px-4 py-3 whitespace-nowrap text-slate-700 font-medium" :class="alignClass(col.align)">
-                  {{ formatAngka(row.qty_hasil) }} Kg
-                </td>
-                
-                <td v-else-if="col.key === 'harga_per_kg' || col.key === 'harga_rata'" class="px-4 py-3 whitespace-nowrap text-slate-700" :class="alignClass(col.align)">
-                  {{ formatRupiah(ambilHarga(row)) }}
-                </td>
-                
-                <td v-else-if="col.key === 'batch'" class="px-4 py-3 whitespace-nowrap font-mono text-slate-800 font-medium" :class="alignClass(col.align)">
-                  {{ row.batch }}
-                </td>
-                
-                <td v-else class="px-4 py-3 whitespace-nowrap text-slate-600" :class="alignClass(col.align)">
-                  {{ row[col.key] ?? '-' }}
-                </td>
-              </template>
+              <td class="px-4 py-4 font-mono font-bold text-slate-800">{{ row.nomor || row.batch }}</td>
+              <td class="px-4 py-4 text-slate-700">{{ row.tangki_kode || row.tangki_tujuan_nama || row.tangki || '-' }}</td>
+              <td class="px-4 py-4 font-semibold text-blue-700">{{ row.nama_hasil }}</td>
+              <td class="px-4 py-4 text-right font-black text-emerald-600">{{ formatAngka(row.qty_hasil) }}</td>
+              <td class="px-4 py-4 text-right text-slate-600">{{ formatRupiah(row.harga_per_kg) }}</td>
             </tr>
           </tbody>
         </table>
@@ -130,40 +88,31 @@
         <div v-for="row in baris" :key="row.id" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
           <div class="flex justify-between items-start border-b border-slate-100 pb-3">
             <div>
-              <h3 class="font-mono font-bold text-slate-800">{{ row.batch }}</h3>
-              <p class="text-xs text-slate-500 mt-1">{{ formatTanggal(row.waktu) }}</p>
+              <h3 class="font-mono font-bold text-slate-800">{{ row.nomor || row.batch }}</h3>
+              <p class="text-xs text-slate-500 mt-1">{{ formatTanggal(row.tanggal || row.waktu) }}</p>
             </div>
-            <span 
-              class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold border"
-              :class="Number(row.qty_hasil) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'"
-            >
-              {{ Number(row.qty_hasil) > 0 ? 'SELESAI' : 'PROSES' }}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+               {{ row.tangki_kode || row.tangki_tujuan_nama || row.tangki || '-' }}
             </span>
           </div>
 
           <div class="grid grid-cols-2 gap-2 text-xs">
+             <div class="flex flex-col gap-1">
+              <span class="text-slate-400 font-semibold uppercase">Nama Hasil</span>
+              <span class="text-blue-700 font-bold">{{ row.nama_hasil }}</span>
+            </div>
             <div class="flex flex-col gap-1">
               <span class="text-slate-400 font-semibold uppercase">Jenis</span>
               <span class="text-slate-700">{{ JENIS_BATCH_LABELS[row.jenis] || row.jenis }}</span>
             </div>
             <div class="flex flex-col gap-1">
-              <span class="text-slate-400 font-semibold uppercase">Nama Hasil</span>
-              <span class="text-slate-700 font-medium">{{ row.nama_hasil }}</span>
+              <span class="text-slate-400 font-semibold uppercase">Yield Output</span>
+              <span class="text-emerald-600 font-black">{{ formatAngka(row.qty_hasil) }} Kg</span>
             </div>
             <div class="flex flex-col gap-1">
-              <span class="text-slate-400 font-semibold uppercase">Yield</span>
-              <span class="text-slate-800 font-bold">{{ formatAngka(row.qty_hasil) }} Kg</span>
+              <span class="text-slate-400 font-semibold uppercase">Harga/Kg</span>
+              <span class="text-slate-700">{{ formatRupiah(row.harga_per_kg) }}</span>
             </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-slate-400 font-semibold uppercase">Nominal/Kg</span>
-              <span class="text-slate-700">{{ formatRupiah(ambilHarga(row)) }}</span>
-            </div>
-          </div>
-
-          <div class="mt-2 pt-3 border-t border-slate-100 flex gap-2 justify-end">
-            <button class="px-4 py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl shadow-sm hover:bg-slate-50 flex-1" @click="router.push({ name: 'produksi-batch-detail', params: { id: row.id } })">
-              Detail
-            </button>
           </div>
         </div>
       </div>
@@ -200,28 +149,20 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiBatch } from '../api'
 import { useLayout } from '@/composables/useLayout'
-import {
-  BATCH_TABLE_COLUMNS,
-  JENIS_BATCH_OPTIONS,
-  JENIS_BATCH_LABELS
-} from '../uiConfigProduksi'
+
+// Impor config dipertahankan hanya untuk filter jenis
+import { JENIS_BATCH_OPTIONS, JENIS_BATCH_LABELS } from '../uiConfigProduksi'
 
 const router = useRouter()
 const { isMobile } = useLayout()
 const baris = ref([])
 const loading = ref(false)
 const errorMsg = ref('')
-const filter = reactive({ jenis: '', search: '' }) // filter status dihapus
+const filter = reactive({ jenis: '', search: '' })
 const halaman = ref(1)
 const totalHalaman = ref(0)
 const adaHalamanBerikut = ref(false)
 let timerDebounce = null
-
-function alignClass(align) {
-  if (align === 'right') return 'text-right'
-  if (align === 'center') return 'text-center'
-  return 'text-left'
-}
 
 function formatTanggal(v) {
   if (!v) return '-'
@@ -242,18 +183,6 @@ function formatRupiah(v) {
   return `Rp ${Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function ambilHarga(row) {
-  const nilai = Number(row.nilai_hasil) || 0
-  const qty = Number(row.qty_hasil) || 0
-  if (qty > 0) {
-    return nilai / qty
-  }
-  const h1 = Number(row.harga_hasil_per_kg) || 0
-  const h2 = Number(row.harga_rata) || 0
-  const h3 = (row.harga_per_kg === 'None') ? 0 : (Number(row.harga_per_kg) || 0)
-  return h1 || h2 || h3 || 0
-}
-
 async function muatData() {
   loading.value = true
   errorMsg.value = ''
@@ -261,6 +190,7 @@ async function muatData() {
     const params = { page: halaman.value }
     if (filter.jenis) params.jenis = filter.jenis
     if (filter.search) params.search = filter.search
+    
     const res = await apiBatch.daftar(params)
 
     if (Array.isArray(res)) {

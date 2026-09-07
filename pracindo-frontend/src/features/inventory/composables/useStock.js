@@ -22,6 +22,10 @@ export function useStock() {
             } else if (params.lapis === 'POOL') {
                 const { data } = await api.get('inventory/pool/', { params })
                 daftarStok.value = data.rincian || []
+            } else if (params.lapis === 'JADI') {
+                // TAMBAHAN: Ambil data stok barang jadi
+                const { data } = await api.get('inventory/barang-jadi/', { params })
+                daftarStok.value = data.rincian || data.results || data || []
             } else {
                 daftarStok.value = []
             }

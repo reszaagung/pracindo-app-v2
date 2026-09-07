@@ -50,6 +50,7 @@ const fetchStokBarangJadi = async () => {
   } finally {
     isLoading.value = false
   }
+  
 }
 
 onMounted(() => {

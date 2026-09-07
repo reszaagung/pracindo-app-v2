@@ -10,17 +10,15 @@ class BatchSerializer(serializers.ModelSerializer):
     tangki_kode = serializers.CharField(source="tangki.kode", read_only=True)
     tangki_tujuan_nama = serializers.CharField(source="tangki.nama", read_only=True)
     batch = serializers.CharField(source="nomor", read_only=True)
-    sisa_qty = serializers.SerializerMethodField()
     harga_per_kg = serializers.SerializerMethodField()
 
     class Meta:
         model = Batch
-        fields = "__all__"
-
-    def get_sisa_qty(self, obj):
-        from .services import saldo_batch
-        return str(saldo_batch(obj).sisa_qty)
+        fields = [
+            "id", "batch", "nomor", "jenis", "nama_hasil", 
+            "tangki", "tangki_kode", "tangki_tujuan_nama", 
+            "qty_hasil", "harga_per_kg", "tanggal", "waktu"
+        ]
 
     def get_harga_per_kg(self, obj):
-        from .services import saldo_batch
-        return str(saldo_batch(obj).harga_per_kg)
+        return str(obj.harga_per_kg) if obj.harga_per_kg else "0.00"

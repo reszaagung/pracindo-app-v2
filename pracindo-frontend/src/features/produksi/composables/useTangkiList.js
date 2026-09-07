@@ -1,6 +1,5 @@
 import { ref, onMounted } from 'vue'
-import { apiTangki } from '../api' // Sesuaikan path import api jika diperlukan
-
+import { apiTangki } from '../api' 
 export function useTangkiList() {
   const loading = ref(true)
   const errorMsg = ref('')
@@ -19,7 +18,6 @@ export function useTangkiList() {
         saldo: null
       }))
 
-      // Load saldo masing-masing tangki secara paralel
       await Promise.all(
         tangkis.value.map(async (t) => {
           try {
@@ -40,7 +38,6 @@ export function useTangkiList() {
     }
   }
 
-  // Otomatis muat data saat komponen pertama kali dibuka
   onMounted(() => {
     muatData()
   })

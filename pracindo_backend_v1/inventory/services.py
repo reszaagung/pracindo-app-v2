@@ -299,7 +299,7 @@ def eksekusi_packing_langsung(packing, user):
     batch = Batch.objects.select_for_update().get(pk=packing.batch_id)
     s = saldo_batch(batch)
     if packing.qty_kg > s.sisa_qty + TOL_QTY:
-        raise KonflikSaldo(f"Sisa batch kurang.")
+        raise KonflikSaldo(f"Sisa cairan Batch {batch.nomor} tinggal {s.sisa_qty} Kg.")
     
     menghabiskan = abs(packing.qty_kg - s.sisa_qty) <= TOL_QTY
     cost_nom_bahan = s.sisa_nilai if menghabiskan else rp(packing.qty_kg * s.harga_per_kg)
@@ -343,6 +343,11 @@ def eksekusi_packing_langsung(packing, user):
     packing.cost_nom = total_cost_nom
     packing.menghabiskan = menghabiskan
     packing.save(update_fields=["harga_per_kg", "cost_nom", "menghabiskan"])
+
+    batch.sisa_stok -= packing.qty_kg
+    if menghabiskan:
+        batch.sisa_stok = D0
+    batch.save(update_fields=['sisa_stok'])
 
     MutasiKlaim.objects.create(
         entitas=packing.entitas, grup_bahan=packing.entitas.grup_bahan,
@@ -398,6 +403,9 @@ def rollback_hapus_packing(packing, user):
         pool_kem_dalam = PoolKemasan.objects.select_for_update().get(pk=packing.kemasan_dalam_id)
         nilai_kemasan_dalam = rp(pool_kem_dalam.harga_satuan * total_unit_dalam)
         tambah_ke_pool_kemasan(pool_kem_dalam.produk_id, total_unit_dalam, nilai_kemasan_dalam)
+
+    packing.batch.sisa_stok += packing.qty_kg
+    packing.batch.save(update_fields=['sisa_stok'])
 
     MutasiKlaim.objects.create(
         entitas=packing.entitas, grup_bahan=packing.entitas.grup_bahan,
@@ -459,6 +467,9 @@ def void_packing(packing, alasan, user=None):
         pool_kem_dalam = PoolKemasan.objects.select_for_update().get(pk=packing.kemasan_dalam_id)
         nilai_kemasan_dalam = rp(pool_kem_dalam.harga_satuan * total_unit_dalam)
         tambah_ke_pool_kemasan(pool_kem_dalam.produk_id, total_unit_dalam, nilai_kemasan_dalam)
+
+    packing.batch.sisa_stok += packing.qty_kg
+    packing.batch.save(update_fields=['sisa_stok'])
 
     MutasiKlaim.objects.create(
         entitas=packing.entitas,
@@ -675,7 +686,4 @@ def get_barang_jadi(grup=None):
         }
         for s in qs
     ]
-    # StokBarangJadi belum melacak nilai rupiah -> total_nilai sementara 0.
-    # Kalau butuh valuasi, tambah kolom `nilai` di model + update
-    # eksekusi_packing_langsung/rollback_hapus_packing/void_packing buat akumulasi.
     return {"rincian": rincian, "total_nilai": "0.00"}

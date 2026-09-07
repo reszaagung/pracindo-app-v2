@@ -153,7 +153,7 @@ def saldo_batch(batch):
         return SaldoBatchData(D0_QTY, D0_RP, D0_RP)
         
     transfer_keluar = sum((t.qty_kg for t in batch.transfer_keluar.all()), D0_QTY)
-    packing_keluar = sum((p.qty_kg for p in Packing.objects.filter(batch_id=batch.id, status="POSTED")), D0_QTY)
+    packing_keluar = sum((p.qty_kg for p in Packing.objects.filter(batch_id=batch.id)), D0_QTY)
     
     sisa_qty = qty(batch.qty_hasil - transfer_keluar - packing_keluar)
     if sisa_qty <= 0:
