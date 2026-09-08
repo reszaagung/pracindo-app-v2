@@ -1,35 +1,44 @@
 from rest_framework import serializers
-
-# Pastikan import ini mengambil dari .models, bukan .serializers
 from .models import (
-    StokRetail, TransaksiPOS, SesiKasir,
+    StokRetail, TransaksiPOS, SesiKasir, ItemTransaksi,
     KategoriAkun, AkunBukuBesar, TransaksiJurnal, DetailJurnal,
     SalesRetail, PelangganRetail,
     BukuPiutangRetail, RiwayatBayarPiutang,
-    SuratJalan
+    PenerimaanBarang, ItemPenerimaan
 )
 
 class KatalogPOSSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='produk.id', read_only=True)
     nama = serializers.CharField(source='produk.nama', read_only=True)
     barcode = serializers.CharField(source='produk.barcode', default='NO-BARCODE', read_only=True)
-    stok = serializers.IntegerField(source='qty', read_only=True)
+    kemasan = serializers.CharField(read_only=True)
+    stok = serializers.IntegerField(source='total_unit', read_only=True)
     harga = serializers.DecimalField(source='harga_jual', max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = StokRetail
-        fields = ['id', 'nama', 'barcode', 'stok', 'harga']
+        fields = ['id', 'nama', 'barcode', 'kemasan', 'stok', 'harga']
 
+class ItemTransaksiSerializer(serializers.ModelSerializer):
+    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
+
+    class Meta:
+        model = ItemTransaksi
+        fields = ['id', 'produk', 'produk_nama', 'kemasan', 'qty_unit', 'harga_satuan', 'subtotal']
 
 class RiwayatTransaksiSerializer(serializers.ModelSerializer):
+    items = ItemTransaksiSerializer(many=True, read_only=True)
+    pelanggan_nama = serializers.CharField(source='pelanggan.nama', read_only=True, allow_null=True)
+    sales_nama = serializers.CharField(source='sales.nama', read_only=True, allow_null=True)
+
     class Meta:
         model = TransaksiPOS
         fields = [
             'id', 'nomor_struk', 'waktu_transaksi', 
+            'pelanggan', 'pelanggan_nama', 'sales', 'sales_nama',
             'subtotal', 'pajak', 'grand_total', 
-            'metode_bayar', 'status'
+            'metode_bayar', 'status', 'items'
         ]
-
 
 class SesiKasirSerializer(serializers.ModelSerializer):
     kasir_nama = serializers.CharField(source='kasir.username', read_only=True)
@@ -42,12 +51,10 @@ class SesiKasirSerializer(serializers.ModelSerializer):
             'waktu_tutup', 'saldo_awal', 'total_penjualan', 'status'
         ]
 
-
 class KategoriAkunSerializer(serializers.ModelSerializer):
     class Meta:
         model = KategoriAkun
         fields = '__all__'
-
 
 class AkunBukuBesarSerializer(serializers.ModelSerializer):
     kategori_nama = serializers.CharField(source='kategori.nama', read_only=True)
@@ -57,7 +64,6 @@ class AkunBukuBesarSerializer(serializers.ModelSerializer):
         model = AkunBukuBesar
         fields = ['id', 'kode', 'nama', 'kategori', 'kategori_nama', 'tipe_saldo', 'cabang', 'aktif']
 
-
 class DetailJurnalSerializer(serializers.ModelSerializer):
     akun_kode = serializers.CharField(source='akun.kode', read_only=True)
     akun_nama = serializers.CharField(source='akun.nama', read_only=True)
@@ -66,7 +72,6 @@ class DetailJurnalSerializer(serializers.ModelSerializer):
         model = DetailJurnal
         fields = ['id', 'akun', 'akun_kode', 'akun_nama', 'debit', 'kredit']
 
-
 class TransaksiJurnalSerializer(serializers.ModelSerializer):
     item_jurnal = DetailJurnalSerializer(many=True, read_only=True)
     
@@ -74,12 +79,10 @@ class TransaksiJurnalSerializer(serializers.ModelSerializer):
         model = TransaksiJurnal
         fields = ['id', 'nomor_jurnal', 'tanggal', 'referensi', 'keterangan', 'cabang', 'item_jurnal']
 
-
 class SalesRetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalesRetail
         fields = ['id', 'nama', 'persentase_bonus']
-
 
 class PelangganRetailSerializer(serializers.ModelSerializer):
     sales_nama = serializers.CharField(source='sales.nama', read_only=True)
@@ -88,12 +91,10 @@ class PelangganRetailSerializer(serializers.ModelSerializer):
         model = PelangganRetail
         fields = ['id', 'nama', 'nomor_telepon', 'alamat', 'limit_piutang', 'default_tempo_hari', 'sales', 'sales_nama']
 
-
 class RiwayatBayarPiutangSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiwayatBayarPiutang
         fields = '__all__'
-
 
 class BukuPiutangRetailSerializer(serializers.ModelSerializer):
     pelanggan_nama = serializers.CharField(source='pelanggan.nama', read_only=True)
@@ -112,10 +113,19 @@ class BukuPiutangRetailSerializer(serializers.ModelSerializer):
             'umur_piutang_hari', 'sisa_hari_jatuh_tempo', 'riwayat_bayar'
         ]
 
+class ItemPenerimaanSerializer(serializers.ModelSerializer):
+    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
+    kemasan_nama = serializers.CharField(source='kemasan.nama', read_only=True)
 
-class SuratJalanSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SuratJalan
+        model = ItemPenerimaan
+        fields = ['id', 'produk', 'produk_nama', 'kemasan', 'kemasan_nama', 'unit_dikirim', 'unit_diterima']
+
+class PenerimaanBarangSerializer(serializers.ModelSerializer):
+    items = ItemPenerimaanSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PenerimaanBarang
         fields = '__all__'
 
 class MutasiBukuBesarSerializer(serializers.ModelSerializer):

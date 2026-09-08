@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from .cabang import CabangToko
 
 class KategoriAkun(models.Model):
     nama = models.CharField(max_length=50, unique=True)
@@ -15,7 +16,7 @@ class AkunBukuBesar(models.Model):
     kode = models.CharField(max_length=20, unique=True)
     nama = models.CharField(max_length=100)
     kategori = models.ForeignKey(KategoriAkun, on_delete=models.PROTECT)
-    cabang = models.ForeignKey('retail.CabangToko', on_delete=models.CASCADE, null=True, blank=True)
+    cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE, null=True, blank=True)
     aktif = models.BooleanField(default=True)
 
     class Meta:
@@ -29,7 +30,7 @@ class TransaksiJurnal(models.Model):
     tanggal = models.DateTimeField(default=timezone.now)
     referensi = models.CharField(max_length=100)
     keterangan = models.TextField()
-    cabang = models.ForeignKey('retail.CabangToko', on_delete=models.CASCADE)
+    cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'retail_transaksi_jurnal'

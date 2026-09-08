@@ -10,7 +10,6 @@ export function usePackageReceipt() {
     const sedangProses = ref(false)
     const galat = ref('')
 
-    // 1. Memuat daftar PO Kemasan (Memakai endpoint utama + filter)
     const muatPOKemasan = async (params = {}) => {
         sedangProses.value = true
         galat.value = ''
@@ -26,7 +25,6 @@ export function usePackageReceipt() {
         }
     }
 
-    // 2. Memuat riwayat daftar penerimaan kemasan (Memakai endpoint utama + filter)
     const muatPenerimaan = async (params = {}) => {
         sedangProses.value = true
         galat.value = ''

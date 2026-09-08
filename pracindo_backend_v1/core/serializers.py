@@ -3,7 +3,7 @@ Serializer core — core/serializers.py
 """
 from rest_framework import serializers
 
-from .models import Entitas, GrupBahan, PeriodeAkuntansi
+from .models import Entitas, GrupBahan, PeriodeAkuntansi ,CabangToko
 
 
 class GrupBahanSerializer(serializers.ModelSerializer):
@@ -53,3 +53,8 @@ class BukaPeriodeSerializer(serializers.Serializer):
         if not v.strip():
             raise serializers.ValidationError('Alasan wajib diisi.')
         return v.strip()
+
+class CabangTokoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CabangToko
+        fields = ['id', 'kode', 'nama', 'alamat', 'aktif']

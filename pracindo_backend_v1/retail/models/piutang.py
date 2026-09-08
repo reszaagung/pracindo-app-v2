@@ -1,8 +1,9 @@
 from django.db import models
+from django.utils import timezone
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.utils import timezone
+from .pelanggan import PelangganRetail
 
 class BukuPiutangRetail(models.Model):
     STATUS_CHOICES = [
@@ -11,29 +12,24 @@ class BukuPiutangRetail(models.Model):
         ('LUNAS', 'LUNAS')
     ]
 
-    pelanggan = models.ForeignKey('retail.PelangganRetail', on_delete=models.PROTECT, related_name='daftar_piutang')
-    transaksi = models.OneToOneField('retail.TransaksiPOS', on_delete=models.CASCADE, related_name='data_piutang')
+    pelanggan = models.ForeignKey(PelangganRetail, on_delete=models.PROTECT, related_name='buku_piutang')
+    transaksi = models.OneToOneField('TransaksiPOS', on_delete=models.CASCADE)
     tanggal_piutang = models.DateField(default=timezone.now)
     jatuh_tempo = models.DateField()
-    total_piutang = models.DecimalField(max_digits=15, decimal_places=2)
+    
+    total_piutang = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_dibayar = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BELUM LUNAS')
+    dibuat_pada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'retail_buku_piutang'
-        ordering = ['-tanggal_piutang']
+        ordering = ['-tanggal_piutang', '-id']
 
     @property
     def sisa_piutang(self):
         return self.total_piutang - self.total_dibayar
-
-    @property
-    def umur_piutang_hari(self):
-        return (timezone.now().date() - self.tanggal_piutang).days
-
-    @property
-    def sisa_hari_jatuh_tempo(self):
-        return (self.jatuh_tempo - timezone.now().date()).days
 
     def save(self, *args, **kwargs):
         if self.total_dibayar >= self.total_piutang and self.total_piutang > 0:
@@ -52,12 +48,14 @@ class RiwayatBayarPiutang(models.Model):
     tanggal_bayar = models.DateField(default=timezone.now)
     nominal = models.DecimalField(max_digits=15, decimal_places=2)
     metode_bayar = models.CharField(max_length=50)
+    catatan = models.CharField(max_length=255, blank=True)
+    dibuat_pada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'retail_riwayat_bayar_piutang'
 
 @receiver([post_save, post_delete], sender=RiwayatBayarPiutang)
-def update_saldo_buku_piutang(sender, instance, **kwargs):
+def update_saldo_piutang(sender, instance, **kwargs):
     piutang_induk = instance.piutang
     total = piutang_induk.riwayat_bayar.aggregate(Sum('nominal'))['nominal__sum'] or 0
     piutang_induk.total_dibayar = total

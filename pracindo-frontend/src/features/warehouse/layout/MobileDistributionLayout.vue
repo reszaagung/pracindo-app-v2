@@ -49,7 +49,7 @@ import { watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useLayout } from '@/composables/useLayout'
-import { useNavDistribution } from '../composables/useNavDistribution'
+import { useNavDistribution } from '../composables/useNavFinalSession'
 
 const route = useRoute()
 const router = useRouter()

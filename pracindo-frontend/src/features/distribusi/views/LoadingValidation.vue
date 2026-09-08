@@ -1,5 +1,4 @@
-﻿<!-- src/features/distribusi/views/LoadingValidation.vue -->
-<template>
+﻿<template>
     <div class="flex flex-col w-full animate-fade-in relative">
         <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
@@ -11,7 +10,6 @@
                 <p class="text-xs md:text-sm text-slate-500 mt-1">Pindai atau centang barang yang naik ke armada agar sesuai dengan DO.</p>
             </div>
 
-            <!-- Fitur Pencarian Dinamis -->
             <div class="flex gap-2 w-full md:w-auto">
                 <input v-model="idCari" @keyup.enter="cariData" type="text" placeholder="Masukkan ID Pengiriman..."
                     class="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-48 shadow-sm" />
@@ -25,18 +23,15 @@
             </div>
         </div>
 
-        <!-- State Memuat -->
         <div v-if="memuat" class="py-12 flex justify-center bg-white border border-slate-200 rounded-[24px] shadow-sm">
             <i class="pi pi-spin pi-spinner text-3xl text-blue-500"></i>
         </div>
 
-        <!-- State Galat -->
         <div v-else-if="galat" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium flex items-start gap-3 shadow-sm">
             <i class="pi pi-exclamation-triangle mt-0.5"></i>
             <span>{{ galat }}</span>
         </div>
 
-        <!-- State Awal (Belum Ada Pencarian) -->
         <div v-else-if="!pengiriman" class="bg-white border border-slate-200 rounded-[24px] p-12 text-center shadow-sm w-full mb-6">
             <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                 <i class="pi pi-search text-slate-300 text-2xl"></i>
@@ -45,7 +40,6 @@
             <p class="text-slate-500 text-sm">Masukkan ID Pengiriman di atas untuk memulai validasi loading barang ke armada.</p>
         </div>
 
-        <!-- Tabel Data Pengiriman Asli -->
         <div v-else class="bg-white border border-slate-200 rounded-[24px] p-4 md:p-6 shadow-sm w-full mb-6">
             <div class="flex flex-col md:flex-row justify-between md:items-center border-b border-slate-100 pb-4 mb-4">
                 <div>
@@ -74,12 +68,9 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        <!-- Kondisi jika tabel muatan kosong dari backend -->
                         <tr v-if="!pengiriman.items || pengiriman.items.length === 0">
                             <td colspan="5" class="py-8 text-center text-slate-400 italic">Data muatan tidak ditemukan dalam dokumen ini.</td>
                         </tr>
-
-                        <!-- Looping Item/Barang Nyata -->
                         <tr v-for="(item, idx) in (pengiriman.items || [])" :key="item.id || idx" class="hover:bg-slate-50/50 transition-colors">
                             <td class="py-4 px-4">
                                 <div class="font-bold text-slate-800">{{ item.produk_nama || item.nama_produk || 'Produk ID ' + (item.produk_id || idx) }}</div>
@@ -97,7 +88,7 @@
                                 <button v-if="(item.qty_muat || 0) >= (item.qty_do || item.qty_kg || 0)" class="w-8 h-8 bg-slate-100 text-slate-400 rounded-lg cursor-not-allowed mx-auto flex items-center justify-center">
                                     <i class="pi pi-check"></i>
                                 </button>
-                                <button v-else @click="simulasiTambahMuat(item)" class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors mx-auto flex items-center justify-center shadow-sm">
+                                <button v-else @click="tambahMuat(item)" class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors mx-auto flex items-center justify-center shadow-sm">
                                     <i class="pi pi-plus"></i>
                                 </button>
                             </td>
@@ -107,9 +98,10 @@
             </div>
 
             <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
-                <button class="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5">
-                    <i class="pi pi-verified text-xs"></i>
-                    <span>Selesaikan Loading & Kunci DO</span>
+                <button @click="submitLoading" :disabled="sedangSimpan" class="px-8 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-sm font-bold rounded-xl transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <i v-if="sedangSimpan" class="pi pi-spin pi-spinner text-xs"></i>
+                    <i v-else class="pi pi-verified text-xs"></i>
+                    <span>{{ sedangSimpan ? 'Menyimpan...' : 'Selesaikan Loading & Kunci DO' }}</span>
                 </button>
             </div>
         </div>
@@ -118,16 +110,17 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { apiDistribusi } from '../api'
 
 const route = useRoute()
+const router = useRouter()
 const pengiriman = ref(null)
 const memuat = ref(false)
+const sedangSimpan = ref(false)
 const galat = ref('')
 const idCari = ref('')
 
-// Fungsi menarik data pengiriman dari Django Backend
 const cariData = async () => {
     if (!idCari.value) return
     memuat.value = true
@@ -144,15 +137,33 @@ const cariData = async () => {
     }
 }
 
-// Simulasi fungsi tombol "Plus (+)" di tabel untuk update kuantitas naik truk
-const simulasiTambahMuat = (item) => {
+const tambahMuat = (item) => {
     if (!item.qty_muat) item.qty_muat = 0
     item.qty_muat += 1
-    // Nanti bisa Anda kembangkan untuk memanggil endpoint PATCH ke server
+}
+
+const submitLoading = async () => {
+    if (!pengiriman.value) return
+    sedangSimpan.value = true
+    galat.value = ''
+    try {
+        const payload = {
+            items: pengiriman.value.items.map(item => ({
+                id: item.id,
+                qty_muat: item.qty_muat || 0
+            }))
+        }
+        await apiDistribusi.validasiLoading(pengiriman.value.id, payload)
+        router.push('/distribusi')
+    } catch (err) {
+        console.error(err)
+        galat.value = err.response?.data?.detail || 'Gagal menyimpan validasi loading ke server.'
+    } finally {
+        sedangSimpan.value = false
+    }
 }
 
 onMounted(() => {
-    // Memungkinkan fitur klik rute dari halaman lain (contoh: /distribusi/loading?id=12)
     if (route.query.id) {
         idCari.value = route.query.id
         cariData()

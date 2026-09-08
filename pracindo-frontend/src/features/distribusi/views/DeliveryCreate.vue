@@ -130,12 +130,12 @@ const muatDataMaster = async () => {
     try {
         const [resArmada, resKurir] = await Promise.all([
             apiDistribusi.getArmada(),
-            api.get('core/users/?role=KURIR').catch(() => ({ data: [] }))
+            apiDistribusi.getKurir().catch(() => [])
         ])
 
         daftarArmada.value = resArmada.results || resArmada || []
 
-        const kurirs = resKurir.data?.results || resKurir.data || []
+        const kurirs = resKurir.results || resKurir || []
         daftarKurir.value = kurirs.length > 0 ? kurirs : [{ id: 1, nama: 'Kurir Sistem (Fallback)' }]
     } catch (err) {
         console.error(err)

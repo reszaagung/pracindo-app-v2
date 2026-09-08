@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     LaporanSelisih, PenerimaanBarang, PenerimaanItem,
-    DeliveryOrder, DeliveryOrderItem
+    Distribusi, ItemDistribusi
 )
 
 class PenerimaanItemInline(admin.TabularInline):
@@ -57,21 +57,28 @@ class LaporanSelisihAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-class DeliveryOrderItemInline(admin.TabularInline):
-    model = DeliveryOrderItem
+
+# =========================================================
+# ADMIN DISTRIBUSI (OUTBOUND)
+# =========================================================
+
+class ItemDistribusiInline(admin.TabularInline):
+    model = ItemDistribusi
     extra = 0
     autocomplete_fields = ('produk',)
+
+@admin.register(Distribusi)
+class DistribusiAdmin(admin.ModelAdmin):
+    list_display = ('nomor', 'tanggal_dibuat', 'pelanggan_nama', 'jenis_tujuan', 'berat_total_kg', 'status')
+    list_filter = ('status', 'jenis_tujuan', 'tanggal_dibuat')
+    search_fields = ('nomor', 'pelanggan_nama', 'alamat')
+    list_select_related = ('entitas', 'tujuan_cabang')
     
-@admin.register(DeliveryOrder)
-class DeliveryOrderAdmin(admin.ModelAdmin):
-    list_display = ('nomor_do', 'tanggal', 'pengemudi', 'plat_nomor', 'status')
-    list_filter = ('status', 'tanggal')
-    search_fields = ('nomor_do', 'pengemudi', 'plat_nomor')
-    
-    readonly_fields = ('nomor_do',)
-    inlines = [DeliveryOrderItemInline]
+    readonly_fields = ('nomor', 'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh')
+    inlines = [ItemDistribusiInline]
 
     def has_delete_permission(self, request, obj=None):
+        # Distribusi hanya boleh dihapus jika masih DRAFT (belum masuk ke logistik)
         if obj and obj.status != 'DRAFT':
             return False
         return super().has_delete_permission(request, obj)

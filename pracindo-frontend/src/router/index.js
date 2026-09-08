@@ -1,14 +1,11 @@
-// src/router/index.js (atau tempat file utama router berada)
 import { createRouter, createWebHistory } from 'vue-router'
 import { useGuards } from './guards'
-
-// Import Rute Modular
 import ruteProduksi from '@/features/produksi/routes.js'
 import ruteWarehouse from '@/features/warehouse/routes.js'
 import ruteDistribusi from '@/features/distribusi/routes.js'
 import ruteLogistik from '@/features/logistik/routes.js'
 import { retailRoutes } from '@/features/retail/routes.js'
-import ruteAccounting from '@/features/accounting/routes.js' // <-- 1. Import rute akunting
+import ruteAccounting from '@/features/accounting/routes.js' 
 
 const routes = [
   {
@@ -29,10 +26,7 @@ const routes = [
     meta: { perluLogin: true, modul: 'dashboard' },
     component: () => import('@/views/DashboardView.vue')
   },
-  
-  // 2. Sebar (Spread) rute akunting di sini
   ...ruteAccounting,
-
   {
     path: '/master/suplier',
     name: 'master-suplier',
@@ -68,14 +62,11 @@ const routes = [
       },
     ]
   },
-  
-  // Rute Modular Lainnya
   ...ruteProduksi,
   ...ruteWarehouse,
   ...ruteDistribusi,
   ...ruteLogistik,
   ...retailRoutes,
-  
   {
     path: '/work-order',
     name: 'work-order',

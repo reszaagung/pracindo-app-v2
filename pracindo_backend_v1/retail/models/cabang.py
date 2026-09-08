@@ -6,5 +6,8 @@ class CabangToko(models.Model):
     alamat = models.TextField(blank=True, null=True)
     aktif = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = 'retail_cabang_toko'
+
     def __str__(self):
         return f"{self.kode} - {self.nama}"

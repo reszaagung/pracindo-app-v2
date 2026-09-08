@@ -1,8 +1,9 @@
 from django.db import models
+from django.utils import timezone
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.utils import timezone
+from .cabang import CabangToko
 
 class BukuHutangRetail(models.Model):
     STATUS_CHOICES = [
@@ -11,13 +12,15 @@ class BukuHutangRetail(models.Model):
         ('LUNAS', 'LUNAS')
     ]
 
-    cabang = models.ForeignKey('retail.CabangToko', on_delete=models.PROTECT, related_name='daftar_hutang')
+    cabang = models.ForeignKey(CabangToko, on_delete=models.PROTECT, related_name='daftar_hutang')
     referensi = models.CharField(max_length=100)
     tanggal_hutang = models.DateField(default=timezone.now)
     jatuh_tempo = models.DateField(blank=True, null=True)
     keterangan = models.TextField(blank=True)
+
     total_hutang = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_dibayar = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BELUM LUNAS')
     dibuat_pada = models.DateTimeField(auto_now_add=True)
 
@@ -50,7 +53,7 @@ class RiwayatBayarHutang(models.Model):
     dibuat_pada = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'retail_riwayat_bayar'
+        db_table = 'retail_riwayat_bayar_hutang'
 
 @receiver([post_save, post_delete], sender=RiwayatBayarHutang)
 def update_saldo_buku_hutang(sender, instance, **kwargs):

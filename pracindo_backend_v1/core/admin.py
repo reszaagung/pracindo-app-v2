@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CounterDokumen, Entitas, GrupBahan, PeriodeAkuntansi
+from .models import CounterDokumen, Entitas, GrupBahan, PeriodeAkuntansi ,CabangToko
 
 
 @admin.register(GrupBahan)
@@ -40,3 +40,9 @@ class PeriodeAkuntansiAdmin(admin.ModelAdmin):
     list_display = ('entitas', 'tahun', 'bulan', 'ditutup', 'ditutup_pada', 'ditutup_oleh')
     list_filter = ('entitas', 'ditutup', 'tahun')
     readonly_fields = ('ditutup_pada', 'ditutup_oleh')
+
+
+@admin.register(CabangToko)
+class CabangTokoAdmin(admin.ModelAdmin):
+    list_display = ('kode', 'nama', 'user', 'aktif')
+    search_fields = ('kode', 'nama')

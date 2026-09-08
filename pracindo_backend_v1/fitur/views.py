@@ -1,48 +1,56 @@
-import os
-from django.conf import settings
-from django.http import HttpResponse
-from rest_framework.views import APIView
+# views.py
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from docxtpl import DocxTemplate
-from .serializers import CetakStikerPayloadSerializer
 
-class GenerateStikerDocxAPIView(APIView):
-    def post(self, request, format=None):
-        serializer = CetakStikerPayloadSerializer(data=request.data)
-        if serializer.is_valid():
-            data = serializer.validated_data
-            
-            item_data = {
-                'NAMA': data.get('nama_item', ''),
-                'TYPE': data.get('type', ''),
-                'LOT': data.get('lot', ''),
-                'NET': data.get('qty', '')
-            }
+from .models import GenerateStikerBesar, ItemCetak
+from .serializers import GenerateStikerBesarInputSerializer, GenerateStikerBesarSerializer
+from .services import petakan_template
+from .chunking import algoritma_chunking  # fungsi yang sudah Anda buat sebelumnya
+from .tasks import task_generate_stiker
 
-            jumlah_cetak = data.get('total_unit', 1)
-            items = [item_data] * jumlah_cetak  
-            
-            context = {'items': items}
+class GenerateStikerBesarViewSet(viewsets.ViewSet):
+    def list(self, request):
+        qs = GenerateStikerBesar.objects.all()
+        return Response(GenerateStikerBesarSerializer(qs, many=True).data)
 
-            template_path = os.path.join(settings.BASE_DIR, 'fitur', 'templates', 'stikerbesarpolos.docx')
+    def retrieve(self, request, pk=None):
+        obj = get_object_or_404(GenerateStikerBesar, pk=pk)
+        return Response(GenerateStikerBesarSerializer(obj).data)
 
-            if not os.path.exists(template_path):
-                return Response({"error": f"Template tidak ditemukan di path: {template_path}"}, status=404)
+    def create(self, request):
+        input_serializer = GenerateStikerBesarInputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        data = input_serializer.validated_data
 
-            try:
-                doc = DocxTemplate(template_path)
-                doc.render(context)
+        try:
+            with transaction.atomic():
+                generate_obj = GenerateStikerBesar.objects.create(total_unit=len(data["items"]))
 
-                response = HttpResponse(
-                    content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                )
-                filename = f"Stiker_{data.get('type', 'Item')}.docx"
-                response['Content-Disposition'] = f'attachment; filename="{filename}"'
-                
-                doc.save(response)
-                return response
-                
-            except Exception as e:
-                return Response({"error": str(e)}, status=500)
-                
-        return Response(serializer.errors, status=400)
+                # Sesuaikan pemanggilan ini dengan signature fungsi chunking Anda yang asli
+                hasil = algoritma_chunking(data["items"])
+                # diasumsikan: {"pola": "AABB", "grup_per_item": ["A", "A", "B", "B"]}
+
+                for item_data, grup in zip(data["items"], hasil["grup_per_item"]):
+                    ItemCetak.objects.create(generate=generate_obj, grup=grup, **item_data)
+
+                template = petakan_template(generate_obj, jenis=data["jenis"], pola=hasil["pola"])
+                if template is None:
+                    raise ValueError(f"Template untuk pola '{hasil['pola']}' belum terdaftar di Master Data.")
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        return Response(GenerateStikerBesarSerializer(generate_obj).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"])
+    def cetak(self, request, pk=None):
+        obj = get_object_or_404(GenerateStikerBesar, pk=pk)
+        if obj.alamat_file is None:
+            return Response({"detail": "Belum ada template terpasang."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Dikirim ke antrean, TIDAK dijalankan langsung — request tidak boleh
+        # diblokir oleh proses Word COM Interop (lihat poin 3 di pesan sebelumnya).
+        task_cetak_stiker.delay(obj.pk)
+        return Response({"detail": "Perintah cetak dikirim ke antrean."}, status=status.HTTP_202_ACCEPTED)

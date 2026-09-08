@@ -1,17 +1,48 @@
+# serializers.py
 from rest_framework import serializers
-from .models import HelperGenerateStikerDoc
+from .models import StikerBesar, GenerateStikerBesar, ItemCetak
 
-class HelperGenerateStikerDocSerializer(serializers.ModelSerializer):
+
+class StikerBesarSerializer(serializers.ModelSerializer):
     class Meta:
-        model = HelperGenerateStikerDoc
-        fields = '__all__'
+        model = StikerBesar
+        fields = ["id", "nama_file", "aktif"]
 
-from rest_framework import serializers
 
-class CetakStikerPayloadSerializer(serializers.Serializer):
-    nama_item = serializers.CharField(max_length=100)
-    type = serializers.CharField(max_length=100)
-    lot = serializers.CharField(max_length=100)
-    total_unit = serializers.IntegerField(default=1)
-    qty = serializers.CharField(max_length=100)
-    satuan = serializers.CharField(max_length=20, default="KGS", required=False)
+class ItemCetakInputSerializer(serializers.ModelSerializer):
+    """Input dari user — belum ada 'grup', itu baru ditentukan
+    setelah algoritma chunking jalan."""
+
+    class Meta:
+        model = ItemCetak
+        fields = ["nama_item", "tipe", "lot", "net"]
+
+
+class ItemCetakSerializer(serializers.ModelSerializer):
+    """Untuk menampilkan hasil, sudah termasuk 'grup'."""
+
+    class Meta:
+        model = ItemCetak
+        fields = ["id", "grup", "nama_item", "tipe", "lot", "net"]
+
+
+class GenerateStikerBesarInputSerializer(serializers.Serializer):
+    jenis = serializers.ChoiceField(choices=["polos", "cv"])
+    items = ItemCetakInputSerializer(many=True)
+
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError("Minimal harus ada 1 item.")
+        if len(value) > 4:  # asumsi template 4 slot, sesuaikan kalau beda
+            raise serializers.ValidationError("Maksimal 4 item per lembar.")
+        return value
+
+
+class GenerateStikerBesarSerializer(serializers.ModelSerializer):
+    item_set = ItemCetakSerializer(many=True, read_only=True)
+    alamat_file = StikerBesarSerializer(read_only=True)
+
+    class Meta:
+        model = GenerateStikerBesar
+        fields = ["id", "total_unit", "pola_terdeteksi", "alamat_file", "item_set", "dibuat_pada"]
+        read_only_fields = fields

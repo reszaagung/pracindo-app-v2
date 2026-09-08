@@ -1,37 +1,38 @@
-import uuid
 from django.db import models
-from django.utils import timezone
+from .cabang import CabangToko
 
-class LaporanSelisih(models.Model):
-    JENIS_CHOICES = [
-        ('KURANG_KIRIM', 'Kurang Kirim (Selisih Timbang)'),
-        ('BARANG_RUSAK', 'Barang Rusak / Ditolak'),
-        ('LAINNYA', 'Lainnya')
-    ]
-    STATUS_CHOICES = [
-        ('DIBUKA', 'Dibuka'),
-        ('DIAJUKAN', 'Diajukan ke Suplier'),
-        ('DISEPAKATI', 'Disepakati'),
-        ('DISELESAIKAN', 'Diselesaikan'),
-        ('DITUTUP', 'Ditutup')
-    ]
-    nomor = models.CharField(max_length=50, unique=True, blank=True)
-    tanggal = models.DateTimeField(default=timezone.now)
-    
-    jenis = models.CharField(max_length=20, choices=JENIS_CHOICES, default='KURANG_KIRIM')
-    qty_selisih = models.DecimalField(max_digits=10, decimal_places=3, default=0)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DIBUKA')
-    catatan_klaim = models.TextField(blank=True, null=True)
-    resolusi = models.CharField(max_length=255, blank=True, null=True)
+class SelisihKasir(models.Model):
+    sesi = models.ForeignKey('SesiKasir', on_delete=models.CASCADE, related_name='riwayat_selisih')
+    waktu_lapor = models.DateTimeField(auto_now_add=True)
+    saldo_sistem = models.DecimalField(max_digits=12, decimal_places=2)
+    saldo_aktual = models.DecimalField(max_digits=12, decimal_places=2)
+    selisih = models.DecimalField(max_digits=12, decimal_places=2)
+    keterangan = models.TextField(blank=True, null=True)
+    diselesaikan = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'retail_laporan_selisih'
-        ordering = ['-tanggal']
-
-    def save(self, *args, **kwargs):
-        if not self.nomor:
-            self.nomor = f"LS-{uuid.uuid4().hex[:6].upper()}"
-        super().save(*args, **kwargs)
+        db_table = 'retail_selisih_kasir'
 
     def __str__(self):
-        return self.nomor
+        return f"Selisih {self.sesi} - {self.selisih}"
+
+class SelisihStok(models.Model):
+    cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE)
+    produk = models.ForeignKey('master.Produk', on_delete=models.CASCADE)
+    kemasan = models.CharField(max_length=50)
+    waktu_lapor = models.DateTimeField(auto_now_add=True)
+    stok_sistem = models.IntegerField()
+    stok_aktual = models.IntegerField()
+    selisih = models.IntegerField()
+    keterangan = models.TextField(blank=True, null=True)
+    status = models.CharField(
+        max_length=20, 
+        choices=[('PENDING', 'PENDING'), ('DISETUJUI', 'DISETUJUI'), ('DITOLAK', 'DITOLAK')], 
+        default='PENDING'
+    )
+
+    class Meta:
+        db_table = 'retail_selisih_stok'
+
+    def __str__(self):
+        return f"Selisih {self.produk.nama} ({self.kemasan}) - {self.selisih} unit"

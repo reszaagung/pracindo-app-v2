@@ -8,21 +8,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-# 1. Import semua Model
 from .models import (
-    StokRetail, CabangToko, SesiKasir, TransaksiPOS, ItemTransaksi,
+    StokRetail, MutasiStokRetail, CabangToko, SesiKasir, TransaksiPOS, ItemTransaksi,
     AkunBukuBesar, TransaksiJurnal, DetailJurnal,
     PelangganRetail, SalesRetail, BukuPiutangRetail, BonusSales,
-    RiwayatBayarPiutang, SuratJalan
+    RiwayatBayarPiutang, PenerimaanBarang, ItemPenerimaan
 )
 
-# 2. Import semua Serializer
 from .serializers import (
     KatalogPOSSerializer, RiwayatTransaksiSerializer, SesiKasirSerializer,
     AkunBukuBesarSerializer, TransaksiJurnalSerializer,
     PelangganRetailSerializer, SalesRetailSerializer,
-    BukuPiutangRetailSerializer, SuratJalanSerializer,
-    MutasiBukuBesarSerializer # <-- Serializer untuk mutasi buku besar
+    BukuPiutangRetailSerializer, PenerimaanBarangSerializer,
+    MutasiBukuBesarSerializer
 )
 
 
@@ -33,7 +31,7 @@ class KatalogPOSAPIView(generics.ListAPIView):
     def get_queryset(self):
         cabang_aktif = CabangToko.objects.filter(aktif=True).first()
         if cabang_aktif:
-            return StokRetail.objects.filter(cabang=cabang_aktif, qty__gt=0).select_related('produk')
+            return StokRetail.objects.filter(cabang=cabang_aktif, total_unit__gt=0).select_related('produk', 'kemasan')
         return StokRetail.objects.none()
 
 
@@ -44,14 +42,14 @@ class CheckoutPOSAPIView(APIView):
     def post(self, request):
         cabang = CabangToko.objects.filter(aktif=True).first()
         if not cabang:
-            return Response({'status': 'gagal', 'pesan': 'Cabang tidak ditemukan'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
 
         metode_bayar = request.data.get('metode_bayar', 'TUNAI')
         pelanggan_id = request.data.get('pelanggan_id')
         sales_id = request.data.get('sales_id')
 
         if metode_bayar == 'TEMPO' and not pelanggan_id:
-            return Response({'status': 'gagal', 'pesan': 'Transaksi TEMPO wajib memilih Pelanggan.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
 
         sesi = SesiKasir.objects.filter(cabang=cabang, status='AKTIF').first()
         if not sesi:
@@ -72,23 +70,37 @@ class CheckoutPOSAPIView(APIView):
         )
 
         for item in keranjang:
-            qty_beli = int(item['qty'])
+            qty_beli = int(item['qty_unit'])
             harga_satuan = Decimal(str(item['harga']))
-            stok = StokRetail.objects.select_for_update().get(cabang=cabang, produk_id=item['id'])
+            stok = StokRetail.objects.select_for_update().get(
+                cabang=cabang, 
+                produk_id=item['produk_id'],
+                kemasan_id=item['kemasan_id']
+            )
             
-            if stok.qty < qty_beli:
-                return Response({'status': 'gagal', 'pesan': f"Stok {stok.produk.nama} tidak mencukupi."}, status=status.HTTP_400_BAD_REQUEST)
+            if stok.total_unit < qty_beli:
+                return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
 
             ItemTransaksi.objects.create(
                 transaksi=transaksi,
-                produk_id=item['id'],
-                qty=qty_beli,
+                produk_id=item['produk_id'],
+                kemasan_id=item['kemasan_id'],
+                qty_unit=qty_beli,
                 harga_satuan=harga_satuan,
                 subtotal=harga_satuan * Decimal(qty_beli)
             )
             
-            stok.qty -= qty_beli
+            stok.total_unit -= qty_beli
             stok.save()
+
+            MutasiStokRetail.objects.create(
+                stok=stok,
+                jenis='PENJUALAN',
+                referensi=transaksi.nomor_struk,
+                unit_masuk=0,
+                unit_keluar=qty_beli,
+                saldo_akhir=stok.total_unit
+            )
 
         if metode_bayar == 'TEMPO':
             pelanggan = PelangganRetail.objects.get(id=pelanggan_id)
@@ -177,7 +189,7 @@ class JurnalUmumAPIView(APIView):
         total_kredit = sum(Decimal(str(i.get('kredit', 0))) for i in items)
 
         if total_debit != total_kredit:
-            return Response({'status': 'gagal', 'pesan': 'Debit dan Kredit tidak balance'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
 
         jurnal = TransaksiJurnal.objects.create(
             nomor_jurnal=f"JV-{uuid.uuid4().hex[:6].upper()}",
@@ -221,7 +233,6 @@ class DaftarPiutangAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         cabang = CabangToko.objects.filter(aktif=True).first()
-        # Hanya tampilkan piutang dari pelanggan di cabang ini
         return BukuPiutangRetail.objects.filter(pelanggan__cabang=cabang).order_by('jatuh_tempo')
 
 
@@ -233,16 +244,13 @@ class BayarPiutangAPIView(APIView):
         try:
             piutang = BukuPiutangRetail.objects.get(id=pk)
         except BukuPiutangRetail.DoesNotExist:
-            return Response({'status': 'gagal', 'pesan': 'Data piutang tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'status': 'gagal'}, status=status.HTTP_404_NOT_FOUND)
 
         nominal = Decimal(str(request.data.get('nominal', 0)))
         metode_bayar = request.data.get('metode_bayar', 'TUNAI')
 
-        if nominal <= 0:
-            return Response({'status': 'gagal', 'pesan': 'Nominal pembayaran tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if nominal > piutang.sisa_piutang:
-            return Response({'status': 'gagal', 'pesan': 'Nominal melebihi sisa piutang.'}, status=status.HTTP_400_BAD_REQUEST)
+        if nominal <= 0 or nominal > piutang.sisa_piutang:
+            return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
         
         RiwayatBayarPiutang.objects.create(
             piutang=piutang,
@@ -257,16 +265,16 @@ class BayarPiutangAPIView(APIView):
             sesi.total_penjualan = sesi.total_penjualan + nominal
             sesi.save()
 
-        return Response({'status': 'sukses', 'pesan': 'Pembayaran berhasil dicatat.'}, status=status.HTTP_200_OK)
+        return Response({'status': 'sukses'}, status=status.HTTP_200_OK)
 
 
-class DaftarSuratJalanAPIView(generics.ListAPIView):
-    serializer_class = SuratJalanSerializer
+class DaftarPenerimaanAPIView(generics.ListAPIView):
+    serializer_class = PenerimaanBarangSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         cabang = CabangToko.objects.filter(aktif=True).first()
-        return SuratJalan.objects.filter(cabang=cabang).order_by('status', '-tanggal_kirim')
+        return PenerimaanBarang.objects.filter(cabang=cabang).order_by('status', '-tanggal_terima')
 
 
 class ProsesPenerimaanAPIView(APIView):
@@ -275,29 +283,43 @@ class ProsesPenerimaanAPIView(APIView):
     @transaction.atomic
     def post(self, request, pk):
         try:
-            do = SuratJalan.objects.get(id=pk)
-        except SuratJalan.DoesNotExist:
-            return Response({'status': 'gagal', 'pesan': 'DO tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+            penerimaan = PenerimaanBarang.objects.get(id=pk)
+        except PenerimaanBarang.DoesNotExist:
+            return Response({'status': 'gagal'}, status=status.HTTP_404_NOT_FOUND)
 
         items = request.data.get('items', [])
         for item in items:
-            produk_id = item.get('produk_id')
-            qty = item.get('qty_diterima')
+            item_obj = ItemPenerimaan.objects.get(id=item['id'])
+            qty_terima = int(item.get('unit_diterima', 0))
             
-            if produk_id and qty and int(qty) > 0:
+            if qty_terima > 0:
+                item_obj.unit_diterima = qty_terima
+                item_obj.save()
+
                 stok, created = StokRetail.objects.get_or_create(
-                    cabang=do.cabang, 
-                    produk_id=produk_id,
-                    defaults={'qty': 0, 'harga_jual': 0}
+                    cabang=penerimaan.cabang, 
+                    produk=item_obj.produk,
+                    kemasan=item_obj.kemasan,
+                    defaults={'total_unit': 0, 'harga_jual': 0}
                 )
-                stok.qty += int(qty)
+                stok.total_unit += qty_terima
                 stok.save()
+
+                MutasiStokRetail.objects.create(
+                    stok=stok,
+                    jenis='PENERIMAAN',
+                    referensi=penerimaan.nomor_penerimaan,
+                    unit_masuk=qty_terima,
+                    unit_keluar=0,
+                    saldo_akhir=stok.total_unit
+                )
                 
-        do.status = 'SELESAI'
-        do.tanggal_terima = timezone.now()
-        do.save()
+        penerimaan.status = 'SELESAI'
+        penerimaan.tanggal_terima = timezone.now()
+        penerimaan.save()
 
         return Response({'status': 'sukses'})
+
 
 class BukuBesarMutasiAPIView(generics.ListAPIView):
     serializer_class = MutasiBukuBesarSerializer

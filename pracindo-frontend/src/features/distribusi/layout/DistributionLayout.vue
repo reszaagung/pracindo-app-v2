@@ -1,6 +1,5 @@
 ﻿<template>
     <div class="flex h-screen bg-[#F8FAFC] font-sans text-slate-700 overflow-hidden relative">
-        <!-- Header Mobile -->
         <header class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 flex items-center justify-between px-4 border-b border-slate-100">
             <div class="flex items-center gap-3">
                 <button @click="toggleSidebar" aria-label="Buka Menu" class="p-2 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors">
@@ -15,20 +14,16 @@
             </button>
         </header>
 
-        <!-- Overlay Gelap (Hanya di Mobile) -->
         <div v-if="sidebarAktif" @click="tutupDiMobile" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden transition-opacity"></div>
 
-        <!-- Sidebar / Navigasi Kiri Dinamis -->
         <aside class="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col items-center py-6 flex-shrink-0 justify-between transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:w-[88px] lg:h-[calc(100vh-2rem)] lg:m-4 lg:z-20 fixed top-2 bottom-2 left-2 w-[88px] z-50" :class="sidebarAktif ? 'translate-x-0' : '-translate-x-[150%]'">
             <div class="flex flex-col items-center w-full gap-6 lg:gap-8">
-                <!-- Tombol Kembali Desktop -->
                 <div @click="kembali" title="Kembali ke Dashboard Utama" class="mb-2 cursor-pointer hidden lg:block">
                     <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-md hover:scale-105 transition-transform group">
                         <i class="pi pi-arrow-left text-white text-xl group-hover:-translate-x-1 transition-transform"></i>
                     </div>
                 </div>
 
-                <!-- Menu Item -->
                 <nav class="flex flex-col gap-3 lg:gap-4 w-full px-4">
                     <button v-for="item in menu" :key="item.id" :disabled="!item.activate" @click="klikMenu(item)"
                         class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 relative mx-auto group"
@@ -41,7 +36,6 @@
                 </nav>
             </div>
 
-            <!-- Tombol Keluar Sistem -->
             <div class="mt-auto flex flex-col items-center group relative mb-4">
                 <button @click="keluar" type="button" aria-label="Keluar Aplikasi" class="w-10 h-10 rounded-xl overflow-hidden cursor-pointer border border-slate-200 hover:border-red-500 bg-white hover:bg-red-50 transition-all shadow-sm flex items-center justify-center">
                     <i class="pi pi-power-off text-slate-400 group-hover:text-red-500 transition-colors"></i>
@@ -52,7 +46,6 @@
             </div>
         </aside>
 
-        <!-- Area Konten Utama -->
         <main class="flex-1 overflow-y-auto p-4 pt-20 md:p-6 md:pt-24 lg:p-8 custom-scrollbar relative">
             <div class="mx-auto w-full h-full max-w-7xl">
                 <router-view v-slot="{ Component, route }">

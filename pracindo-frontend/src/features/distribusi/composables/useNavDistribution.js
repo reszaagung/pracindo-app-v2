@@ -15,5 +15,6 @@ export function useNavDistribution() {
         if (ruteTujuan === '/distribusi') return route.path === '/distribusi'
         return route.path.startsWith(ruteTujuan)
     }
+    
     return { menu, aktif }
 }

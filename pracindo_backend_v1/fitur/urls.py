@@ -1,8 +1,7 @@
-from django.urls import path
-from .views import GenerateStikerDocxAPIView
+# urls.py
+from rest_framework.routers import DefaultRouter
+from .views import GenerateStikerBesarViewSet
 
-
-app_name = 'fitur'
-urlpatterns = [
-    path('generate-stiker-docx/', GenerateStikerDocxAPIView.as_view(), name='generate-stiker-docx'),
-]
+router = DefaultRouter()
+router.register("generate-stiker", GenerateStikerBesarViewSet, basename="generate-stiker")
+urlpatterns = router.urls

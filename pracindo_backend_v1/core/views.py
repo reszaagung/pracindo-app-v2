@@ -13,10 +13,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from staff_user.permissions import HanyaSupervisor, SudahLogin
 from . import services
-from .models import Entitas, GrupBahan, PeriodeAkuntansi
+from .models import Entitas, GrupBahan, PeriodeAkuntansi ,CabangToko
 from .serializers import (
     BukaPeriodeSerializer, EntitasSerializer, GrupBahanSerializer,
-    PeriodeAkuntansiSerializer, TutupPeriodeSerializer
+    PeriodeAkuntansiSerializer, TutupPeriodeSerializer ,CabangTokoSerializer
 )
 
 
@@ -41,7 +41,6 @@ class EntitasViewSet(viewsets.ModelViewSet):
     serializer_class = EntitasSerializer
 
     def get_permissions(self):
-        # Membuka akses Read-Only (GET) untuk keperluan dropdown di frontend
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         return super().get_permissions()
@@ -53,9 +52,7 @@ class PeriodeAkuntansiViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PeriodeAkuntansiSerializer
     filterset_fields = ['entitas', 'tahun', 'bulan', 'ditutup']
 
-    def get_permissions(self):
-        # Aksi tutup dan buka periode hanya untuk Supervisor. 
-        # Cek status periode boleh oleh siapa saja yang login (seperti Akunting).
+    def get_permissions(self):.
         if self.action in ('tutup', 'buka'):
             return [HanyaSupervisor()]
         return [SudahLogin()]
@@ -126,3 +123,7 @@ class PeriodeAkuntansiViewSet(viewsets.ReadOnlyModelViewSet):
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(PeriodeAkuntansiSerializer(periode).data)
+
+class CabangTokoViewSet(viewsets.ModelViewSet):
+    queryset = CabangToko.objects.filter(aktif=True) 
+    serializer_class = CabangTokoSerializer

@@ -4,6 +4,7 @@ from .views import (
     LaporanSelisihViewSet, 
     PenerimaanViewSet,
     POSiapTerimaViewSet,
+    DistribusiViewSet,  # <-- Ini jagoan baru kita
 )
 
 app_name = 'warehouse'
@@ -12,6 +13,7 @@ router = DefaultRouter()
 router.register('po-siap-terima', POSiapTerimaViewSet, basename='po-siap-terima')
 router.register('penerimaan', PenerimaanViewSet, basename='penerimaan')
 router.register('laporan-selisih', LaporanSelisihViewSet, basename='laporan-selisih')
+router.register('distribusi', DistribusiViewSet, basename='distribusi')  # <-- Rute API Distribusi
 
 urlpatterns = [
     path('', include(router.urls)),

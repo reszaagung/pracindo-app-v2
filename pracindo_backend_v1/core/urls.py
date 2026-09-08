@@ -1,13 +1,13 @@
 ﻿from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import EntitasViewSet, GrupBahanViewSet, PeriodeAkuntansiViewSet
+from .views import EntitasViewSet, GrupBahanViewSet, PeriodeAkuntansiViewSet ,CabangTokoViewSet
 
 app_name = 'core'
 
 router = DefaultRouter()
 router.register(r'entitas', EntitasViewSet, basename='entitas')
 router.register(r'grup-bahan', GrupBahanViewSet, basename='grup-bahan')
-
+router.register(r'cabangtoko', CabangTokoViewSet, basename='cabangtoko')
 router.register(r'periode', PeriodeAkuntansiViewSet, basename='periode')
 
 urlpatterns = [

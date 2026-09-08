@@ -1,22 +1,32 @@
 from django.db import models
-from django.utils import timezone
+from .cabang import CabangToko
 
-class SuratJalan(models.Model):
-    nomor_do = models.CharField(max_length=50, unique=True)
-    cabang = models.ForeignKey('retail.CabangToko', on_delete=models.CASCADE, related_name='penerimaan_do')
-    asal_pengiriman = models.CharField(max_length=150, default='Gudang Utama Pracindo')
-    tanggal_kirim = models.DateTimeField(default=timezone.now)
-    tanggal_terima = models.DateTimeField(null=True, blank=True)
+class PenerimaanBarang(models.Model):
+    nomor_penerimaan = models.CharField(max_length=50, unique=True)
+    cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE, related_name='riwayat_penerimaan')
+    referensi_logistik = models.CharField(max_length=100, blank=True, null=True)
+    tanggal_kirim = models.DateTimeField(null=True, blank=True)
+    tanggal_terima = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=20, 
-        choices=[('MENUNGGU', 'MENUNGGU'), ('SELESAI', 'SELESAI')], 
-        default='MENUNGGU'
+        choices=[('DIKIRIM', 'DIKIRIM'), ('DITERIMA SEBAGIAN', 'DITERIMA SEBAGIAN'), ('SELESAI', 'SELESAI')],
+        default='DIKIRIM'
     )
-    pengirim = models.CharField(max_length=100, blank=True)
+    keterangan = models.TextField(blank=True)
 
     class Meta:
-        db_table = 'retail_surat_jalan'
-        ordering = ['-tanggal_kirim']
+        db_table = 'retail_penerimaan_barang'
+        ordering = ['-tanggal_terima']
 
     def __str__(self):
-        return f"{self.nomor_do} - {self.cabang.nama}"
+        return f"{self.nomor_penerimaan} - {self.cabang.kode}"
+
+class ItemPenerimaan(models.Model):
+    penerimaan = models.ForeignKey(PenerimaanBarang, on_delete=models.CASCADE, related_name='items')
+    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT)
+    kemasan = models.CharField(max_length=50)
+    unit_dikirim = models.IntegerField(default=0)
+    unit_diterima = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'retail_item_penerimaan'

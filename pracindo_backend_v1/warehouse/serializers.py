@@ -19,9 +19,14 @@ from rest_framework import serializers
 from akunting.models import PurchaseOrder, PurchaseOrderItem
 
 from .models import (
-    JenisKemasan, LaporanSelisih,PenerimaanBarang, PenerimaanItem,
+    JenisKemasan, LaporanSelisih, PenerimaanBarang, PenerimaanItem,
+    Distribusi, ItemDistribusi
 )
 
+
+# =========================================================
+# PENERIMAAN BARANG (INBOUND)
+# =========================================================
 
 class POItemGudangSerializer(serializers.ModelSerializer):
     produk_kode = serializers.CharField(source='produk.kode', read_only=True)
@@ -181,3 +186,70 @@ class SelesaikanSelisihSerializer(serializers.Serializer):
 class TutupSelisihSerializer(serializers.Serializer):
     alasan = serializers.CharField()
 
+
+# =========================================================
+# DISTRIBUSI BARANG KELUAR (OUTBOUND)
+# =========================================================
+
+class ItemDistribusiSerializer(serializers.ModelSerializer):
+    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
+    produk_kode = serializers.CharField(source='produk.kode', read_only=True)
+
+    class Meta:
+        model = ItemDistribusi
+        fields = ['id', 'produk', 'produk_kode', 'produk_nama', 'kemasan', 'stiker', 'qty']
+
+
+class DistribusiSerializer(serializers.ModelSerializer):
+    item = ItemDistribusiSerializer(many=True, read_only=True)
+    status_label = serializers.CharField(source='get_status_display', read_only=True)
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    tujuan_cabang_kode = serializers.CharField(source='tujuan_cabang.kode', read_only=True, default=None)
+    
+    # Menghindari error jika user ditarik tanpa nama
+    diterima_oleh_nama = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Distribusi
+        fields = [
+            'id', 'nomor', 'entitas', 'entitas_kode', 'jenis_tujuan',
+            'tujuan_cabang', 'tujuan_cabang_kode', 'pelanggan_nama', 'alamat',
+            'lat', 'lng', 'berat_total_kg', 'status', 'status_label',
+            'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh_nama', 'item'
+        ]
+        read_only_fields = ['nomor', 'status', 'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh']
+
+    def get_diterima_oleh_nama(self, obj):
+        u = obj.diterima_oleh
+        return (u.get_full_name() or u.get_username()) if u else None
+
+
+class BarisDistribusiSerializer(serializers.Serializer):
+    produk_id = serializers.IntegerField()
+    kemasan = serializers.CharField(max_length=50)
+    stiker = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    qty = serializers.IntegerField(min_value=1)
+
+
+class BuatDistribusiSerializer(serializers.Serializer):
+    """
+    Payload untuk membuat/merakit draft distribusi baru.
+    """
+    entitas_id = serializers.IntegerField()
+    jenis_tujuan = serializers.ChoiceField(choices=[('CABANG', 'Cabang Retail'), ('CUSTOMER', 'Pelanggan Langsung')])
+    tujuan_cabang_id = serializers.IntegerField(required=False, allow_null=True)
+    
+    pelanggan_nama = serializers.CharField(max_length=200)
+    alamat = serializers.CharField()
+    lat = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    lng = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
+    berat_total_kg = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    baris = BarisDistribusiSerializer(many=True, allow_empty=False)
+
+    def validate(self, data):
+        if data.get('jenis_tujuan') == 'CABANG' and not data.get('tujuan_cabang_id'):
+            raise serializers.ValidationError(
+                "Tujuan cabang wajib diisi jika jenis tujuan adalah CABANG."
+            )
+        return data

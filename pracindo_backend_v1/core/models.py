@@ -252,3 +252,14 @@ class PeriodeAkuntansi(TimeStampedModel):
     def __str__(self):
         status = 'tertutup' if self.ditutup else 'terbuka'
         return f"{self.entitas.kode} {self.bulan:02d}/{self.tahun} ({status})"
+
+
+class CabangToko(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='cabang')
+    kode = models.CharField(max_length=20, unique=True)
+    nama = models.CharField(max_length=100)
+    alamat = models.TextField(blank=True, null=True)
+    aktif = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.kode} - {self.nama}"

@@ -8,7 +8,7 @@ export const warehouseApi = {
 
   getGrupAktif: () => api.get('inventory/entitas/', { params: { aktif: true } }), 
   getKemasanAktif: () => api.get('inventory/pool/kemasan/'), 
-  getBarangJadi: () => api.get('inventory/barang-jadi/', { params: { lapis: 'JADI' } }), // <--- INI TAMBAHANNYA BOS!
+  getBarangJadi: () => api.get('inventory/barang-jadi/', { params: { lapis: 'JADI' } }),
 
   getTangkiProduksi: () => api.get('produksi/tangki/'), 
   getSaldoTangki: (id) => api.get(`produksi/tangki/${id}/saldo/`), 
@@ -26,6 +26,14 @@ export const warehouseApi = {
   buatMasterProduk: (payload) => api.post('master/master-produk/', payload),
   updateMasterProduk: (id, payload) => api.put(`master/master-produk/${id}/`, payload),
   patchMasterProduk: (id, payload) => api.patch(`master/master-produk/${id}/`, payload),
+
+
+  getDistribusi: (params) => api.get('warehouse/distribusi/', { params }),
+  getDetailDistribusi: (id) => api.get(`warehouse/distribusi/${id}/`),
+  buatDistribusi: (payload) => api.post('warehouse/distribusi/', payload),
+  hapusDistribusi: (id) => api.delete(`warehouse/distribusi/${id}/`),
+  
+  sahkanDistribusi: (id) => api.post(`warehouse/distribusi/${id}/sahkan/`),
 }
 
 export default warehouseApi

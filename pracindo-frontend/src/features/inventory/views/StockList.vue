@@ -38,7 +38,6 @@
                 <p class="text-xs text-slate-500 font-medium">Memuat data dari server...</p>
             </div>
 
-            <!-- TAB 1: ENTITAS -->
             <div v-else-if="lapis === 'ENTITAS'" class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left text-sm table-auto min-w-[800px]">
                     <thead class="text-slate-500 bg-slate-50/50">
@@ -80,7 +79,6 @@
                 <div v-if="daftarStok.length === 0" class="py-12 text-center text-slate-500 text-sm">Tidak ada mutasi entitas.</div>
             </div>
 
-            <!-- TAB 2: POOL RAW MATERIAL -->
             <div v-else-if="lapis === 'POOL'" class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left text-sm table-fixed min-w-[500px]">
                     <thead class="text-slate-500 bg-slate-50/50">
@@ -106,43 +104,59 @@
                 <div v-if="daftarStok.length === 0" class="py-12 text-center text-slate-500 text-sm">Pool sedang kosong.</div>
             </div>
 
-            <!-- TAB 3: STOK BARANG JADI (TABEL PIVOT CLASSIC) -->
-            <div v-else-if="lapis === 'JADI'" class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left text-sm border-collapse border border-slate-900 min-w-[800px]">
-                    <thead class="bg-white">
-                        <tr>
-                            <th class="py-2 px-3 border border-slate-900 font-medium text-slate-900 uppercase whitespace-nowrap">
-                                NAMA BARANG
-                            </th>
-                            <th v-for="kemasan in kemasanUnik" :key="kemasan" 
-                                class="py-2 px-3 border border-slate-900 font-medium whitespace-nowrap uppercase">
-                                <span class="text-blue-600 underline cursor-pointer">{{ kemasan }}</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white">
-                        <tr v-if="stokPivot.length === 0">
-                            <td :colspan="kemasanUnik.length + 1" class="py-8 text-center text-slate-500">
-                                Belum ada stok barang jadi tercatat.
-                            </td>
-                        </tr>
-                        <!-- Baris Data -->
-                        <tr v-for="baris in stokPivot" :key="baris.nama">
-                            <td class="py-2 px-3 border border-slate-900 text-slate-900 uppercase">
-                                {{ baris.nama }}
-                            </td>
-                            <td v-for="kemasan in kemasanUnik" :key="kemasan" 
-                                class="py-2 px-3 border border-slate-900 text-slate-900 whitespace-nowrap">
-                                {{ renderCell(kemasan, baris[kemasan]) }}
-                            </td>
-                        </tr>
-                        <!-- Tiga baris kosong estetika seperti di gambar -->
-                        <tr v-for="i in 3" :key="'blank-' + i">
-                            <td class="py-3 px-3 border border-slate-900"></td>
-                            <td v-for="k in kemasanUnik" :key="'b-' + k" class="py-3 px-3 border border-slate-900"></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div v-else-if="lapis === 'JADI'" class="flex flex-col gap-4">
+                <div class="flex justify-end">
+                    <div class="relative w-full md:w-64">
+                        <input 
+                            type="text" 
+                            v-model="pencarianBarang" 
+                            class="w-full text-sm border-slate-200 rounded-lg px-4 py-2 focus:ring-emerald-500 focus:border-emerald-500" 
+                            placeholder="Cari nama barang..." 
+                            list="saran-barang"
+                        >
+                        <datalist id="saran-barang">
+                            <option v-for="nama in saranNamaBarang" :key="nama" :value="nama"></option>
+                        </datalist>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-sm table-auto min-w-[800px]">
+                        <thead class="text-slate-500 bg-slate-50/50">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold rounded-tl-xl w-[25%] tracking-wider">
+                                    NAMA BARANG
+                                </th>
+                                <th v-for="(kemasan, index) in kemasanUnik" :key="kemasan" 
+                                    class="py-3 px-4 font-semibold text-center tracking-wider text-blue-600"
+                                    :class="{ 'rounded-tr-xl': index === kemasanUnik.length - 1 }">
+                                    {{ kemasan }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <tr v-if="dataYangDitampilkan.length === 0">
+                                <td :colspan="kemasanUnik.length + 1" class="py-8 text-center text-slate-500">
+                                    Tidak ada data yang sesuai.
+                                </td>
+                            </tr>
+                            
+                            <tr v-for="baris in dataYangDitampilkan" :key="baris.nama" class="hover:bg-slate-50/50 transition-colors">
+                                <td class="py-3.5 px-4 text-slate-800 uppercase font-bold">
+                                    {{ baris.nama }}
+                                </td>
+                                <td v-for="kemasan in kemasanUnik" :key="kemasan" 
+                                    class="py-3.5 px-4 text-slate-600 whitespace-nowrap text-center font-medium">
+                                    {{ renderCell(kemasan, baris[kemasan]) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="text-right text-xs text-slate-400 mt-2" v-if="stokPivot.length > 10 && !pencarianBarang">
+                        Menampilkan 10 dari total {{ stokPivot.length }} barang
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -158,15 +172,26 @@ import { angka } from '@/utils/format'
 const LAPIS = [
     { nilai: 'ENTITAS', label: 'Mutasi Entitas' },
     { nilai: 'POOL', label: 'Saldo Pool (Fisik)' },
-    { nilai: 'JADI', label: 'Stok Barang Jadi' } // TAB BARU
+    { nilai: 'JADI', label: 'Stok Barang Jadi' }
 ]
 
 const router = useRouter()
 const { daftarStok, sedangProses, galat, muatStok } = useStock()
 const lapis = ref('ENTITAS')
+const pencarianBarang = ref('')
+
+const STANDAR_KEMASAN = [
+    'PCS@1KG', 
+    'GALON@5KG', 
+    'DUS@12KG', 
+    'PAIL@20KG', 
+    'PAIL@25KG', 
+    'PAIL@30KG'
+]
 
 const pilihLapis = (l) => {
     lapis.value = l
+    pencarianBarang.value = ''
     muatStok({ lapis: l })
 }
 
@@ -177,57 +202,71 @@ const getStatusBadge = (status) => {
     return 'bg-slate-100 text-slate-600 border-slate-200';
 }
 
-// ==========================================
-// LOGIKA PIVOT TABEL STOK BARANG JADI
-// ==========================================
-
-// 1. Ekstrak nama kemasan unik untuk dijadikan Header Kolom
 const kemasanUnik = computed(() => {
     if (lapis.value !== 'JADI') return []
-    const unik = new Set()
+    
+    const unik = new Set(STANDAR_KEMASAN)
+
     daftarStok.value.forEach(item => {
-        if (item.kemasan_nama) unik.add(item.kemasan_nama)
+        if (item.kemasan_nama) {
+            unik.add(String(item.kemasan_nama).trim().toUpperCase())
+        }
     })
-    return Array.from(unik).sort() 
+
+    return Array.from(unik) 
 })
 
-// 2. Kelompokkan Data menjadi Baris (Barang) x Kolom (Kemasan)
 const stokPivot = computed(() => {
     if (lapis.value !== 'JADI') return []
+    
     const pivotMap = {}
+    const headers = kemasanUnik.value 
 
     daftarStok.value.forEach(item => {
         const namaBarang = item.item_nama || item.produk_nama || '-'
-        const namaKemasan = item.kemasan_nama || '-'
+        const namaKemasan = item.kemasan_nama ? String(item.kemasan_nama).trim().toUpperCase() : '-'
         
         if (!pivotMap[namaBarang]) {
             pivotMap[namaBarang] = { nama: namaBarang }
+            
+            headers.forEach(k => {
+                pivotMap[namaBarang][k] = { qty: 0 }
+            })
         }
         
-        // Simpan unit ke dalam object dengan key nama kemasan
-        pivotMap[namaBarang][namaKemasan] = {
-            qty: item.qty_unit || 0
+        if (pivotMap[namaBarang][namaKemasan] !== undefined) {
+            pivotMap[namaBarang][namaKemasan].qty += (item.qty_unit || 0)
+        } else {
+            pivotMap[namaBarang][namaKemasan] = { qty: (item.qty_unit || 0) }
         }
     })
 
-    // Kembalikan sebagai Array lalu urutkan sesuai abjad
     return Object.values(pivotMap).sort((a, b) => a.nama.localeCompare(b.nama))
 })
 
-// 3. Format Cell (Auto-detect satuan dari teks kemasan)
+const saranNamaBarang = computed(() => {
+    return stokPivot.value.map(row => row.nama)
+})
+
+const dataYangDitampilkan = computed(() => {
+    let hasil = stokPivot.value
+    if (pencarianBarang.value) {
+        const keyword = pencarianBarang.value.toLowerCase()
+        hasil = hasil.filter(row => row.nama.toLowerCase().includes(keyword))
+    }
+    return hasil.slice(0, 10)
+})
+
 const renderCell = (namaKemasan, cellData) => {
-    if (!cellData || !cellData.qty) return '' // Kosong jika tidak ada stok
-    
-    // Auto tebak satuan berdasarkan judul kolom
-    let satuan = ''
+    const qty = (cellData && cellData.qty) ? cellData.qty : 0
+    let satuan = 'unit'
     const str = String(namaKemasan).toUpperCase()
     
-    if (str.includes('PCS')) satuan = 'PCS'
-    else if (str.includes('GALON') || str.includes('GL')) satuan = 'GL'
-    else if (str.includes('DUS') || str.includes('DS')) satuan = 'DS'
-    else if (str.includes('PAIL') || str.includes('PL')) satuan = 'PL'
+    if (str.includes('DUS') || str.includes('DS')) {
+        satuan = 'dus'
+    }
     
-    return `${cellData.qty} ${satuan}`.trim()
+    return `${qty} ${satuan}`
 }
 
 onMounted(() => {
@@ -267,5 +306,9 @@ onMounted(() => {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+input[type="text"]::-webkit-search-cancel-button {
+    display: none; 
 }
 </style>

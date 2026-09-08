@@ -13,6 +13,10 @@ from core.models import CounterDokumen, DiauditModel, TimeStampedModel
 D0 = Decimal("0")
 
 
+# =========================================================
+# KEMASAN & PENERIMAAN BARANG (INBOUND)
+# =========================================================
+
 class JenisKemasan(models.TextChoices):
     KARUNG  = 'KARUNG',  'Karung'
     DRUM    = 'DRUM',    'Drum'
@@ -181,6 +185,10 @@ class PenerimaanItem(models.Model):
                 )
 
 
+# =========================================================
+# LAPORAN SELISIH
+# =========================================================
+
 class JenisSelisih(models.TextChoices):
     KURANG_KIRIM  = 'KURANG_KIRIM',  'Kurang kirim'
     LEBIH_KIRIM   = 'LEBIH_KIRIM',   'Lebih kirim'
@@ -292,24 +300,71 @@ class LaporanSelisih(DiauditModel):
         raise ValidationError('Laporan selisih tidak jangan dihapus. Tutup saja.')
 
 
-class DeliveryOrder(models.Model):
-    nomor_do = models.CharField(max_length=64, unique=True)
-    status = models.CharField(max_length=20, default='DRAFT')
-    tanggal = models.DateField(auto_now_add=True)
-    pengemudi = models.CharField(max_length=100, blank=True)
-    plat_nomor = models.CharField(max_length=20, blank=True)
+# =========================================================
+# DISTRIBUSI (OUTBOUND) - MENGGANTIKAN DELIVERY ORDER LAMA
+# =========================================================
+
+class StatusDistribusi(models.TextChoices):
+    DRAFT = 'DRAFT', 'Draft / Belum Dipotong Stok'
+    SIAP_KIRIM = 'SIAP_KIRIM', 'Siap Kirim (Diserahkan ke Logistik)'
+    DIKIRIM = 'DIKIRIM', 'Sedang Dibawa Kurir'
+    TERKIRIM = 'TERKIRIM', 'Selesai / Terkirim'
+    BATAL = 'BATAL', 'Dibatalkan'
+
+class Distribusi(models.Model):
+    """
+    Dokumen Surat Jalan Gudang untuk Pengeluaran Barang.
+    Memenuhi kontrak logistik (integrasi_warehouse.py).
+    """
+    nomor = models.CharField(max_length=50, unique=True)
+    entitas = models.ForeignKey('core.Entitas', on_delete=models.PROTECT, related_name='distribusi')
+    
+    jenis_tujuan = models.CharField(
+        max_length=20, 
+        choices=[('CABANG', 'Cabang Retail'), ('CUSTOMER', 'Pelanggan Langsung')]
+    )
+    tujuan_cabang = models.ForeignKey('core.CabangToko', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    pelanggan_nama = models.CharField(max_length=200)
+    alamat = models.TextField()
+    lat = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    lng = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    berat_total_kg = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'))
+    
+    status = models.CharField(
+        max_length=20, 
+        choices=StatusDistribusi.choices, 
+        default=StatusDistribusi.DRAFT,
+        db_index=True
+    )
+    
+    tanggal_dibuat = models.DateTimeField(auto_now_add=True)
+    waktu_terkirim = models.DateTimeField(null=True, blank=True)
+    diterima_oleh = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        db_table = 'tx_delivery_order'
+        db_table = 'warehouse_distribusi'
+        ordering = ['-tanggal_dibuat']
 
     def __str__(self):
-        return self.nomor_do
+        return f"{self.nomor} - {self.pelanggan_nama}"
+
+    def save(self, *args, **kwargs):
+        if not self.nomor:
+            self.nomor = CounterDokumen.berikutnya(self.entitas, 'DO', timezone.localdate())
+        super().save(*args, **kwargs)
 
 
-class DeliveryOrderItem(models.Model):
-    delivery_order = models.ForeignKey(DeliveryOrder, on_delete=models.CASCADE, related_name='item')
-    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT, null=True)
-    qty = models.DecimalField(max_digits=14, decimal_places=3, default=Decimal('0'))
+class ItemDistribusi(models.Model):
+    distribusi = models.ForeignKey(Distribusi, on_delete=models.CASCADE, related_name='item')
+    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT)
+    kemasan = models.CharField(max_length=50) 
+    
+    stiker = models.CharField(max_length=100, blank=True, help_text="Barang berstiker tidak bisa diklaim lagi.")
+    qty = models.IntegerField(default=1)
 
     class Meta:
-        db_table = 'tx_delivery_order_item'
+        db_table = 'warehouse_item_distribusi'
+
+    def __str__(self):
+        return f"{self.produk.nama} - {self.qty} {self.kemasan}"
