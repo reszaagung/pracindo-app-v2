@@ -16,7 +16,6 @@ export const BATCH_TABLE_COLUMNS = [
   { key: 'aksi', label: '', align: 'center' }
 ]
 
-// ---- Opsi filter (dropdown) ----
 export const JENIS_BATCH_OPTIONS = [
   { value: '', label: 'Semua Jenis' },
   { value: 'MIXING', label: 'Mixing' },
@@ -28,7 +27,6 @@ export const STATUS_BATCH_OPTIONS = [
   { value: 'POSTED', label: 'Posted' },
 ]
 
-// ---- Label tampilan ----
 export const JENIS_BATCH_LABELS = {
   MIXING: 'Mixing',
   BLENDING: 'Blending'
@@ -38,7 +36,6 @@ export const STATUS_BATCH_LABELS = {
   POSTED: 'Posted',
 }
 
-// ---- Warna badge status ----
 export function getStatusBadgeClass(status) {
   switch (status) {
     case 'POSTED':
@@ -51,7 +48,6 @@ export function getStatusBadgeClass(status) {
   }
 }
 
-// ---- Formatter bersama ----
 export function formatKg(v) {
   return Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
 }

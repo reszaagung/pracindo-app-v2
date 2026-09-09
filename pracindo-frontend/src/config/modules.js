@@ -1,5 +1,6 @@
 import { produksiModul } from '@/features/produksi/uiConfigProduksi'
 import { retailModul } from '@/features/retail/uiConfigRetail'
+import { helperModul } from '@/features/helper/uiConfigHelper'
 
 export const MODUL = [
   {
@@ -44,7 +45,7 @@ export const MODUL = [
     ikon: 'kirim',
     rute: '/distribusi',
     siap: true,
-  menu: [
+    menu: [
       { label: 'Input Packing', rute: '/distribusi/packing' },
       { label: 'Riwayat Packing', rute: '/distribusi/packing/log' },
       { label: 'Jadwal Pengiriman', rute: '/distribusi' },
@@ -64,22 +65,28 @@ export const MODUL = [
       { label: 'Suplier', rute: '/master/suplier' },
     ],
   },
-
   produksiModul,
   retailModul,
-
+  helperModul,
   {
     id: 'logistik',
-    nama: 'Logistik (Kurir)',
+    nama: 'Logistik',
+    ringkas: 'Manajemen logistik dan pengiriman',
+    ikon: 'gudang',
+    rute: '/logistik',
+    siap: true,
+    catatan: '',
+    menu: [],
+  },
+  {
+    id: 'kurir',
+    nama: 'App Driver',
     ringkas: 'Aplikasi lapangan kurir dan status pengiriman',
     ikon: 'kirim',
     rute: '/kurir',
     siap: true,
     catatan: '',
-    menu: [
-      { label: 'Dashboard', rute: '/kurir' },
-      { label: 'Tugas Saya', rute: '/kurir/tugas-saya' },
-    ],
+    menu: [],
   },
   {
     id: 'sales_order',

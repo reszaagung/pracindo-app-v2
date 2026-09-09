@@ -1,104 +1,102 @@
 <template>
-    <div class="flex flex-col w-full animate-fade-in relative">
-        <div class="mb-6 flex items-center gap-4">
-            <button @click="$router.push('/distribusi')" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors shadow-sm">
-                <i class="pi pi-arrow-left text-slate-600 text-sm"></i>
-            </button>
+    <div class="flex flex-col w-full animate-fade-in bg-slate-50 min-h-screen p-6">
+        <div class="flex justify-between items-center mb-6 border-b-2 border-slate-200 pb-4">
             <div>
-                <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">Rakit Pengiriman Baru</h1>
-                <p class="text-xs md:text-sm text-slate-500 mt-1">Pilih barang dari gudang dan tugaskan armada.</p>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Form Delivery</h1>
+                <p class="text-sm text-slate-500 mt-1"></p>
             </div>
+            <button @click="$router.push('/distribusi')" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm transition-colors">
+                KEMBALI
+            </button>
         </div>
 
-        <div v-if="galat" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium flex items-start gap-3 shadow-sm">
-            <i class="pi pi-exclamation-triangle mt-0.5"></i>
-            <span>{{ galat }}</span>
-        </div>
-
-        <form @submit.prevent="simpanPengiriman" class="flex flex-col gap-6 pb-20">
-            <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm w-full">
-                <h2 class="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100">Informasi Armada & Kurir</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tanggal Pengiriman</label>
+        <form @submit.prevent="simpanDelivery" class="flex flex-col gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white border-2 border-slate-800 p-4 shadow-sm flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 uppercase text-center mb-2">Tanggal</label>
                         <input type="date" v-model="form.tanggal" required
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium" />
+                            class="w-full text-center text-lg font-bold focus:outline-none text-slate-800" />
                     </div>
 
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pilih Armada (Truk)</label>
-                        <select v-model="form.kendaraan_id" required
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium">
-                            <option value="" disabled>-- Pilih Armada Tersedia --</option>
+                    <div class="bg-white border-2 border-slate-800 p-4 shadow-sm flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 uppercase text-center mb-2">
+                            Entitas
+                        </label>
+                        <select v-model="form.entitas_id" required @change="muatAntrean"
+                            class="w-full text-center text-lg font-bold focus:outline-none text-slate-800 bg-transparent">
+                            <option value="" disabled></option>
+                            <option v-for="toko in daftarToko" :key="toko.id" :value="toko.id">
+                                {{ toko.nama }} ({{ toko.kode }})
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white border-2 border-slate-800 p-4 shadow-sm flex flex-col justify-center">
+                            <label class="text-xs font-bold text-slate-500 uppercase text-center mb-2">No Surat Jalan</label>
+                            <input type="text" v-model="form.nomor_surat_jalan"
+                                class="w-full text-center text-sm font-bold focus:outline-none text-slate-800" />
+                        </div>
+                        <div class="bg-white border-2 border-slate-800 p-4 shadow-sm flex flex-col justify-center">
+                            <label class="text-xs font-bold text-slate-500 uppercase text-center mb-2">Nama Pengirim</label>
+                            <select v-model="form.kurir_id" required
+                                class="w-full text-center text-sm font-bold focus:outline-none text-slate-800 bg-transparent">
+                                <option value="" disabled></option>
+                                <option v-for="kurir in daftarKurir" :key="kurir.id" :value="kurir.id">
+                                    {{ kurir.nama }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white border-2 border-slate-800 p-4 shadow-sm flex flex-col">
+                        <label class="text-xs font-bold text-slate-500 uppercase text-center mb-2">No Kendaraan</label>
+                        <select v-model="form.kendaraan_id"
+                            class="w-full text-center text-lg font-bold focus:outline-none text-slate-800 bg-transparent">
+                            <option value=""></option>
                             <option v-for="armada in daftarArmada" :key="armada.id" :value="armada.id">
                                 {{ armada.plat_nomor }} - {{ armada.nama }}
                             </option>
                         </select>
                     </div>
-
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pilih Kurir Bertugas</label>
-                        <select v-model="form.kurir_id" required
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium">
-                            <option value="" disabled>-- Pilih Kurir --</option>
-                            <option v-for="kurir in daftarKurir" :key="kurir.id" :value="kurir.id">
-                                {{ kurir.nama || kurir.username }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Catatan Tambahan</label>
-                        <input type="text" v-model="form.catatan" placeholder="Instruksi khusus untuk kurir..."
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 font-medium" />
-                    </div>
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm w-full">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                    <h2 class="text-sm font-bold text-slate-800">Muatan Barang (Pilih dari Warehouse)</h2>
-                    <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">
-                        {{ form.distribusi_ids.length }} Dipilih
-                    </span>
-                </div>
-
-                <div v-if="sedangMemuatBarang" class="py-8 flex justify-center">
-                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
-                </div>
-                <div v-else-if="barangTersedia.length > 0" class="flex flex-col gap-3">
-                    <label v-for="barang in barangTersedia" :key="barang.id"
-                        class="flex items-start gap-4 p-4 border rounded-xl cursor-pointer transition-colors"
-                        :class="form.distribusi_ids.includes(barang.id) ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'">
-                        <input type="checkbox" :value="barang.id" v-model="form.distribusi_ids" class="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
-                        <div class="flex-1">
-                            <div class="flex justify-between">
-                                <span class="font-bold text-slate-800">{{ barang.pelanggan_nama }}</span>
-                                <span class="text-xs font-black text-slate-500">{{ barang.nomor }}</span>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-1"><i class="pi pi-map-marker text-[10px]"></i> {{ barang.alamat }}</p>
-                        </div>
-                    </label>
-                </div>
-                <div v-else class="py-8 text-center">
-                    <i class="pi pi-check-circle text-3xl text-emerald-500 mb-2"></i>
-                    <p class="text-sm font-bold text-slate-800">Gudang Kosong</p>
-                    <p class="text-xs text-slate-500 mt-1">Tidak ada barang yang menunggu pengiriman saat ini.</p>
-                </div>
+            <div class="bg-white border-2 border-slate-800 shadow-sm p-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-2 border-slate-800 bg-slate-50">
+                            <th class="p-3 border-r-2 border-slate-800 text-center text-sm font-bold uppercase w-16">Pilih</th>
+                            <th class="p-3 border-r-2 border-slate-800 text-center text-sm font-bold uppercase">No Distribusi</th>
+                            <th class="p-3 text-center text-sm font-bold uppercase">Tujuan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="antrean in daftarAntrean" :key="antrean.id" class="border-b border-slate-200 hover:bg-slate-50">
+                            <td class="p-3 border-r-2 border-slate-800 text-center font-bold">
+                                <input type="checkbox" :value="antrean.id" v-model="form.distribusi_ids" class="w-5 h-5 accent-slate-800" />
+                            </td>
+                            <td class="p-3 border-r-2 border-slate-800 font-bold text-center">
+                                {{ antrean.nomor }}
+                            </td>
+                            <td class="p-3 text-center">
+                                {{ antrean.tujuan }}
+                            </td>
+                        </tr>
+                        <tr v-if="!daftarAntrean.length">
+                            <td colspan="3" class="p-6 text-center text-slate-500 font-bold"></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 px-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40 lg:left-[88px]">
-                <div class="max-w-7xl mx-auto flex justify-end gap-4">
-                    <button type="button" @click="$router.push('/distribusi')" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
-                        Batal
-                    </button>
-                    <button type="submit" :disabled="sedangProses || form.distribusi_ids.length === 0"
-                        class="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-2">
-                        <i v-if="sedangProses" class="pi pi-spin pi-spinner text-xs"></i>
-                        <i v-else class="pi pi-save text-xs"></i>
-                        <span>Simpan & Rakit Jadwal</span>
-                    </button>
-                </div>
+            <div class="flex justify-end mt-4">
+                <button type="submit" :disabled="sedangProses || form.distribusi_ids.length === 0" class="px-10 py-3 bg-slate-800 text-white font-bold hover:bg-slate-700 disabled:bg-slate-400 transition-colors w-full md:w-auto">
+                    SIMPAN
+                </button>
             </div>
         </form>
     </div>
@@ -107,64 +105,53 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiDistribusi } from '../api'
-import api from '@/utils/api'
-
+import { apiDistribusi } from '@/features/distribusi/api'
+import { useMasterLogistik } from '../composables/useMasterLogistik'
 const router = useRouter()
-const daftarArmada = ref([])
-const daftarKurir = ref([])
-const barangTersedia = ref([])
-const sedangMemuatBarang = ref(false)
+const { daftarArmada, daftarKurir, daftarToko, muatDataMaster } = useMasterLogistik()
+
 const sedangProses = ref(false)
-const galat = ref('')
+const daftarAntrean = ref([])
 
 const form = reactive({
+    tanggal: new Date().toISOString().split('T')[0],
+    entitas_id: '',
+    nomor_surat_jalan: '', 
     kurir_id: '',
     kendaraan_id: '',
-    tanggal: new Date().toISOString().split('T')[0],
-    catatan: '',
     distribusi_ids: []
 })
 
-const muatDataMaster = async () => {
+const muatAntrean = async () => {
+    if (!form.entitas_id) return
     try {
-        const [resArmada, resKurir] = await Promise.all([
-            apiDistribusi.getArmada(),
-            apiDistribusi.getKurir().catch(() => [])
-        ])
-
-        daftarArmada.value = resArmada.results || resArmada || []
-
-        const kurirs = resKurir.results || resKurir || []
-        daftarKurir.value = kurirs.length > 0 ? kurirs : [{ id: 1, nama: 'Kurir Sistem (Fallback)' }]
+        const res = await apiDistribusi.getDistribusiTersedia(form.entitas_id)
+        daftarAntrean.value = res.results || res || []
+        form.distribusi_ids = []
     } catch (err) {
         console.error(err)
-        galat.value = 'Gagal memuat data master kendaraan dan kurir.'
     }
 }
 
-const muatBarangGudang = async () => {
-    sedangMemuatBarang.value = true
-    try {
-        const resBarang = await apiDistribusi.getDistribusiTersedia()
-        barangTersedia.value = resBarang || []
-    } catch (err) {
-        console.error(err)
-        galat.value = 'Gagal memuat barang dari gudang.'
-    } finally {
-        sedangMemuatBarang.value = false
-    }
-}
-
-const simpanPengiriman = async () => {
+const simpanDelivery = async () => {
     sedangProses.value = true
-    galat.value = ''
     try {
-        await apiDistribusi.rakitPengiriman(form)
+        const payload = {
+            is_direct_push: false,
+            tanggal: form.tanggal,
+            entitas_id: form.entitas_id,
+            nomor_surat_jalan: form.nomor_surat_jalan,
+            kurir_id: form.kurir_id,
+            kendaraan_id: form.kendaraan_id || null,
+            perhentian: form.distribusi_ids.map((id, index) => ({
+                distribusi_id: id,
+                urutan: index + 1
+            }))
+        }
+        await apiDistribusi.rakitPengiriman(payload)
         router.push('/distribusi')
     } catch (err) {
         console.error(err)
-        galat.value = err.response?.data?.detail || 'Gagal menyimpan pengiriman.'
     } finally {
         sedangProses.value = false
     }
@@ -172,14 +159,5 @@ const simpanPengiriman = async () => {
 
 onMounted(() => {
     muatDataMaster()
-    muatBarangGudang()
 })
 </script>
-
-<style scoped>
-.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-</style>

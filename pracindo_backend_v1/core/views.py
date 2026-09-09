@@ -52,7 +52,7 @@ class PeriodeAkuntansiViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PeriodeAkuntansiSerializer
     filterset_fields = ['entitas', 'tahun', 'bulan', 'ditutup']
 
-    def get_permissions(self):.
+    def get_permissions(self):
         if self.action in ('tutup', 'buka'):
             return [HanyaSupervisor()]
         return [SudahLogin()]

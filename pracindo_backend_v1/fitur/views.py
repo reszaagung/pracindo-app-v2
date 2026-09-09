@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from .models import GenerateStikerBesar, ItemCetak
 from .serializers import GenerateStikerBesarInputSerializer, GenerateStikerBesarSerializer
 from .services import petakan_template
-from .chunking import algoritma_chunking  # fungsi yang sudah Anda buat sebelumnya
+from .chunking import algoritma_chunking  
 from .tasks import task_generate_stiker
 
 class GenerateStikerBesarViewSet(viewsets.ViewSet):

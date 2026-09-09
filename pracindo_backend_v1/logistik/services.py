@@ -55,7 +55,7 @@ def distribusi_tersedia(entitas_id=None):
 
 
 @transaction.atomic
-def rakit_pengiriman(*, entitas_id, kurir_id, distribusi_ids, tanggal=None,
+def rakit_pengiriman(*, entitas_id, distribusi_ids, kurir_id=None, tanggal=None,
                      kendaraan_id=None, catatan='', user=None):
     """
     Membuat pengiriman DISIAPKAN beserta perhentiannya.
@@ -106,6 +106,20 @@ def rakit_pengiriman(*, entitas_id, kurir_id, distribusi_ids, tanggal=None,
         )
 
     hitung_rute(kirim.id)
+    return kirim
+
+@transaction.atomic
+def klaim_pengiriman(*, pengiriman_id, kurir):
+    """Kurir mengambil pengiriman dari Open Pool."""
+    kirim = Pengiriman.objects.select_for_update().get(pk=pengiriman_id)
+    
+    if kirim.kurir_id is not None:
+        raise ValidationError('Pengiriman ini sudah diambil oleh kurir lain.')
+    if kirim.status != StatusPengiriman.DISIAPKAN:
+        raise ValidationError('Hanya pengiriman berstatus DISIAPKAN yang bisa diklaim.')
+
+    kirim.kurir = kurir
+    kirim.save(update_fields=['kurir'])
     return kirim
 
 
@@ -164,16 +178,23 @@ def hitung_rute(pengiriman_id, *, pakai_usulan=False):
     return kirim
 
 
-# =========================================================
-# ALUR PERJALANAN
-# =========================================================
+
 
 @transaction.atomic
 def berangkatkan(*, pengiriman_id, oleh):
     kirim = Pengiriman.objects.select_for_update().get(pk=pengiriman_id)
+    
+    if not kirim.kurir_id:
+        raise ValidationError('Pengiriman belum diklaim kurir. Tidak bisa berangkat.')
+        
+    if oleh is not None and not getattr(oleh, 'is_superuser', False) and not getattr(oleh, 'supervisor', False):
+        if kirim.kurir_id != oleh.id:
+            raise ValidationError('Hanya kurir yang mengambil tiket ini yang bisa memberangkatkannya.')
+
     if kirim.status != StatusPengiriman.DISIAPKAN:
         raise ValidationError(
             f'Pengiriman sudah {kirim.get_status_display()}.')
+            
     if not kirim.perhentian.exists():
         raise ValidationError('Pengiriman tanpa perhentian tidak bisa berangkat.')
 

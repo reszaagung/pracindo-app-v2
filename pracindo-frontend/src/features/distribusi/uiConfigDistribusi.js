@@ -9,6 +9,6 @@ export const distribusiModul = {
     { label: 'Jadwal Pengiriman', rute: '/distribusi' },
     { label: 'Rakit Pengiriman', rute: '/distribusi/buat' },
     { label: 'Loading Muatan', rute: '/distribusi/loading' },
-    { label: 'Status Armada', rute: '/distribusi/armada' },
+    { label: 'Status Armada', rute: '/distribusi/armada' }
   ]
 }

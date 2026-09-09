@@ -44,10 +44,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useNavHelperLayout } from '../composables/useNavHelperLayout'
+import { useNavHelper } from '../composables/useNavHelper'
 
 const router = useRouter()
-const { menu, aktif } = useNavHelperLayout()
+const { menuHelper: menu, aktif } = useNavHelper()
 const sidebarAktif = ref(false)
 
 const kembali = () => {

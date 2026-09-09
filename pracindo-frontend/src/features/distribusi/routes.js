@@ -14,7 +14,7 @@ export default [
             {
                 path: 'buat',
                 name: 'distribusi-buat',
-                component: () => import('./views/DeliveryCreate.vue')
+                component: () => import('./views/PengirimanCreate.vue')
             },
             {
                 path: 'loading',

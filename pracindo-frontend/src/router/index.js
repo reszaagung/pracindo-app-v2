@@ -6,6 +6,8 @@ import ruteDistribusi from '@/features/distribusi/routes.js'
 import ruteLogistik from '@/features/logistik/routes.js'
 import { retailRoutes } from '@/features/retail/routes.js'
 import ruteAccounting from '@/features/accounting/routes.js' 
+import ruteHelper from '@/features/helper/routes.js'
+import { kurirRoutes } from '@/features/kurir/routes.js' 
 
 const routes = [
   {
@@ -67,6 +69,8 @@ const routes = [
   ...ruteDistribusi,
   ...ruteLogistik,
   ...retailRoutes,
+  ...ruteHelper, 
+  ...kurirRoutes, 
   {
     path: '/work-order',
     name: 'work-order',

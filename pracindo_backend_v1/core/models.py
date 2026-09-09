@@ -12,7 +12,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-
+from django.contrib.auth.models import User
 
 
 class TimeStampedModel(models.Model):
@@ -253,9 +253,15 @@ class PeriodeAkuntansi(TimeStampedModel):
         status = 'tertutup' if self.ditutup else 'terbuka'
         return f"{self.entitas.kode} {self.bulan:02d}/{self.tahun} ({status})"
 
-
 class CabangToko(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='cabang')
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='cabang'
+    )
+
     kode = models.CharField(max_length=20, unique=True)
     nama = models.CharField(max_length=100)
     alamat = models.TextField(blank=True, null=True)

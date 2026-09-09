@@ -60,6 +60,10 @@ AKSES_MODUL = {
     'dashboard':   [Role.ADMIN, Role.AKUNTING, Role.KEUANGAN, Role.GUDANG,
                     Role.PRODUKSI, Role.SALES, Role.STAFF, Role.KURIR, Role.SUPERVISOR], 
     'akunting':    [Role.AKUNTING, Role.SUPERVISOR],
+
+    'helper':      [Role.ADMIN, Role.AKUNTING, Role.KEUANGAN, Role.GUDANG,
+                    Role.PRODUKSI, Role.SALES, Role.STAFF, Role.KURIR, Role.SUPERVISOR],
+
     'keuangan':    [Role.KEUANGAN, Role.SUPERVISOR],
     'pajak':       [Role.AKUNTING, Role.SUPERVISOR],
     'warehouse':   [Role.GUDANG, Role.SUPERVISOR],
@@ -70,6 +74,8 @@ AKSES_MODUL = {
     
     'sales_order': [Role.SALES, Role.SUPERVISOR],
     'logistik':    [Role.GUDANG, Role.SALES, Role.KURIR, Role.SUPERVISOR], 
+    'kurir':       [Role.KURIR, Role.SUPERVISOR], 
+
     'work_order':  [Role.ADMIN, Role.AKUNTING, Role.KEUANGAN, Role.GUDANG,
                     Role.PRODUKSI, Role.SALES, Role.STAFF, Role.SUPERVISOR],
     'master':      [Role.ADMIN, Role.SUPERVISOR],
@@ -77,6 +83,7 @@ AKSES_MODUL = {
                     Role.PRODUKSI, Role.SALES, Role.SUPERVISOR],
     'staff_user':  [Role.ADMIN, Role.SUPERVISOR],
 }
+
 META_MODUL = {
     'dashboard':   {'label': 'Dashboard',      'ikon': 'pi-home',          'rute': '/'},
     'akunting':    {'label': 'Akunting',       'ikon': 'pi-book',          'rute': '/akunting'},
@@ -88,8 +95,13 @@ META_MODUL = {
     'produksi':    {'label': 'Produksi',       'ikon': 'pi-cog',           'rute': '/produksi'},
     'retail':      {'label': 'Retail & POS',   'ikon': 'pi-shop',          'rute': '/retail/pos'},
     
+    'helper':      {'label': 'Helper System',  'ikon': 'pi-print',         'rute': '/helper/stiker'},
+
     'sales_order': {'label': 'Sales Order',    'ikon': 'pi-shopping-cart', 'rute': '/sales-order'},
-    'logistik':    {'label': 'Logistik',       'ikon': 'pi-map',           'rute': '/kurir'}, 
+    
+    'logistik':    {'label': 'Logistik',       'ikon': 'pi-map',           'rute': '/logistik'}, 
+    'kurir':       {'label': 'App Driver',     'ikon': 'pi-motorcycle',    'rute': '/kurir'},    
+    
     'work_order':  {'label': 'Papan Tugas',    'ikon': 'pi-list-check',    'rute': '/work-order'},
     'master':      {'label': 'Master Data',    'ikon': 'pi-server',        'rute': '/master'},
     'dokumen':     {'label': 'Dokumen',        'ikon': 'pi-file',          'rute': '/dokumen'},

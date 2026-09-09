@@ -1,9 +1,11 @@
-export const menuHelper = [
-    {
-        id: 'generate-stiker',
-        label: 'Cetak Stiker',
-        ikon: 'pi-print',
-        rute: '/helper/stiker',
-        activate: true
-    }
-]
+export const helperModul = {
+    id: 'helper',
+    nama: 'Helper',
+    ringkas: 'Otomatisasi cetak stiker Word dan antrean logistik',
+    ikon: 'dokumen',
+    rute: '/helper/stiker',
+    siap: true,
+    menu: [
+        { label: 'Cetak Stiker', rute: '/helper/stiker' }
+    ]
+}

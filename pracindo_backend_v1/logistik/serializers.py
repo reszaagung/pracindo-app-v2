@@ -125,7 +125,7 @@ class PengirimanDetailSerializer(PengirimanSerializer):
 
 class RakitPengirimanSerializer(serializers.Serializer):
     entitas_id = serializers.IntegerField()
-    kurir_id = serializers.IntegerField()
+    kurir_id = serializers.IntegerField(required=False, allow_null=True) 
     distribusi_ids = serializers.ListField(
         child=serializers.IntegerField(), allow_empty=False)
     tanggal = serializers.DateField(required=False, allow_null=True)

@@ -1,14 +1,3 @@
-"""
-API logistik — logistik/views.py
-
-Views tipis: menerjemahkan HTTP ke pemanggilan service dan sebaliknya.
-Seluruh logika bisnis di services.py.
-
-PENYARINGAN KURIR ADA DI get_queryset(), BUKAN DI has_object_permission.
-Izin objek di DRF tidak berlaku untuk endpoint list -- kalau hanya
-mengandalkannya, GET daftar pengiriman akan mengembalikan perjalanan seluruh
-kurir beserta alamat semua pelanggan.
-"""
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status as http, viewsets
 from rest_framework.decorators import action
@@ -16,16 +5,14 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Q
 
 from staff_user.permissions import AksesModul, HanyaSupervisor
-
 from . import serializers as s
 from . import services
 from .integrasi_warehouse import SambunganBelumSiap
 from .models import Kendaraan, Pengiriman, Retur, StatusPengiriman
-from .permissions import (
-    HanyaKurirPengiriman, KurirTidakMengubahRute, batasi_ke_kurir,
-)
+from .permissions import HanyaKurirPengiriman, KurirTidakMengubahRute, batasi_ke_kurir
 
 
 def _galat(e):
@@ -34,8 +21,6 @@ def _galat(e):
 
 
 def _belum_siap(e):
-    # 503, bukan 400: ini bukan kesalahan pengguna, ini modul hulu yang
-    # belum terpasang. Membalasnya 400 membuat orang mengira datanya salah.
     return Response({'detail': str(e)}, status=http.HTTP_503_SERVICE_UNAVAILABLE)
 
 
@@ -52,13 +37,14 @@ class PengirimanViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = batasi_ke_kurir(qs, self.request.user, 'kurir_id')
+        if self.action not in ('klaim', 'kolam_tugas'):
+            qs = batasi_ke_kurir(qs, self.request.user, 'kurir_id')
         if self.action in ('retrieve', 'tugas_saya'):
             qs = qs.prefetch_related('perhentian__bukti', 'perhentian__retur')
         return qs
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action in ('list', 'kolam_tugas'):
             return s.PengirimanSerializer
         return s.PengirimanDetailSerializer
 
@@ -67,22 +53,11 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             'perhentian__bukti', 'perhentian__retur').get(pk=pk)
         return Response(s.PengirimanDetailSerializer(obj).data, status=kode)
 
-    # ---------- metode yang ditutup ----------
-
     def update(self, request, *args, **kwargs):
-        raise MethodNotAllowed(
-            'PUT/PATCH',
-            detail='Pengiriman tidak diubah lewat PUT atau PATCH. Gunakan '
-                   'aksi urutkan, berangkatkan, atau batalkan.',
-        )
+        raise MethodNotAllowed('PUT/PATCH')
 
     def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(
-            'DELETE',
-            detail='Pengiriman tidak dihapus. Gunakan aksi batalkan.',
-        )
-
-    # ---------- perakitan ----------
+        raise MethodNotAllowed('DELETE')
 
     def create(self, request, *args, **kwargs):
         ser = s.RakitPengirimanSerializer(data=request.data)
@@ -97,23 +72,18 @@ class PengirimanViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def urutkan(self, request, pk=None):
-        """Urutan dari orang menimpa usulan sistem. Itu memang niatnya."""
         ser = s.UrutRuteSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         kirim = self.get_object()
-
         diminta = ser.validated_data['urutan']
         milik = list(kirim.perhentian.values_list('id', flat=True))
         if sorted(diminta) != sorted(milik):
             return Response(
-                {'detail': 'Daftar urutan harus memuat tepat semua perhentian '
-                           'pengiriman ini, tanpa kurang dan tanpa lebih.'},
+                {'detail': 'Daftar urutan harus memuat tepat semua perhentian pengiriman ini, tanpa kurang dan tanpa lebih.'},
                 status=http.HTTP_400_BAD_REQUEST,
             )
-
         for posisi, hid in enumerate(diminta, start=1):
             kirim.perhentian.filter(pk=hid).update(urutan=posisi)
-
         try:
             services.hitung_rute(kirim.id)
         except DjangoValidationError as e:
@@ -132,7 +102,24 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             return _galat(e)
         return self._balas(kirim.id)
 
-    # ---------- alur perjalanan ----------
+    @action(detail=False, methods=['get'], url_path='kolam-tugas')
+    def kolam_tugas(self, request):
+        qs = super().get_queryset().filter(
+            kurir__isnull=True,
+            status=StatusPengiriman.DISIAPKAN
+        ).order_by('tanggal', 'id')
+        return Response(s.PengirimanSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=['post'])
+    def klaim(self, request, pk=None):
+        try:
+            pengiriman = services.klaim_pengiriman(
+                pengiriman_id=pk,
+                kurir=request.user
+            )
+        except DjangoValidationError as e:
+            return _galat(e)
+        return self._balas(pengiriman.id)
 
     @action(detail=True, methods=['post'])
     def berangkatkan(self, request, pk=None):
@@ -157,14 +144,11 @@ class PengirimanViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='tugas-saya')
     def tugas_saya(self, request):
-        """Layar utama kurir: perjalanan yang belum tuntas, array polos."""
         qs = self.get_queryset().filter(
             kurir=request.user,
             status__in=[StatusPengiriman.DISIAPKAN, StatusPengiriman.BERANGKAT],
         ).order_by('tanggal', 'id')
         return Response(s.PengirimanDetailSerializer(qs, many=True).data)
-
-    # ---------- pelacakan ----------
 
     @action(detail=True, methods=['post'])
     def posisi(self, request, pk=None):
@@ -184,8 +168,6 @@ class PengirimanViewSet(viewsets.ModelViewSet):
         return Response(
             s.JejakPosisiSerializer(kirim.jejak.all(), many=True).data)
 
-    # ---------- aksi per perhentian ----------
-
     @action(detail=True, methods=['post'],
             url_path=r'perhentian/(?P<hid>\d+)/sampai')
     def sampai(self, request, pk=None, hid=None):
@@ -199,11 +181,6 @@ class PengirimanViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'],
             url_path=r'perhentian/(?P<hid>\d+)/bukti')
     def bukti(self, request, pk=None, hid=None):
-        """
-        Unggah foto bukti terima. Bisa datang dari antrean offline berjam-jam
-        setelah kejadian, jadi header Idempotency-Key dipakai supaya
-        pengiriman ulang tidak menghasilkan dua foto untuk satu peristiwa.
-        """
         kirim = self.get_object()
         ser = s.BuktiTerimaUploadSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
@@ -256,10 +233,6 @@ class ReturViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['post'],
             permission_classes=[HanyaSupervisor])
     def setujui(self, request, pk=None):
-        """
-        Persetujuan Supervisor memicu warehouse mengembalikan stok.
-        Logistik tidak pernah menulis stok sendiri.
-        """
         retur = self.get_object()
         try:
             services.setujui_retur(retur_id=retur.id, oleh=request.user)
@@ -278,10 +251,6 @@ class KendaraanViewSet(viewsets.ModelViewSet):
 
 
 class DistribusiTersediaView(APIView):
-    """
-    Distribusi yang siap dirakit jadi pengiriman. Sumbernya warehouse.
-    Array polos.
-    """
     permission_classes = [AksesModul]
     modul = 'logistik'
 

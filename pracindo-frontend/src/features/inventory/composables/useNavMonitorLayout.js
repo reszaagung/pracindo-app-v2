@@ -3,7 +3,6 @@ import { useRoute } from 'vue-router'
 export function useNavMonitorLayout() {
     const route = useRoute()
 
-    // Daftar menu untuk Sidebar Monitor Inventory
     const menu = [
         {
             id: 'stok',
@@ -30,8 +29,6 @@ export function useNavMonitorLayout() {
 
     const aktif = (ruteTujuan) => {
         if (!route) return false
-
-        // Logika khusus agar menu utama 'Stok' tetap menyala saat masuk ke detail stok atau mutasi
         if (ruteTujuan === '/inventory') {
             return route.path === '/inventory' || route.path.startsWith('/inventory/stok')
         }

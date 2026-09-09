@@ -27,13 +27,13 @@ class ItemCetakSerializer(serializers.ModelSerializer):
 
 
 class GenerateStikerBesarInputSerializer(serializers.Serializer):
-    jenis = serializers.ChoiceField(choices=["polos", "cv"])
+    jenis = serializers.ChoiceField(choices=["polos", "polos_besar", "cv", "pt"])
     items = ItemCetakInputSerializer(many=True)
 
     def validate_items(self, value):
         if not value:
             raise serializers.ValidationError("Minimal harus ada 1 item.")
-        if len(value) > 4:  # asumsi template 4 slot, sesuaikan kalau beda
+        if len(value) > 4:  
             raise serializers.ValidationError("Maksimal 4 item per lembar.")
         return value
 

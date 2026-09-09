@@ -109,10 +109,10 @@ class Pengiriman(DiauditModel):
     tanggal = models.DateField(default=timezone.localdate, db_index=True)
 
     kurir = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
-        related_name='pengiriman_dibawa')
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.PROTECT, related_name='pengiriman_dibawa')
     kendaraan = models.ForeignKey(
-        Kendaraan, null=True, blank=True,
+        'logistik.Kendaraan', null=True, blank=True,
         on_delete=models.PROTECT, related_name='pengiriman')
 
     status = models.CharField(
