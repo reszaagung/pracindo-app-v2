@@ -1,25 +1,10 @@
 <template>
     <div class="flex gap-6 h-full p-6 bg-slate-50/50">
-        
-        <!-- ========================================== -->
-        <!-- SISI KIRI: PEMILIHAN JENIS & DAFTAR FILE   -->
-        <!-- ========================================== -->
         <div class="w-1/4 flex flex-col gap-5">
-            <!-- 1. Dropdown Jenis -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-3">
                 <label class="text-xs font-extrabold text-slate-500 uppercase tracking-widest">Pilih Jenis</label>
-                <Dropdown 
-                    v-model="form.jenis" 
-                    :options="opsiJenis" 
-                    optionLabel="label" 
-                    optionValue="value" 
-                    placeholder="Pilih Jenis..." 
-                    class="w-full"
-                    @change="resetPilihan"
-                />
+                <Dropdown :options="opsiJenis" @change="resetPilihan" class="w-full" optionLabel="label" optionValue="value" placeholder="Pilih Jenis..." v-model="form.jenis"/>
             </div>
-
-            <!-- 2. Daftar File -->
             <div v-if="form.jenis" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-y-auto custom-scrollbar">
                 <label class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 block">Opsi Template</label>
                 <div class="flex flex-col gap-3">
@@ -27,27 +12,22 @@
                         v-for="file in daftarFileAktif" 
                         :key="file.id"
                         @click="pilihFile(file)"
-                        class="p-4 text-left rounded-xl border-2 transition-all w-full flex flex-col gap-1 group"
+                        class="w-full p-4 text-left rounded-xl border-2 transition-all flex flex-col gap-1 group"
                         :class="fileTerpilih?.id === file.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 bg-white hover:border-slate-300'"
                     >
-                        <span class="font-bold text-sm transition-colors" :class="fileTerpilih?.id === file.id ? 'text-slate-900' : 'text-slate-600 group-hover:text-slate-900'">
-                            {{ file.nama_file }}
-                        </span>
-                        <span class="text-xs font-semibold" :class="fileTerpilih?.id === file.id ? 'text-slate-600' : 'text-slate-400'">
+                        <div class="font-bold text-base transition-colors" :class="fileTerpilih?.id === file.id ? 'text-slate-900' : 'text-slate-700 group-hover:text-slate-900'">
                             Pola: {{ file.pola }}
-                        </span>
+                        </div>
+                        <div class="text-xs truncate transition-colors" :class="fileTerpilih?.id === file.id ? 'text-slate-500' : 'text-slate-400'">
+                            {{ file.nama_file }}
+                        </div>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- SISI KANAN: AREA INPUT (ACTIVITY)          -->
-        <!-- ========================================== -->
         <div class="w-3/4 flex flex-col">
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full">
-                
-                <!-- State Kosong -->
                 <div v-if="!fileTerpilih" class="flex-1 flex flex-col items-center justify-center text-slate-400">
                     <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                         <i class="pi pi-file-edit text-3xl text-slate-400"></i>
@@ -55,84 +35,88 @@
                     <h3 class="font-bold text-slate-600 mb-1">Belum Ada Template Terpilih</h3>
                     <p class="text-sm">Silakan pilih jenis dan template di panel sebelah kiri.</p>
                 </div>
-
-                <!-- State Aktif (Formulir Dinamis) -->
-                <div v-else class="flex flex-col h-full">
-                    
-                    <!-- Header -->
-                    <div class="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start">
-                        <div>
-                            <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1">Input Data Stiker</h2>
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="font-semibold text-slate-600">{{ fileTerpilih.nama_file }}</span>
-                                <span class="text-slate-300">•</span>
-                                <span class="text-slate-500">Pola <span class="font-bold text-slate-700">{{ fileTerpilih.pola }}</span></span>
+                <div v-else class="flex gap-6 h-full">
+                    <div class="flex-1 flex flex-col h-full">
+                        <div class="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start">
+                            <div>
+                                <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1">Input Data Stiker</h2>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="font-semibold text-slate-600">{{ fileTerpilih.nama_file }}</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-slate-500">Pola <span class="font-bold text-slate-700">{{ fileTerpilih.pola }}</span></span>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-sm">
+                                <i class="pi pi-info-circle"></i>
+                                Butuh {{ form.items.length }} Input
                             </div>
                         </div>
-                        <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-sm">
-                            <i class="pi pi-info-circle"></i>
-                            Butuh {{ form.items.length }} Input
+                        <div class="flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col gap-6">
+                            <div 
+                                v-for="(item, index) in form.items" 
+                                :key="index"
+                                class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col gap-5 hover:border-slate-300 transition-colors"
+                            >
+                                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                                    <div class="w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-black text-sm shadow-sm">
+                                        {{ index + 1 }}
+                                    </div>
+                                    <h3 class="font-bold text-slate-700 tracking-wide text-sm uppercase">Grup Input {{ index + 1 }}</h3>
+                                </div>
+                                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
+                                    <div class="flex flex-col gap-2">
+                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Nama Barang</label>
+                                        <InputText class="p-3 border-slate-300 rounded-xl" placeholder="Misal: SUPER WHITE" v-model="item.nama_item"/>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tipe Barang</label>
+                                        <InputText class="p-3 border-slate-300 rounded-xl" placeholder="Misal: SC SC" v-model="item.tipe"/>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tanggal Lot</label>
+                                        <Calendar :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" class="w-full" dateFormat="yy-mm-dd" placeholder="Pilih Tanggal" v-model="item.lot"/>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Net (KGS)</label>
+                                        <InputNumber :maxFractionDigits="2" :minFractionDigits="2" :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" class="w-full" mode="decimal" placeholder="0.00" v-model="item.net"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-6 mt-4 border-t border-slate-200 flex justify-end">
+                            <button 
+                                @click="submitStiker" 
+                                :disabled="isSubmitting"
+                                class="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-xl flex items-center gap-3 transition-colors shadow-md"
+                            >
+                                <i :class="isSubmitting ? 'pi pi-spin pi-spinner' : 'pi pi-print'"></i>
+                                {{ isSubmitting ? 'Memproses...' : 'Generate Stiker Sekarang' }}
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Area Input -->
-                    <div class="flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col gap-6">
-                        <div 
-                            v-for="(item, index) in form.items" 
-                            :key="index"
-                            class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col gap-5 hover:border-slate-300 transition-colors"
-                        >
-                            <!-- Header Label per Blok -->
-                            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                                <div class="w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-black text-sm shadow-sm">
-                                    {{ index + 1 }}
-                                </div>
-                                <h3 class="font-bold text-slate-700 tracking-wide text-sm uppercase">Grup Input {{ index + 1 }}</h3>
-                            </div>
-                            
-                            <!-- Form Grid -->
-                            <div class="grid grid-cols-2 gap-x-6 gap-y-5">
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Nama Barang</label>
-                                    <InputText v-model="item.nama_item" placeholder="Misal: SUPER WHITE" class="p-3 border-slate-300 rounded-xl" />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tipe Barang</label>
-                                    <InputText v-model="item.tipe" placeholder="Misal: SC SC" class="p-3 border-slate-300 rounded-xl" />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tanggal Lot</label>
-                                    <Calendar v-model="item.lot" dateFormat="yy-mm-dd" placeholder="Pilih Tanggal" class="w-full" :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Net (KGS)</label>
-                                    <InputNumber v-model="item.net" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" placeholder="0.00" class="w-full" :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" />
-                                </div>
-                            </div>
+                    <div class="w-80 bg-slate-50/80 p-5 rounded-2xl border border-slate-200 flex flex-col">
+                        <div class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4">Petunjuk Visual</div>
+                        <div class="flex-1 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-white p-4">
+                            <component :is="PreviewComponent" v-if="fileTerpilih" :form="form" class="w-full" />
+                            <div v-else class="text-slate-400 text-xs text-center">Pilih template untuk melihat preview.</div>
                         </div>
-                    </div>
-
-                    <!-- Footer / Submit -->
-                    <div class="pt-6 mt-4 border-t border-slate-200 flex justify-end">
-                        <button @click="submitStiker" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-8 rounded-xl flex items-center gap-3 transition-colors shadow-md">
-                            <i class="pi pi-print"></i>
-                            Generate Stiker Sekarang
-                        </button>
                     </div>
                 </div>
-
             </div>
         </div>
-
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, shallowRef, defineAsyncComponent } from 'vue'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Calendar from 'primevue/calendar'
+import { useToast } from 'primevue/usetoast'
+import api from '../api'
+
+const toast = useToast()
 
 const opsiJenis = [
     { label: 'Polos Besar', value: 'polos_besar' },
@@ -157,19 +141,32 @@ const masterTemplates = {
 }
 
 const fileTerpilih = ref(null)
+const isSubmitting = ref(false)
+const PreviewComponent = shallowRef(null)
+
 const form = reactive({
     jenis: null,
     items: [] 
 })
 
+const getPolaFromFilename = (filename) => {
+    const cleanName = filename.replace('.docx', '')
+    const parts = cleanName.split('_')
+    return parts[parts.length - 1].toUpperCase()
+}
+
 const daftarFileAktif = computed(() => {
     if (!form.jenis) return []
-    return masterTemplates[form.jenis] || []
+    return (masterTemplates[form.jenis] || []).map(file => ({
+        ...file,
+        pola: file.pola || getPolaFromFilename(file.nama_file)
+    }))
 })
 
 const resetPilihan = () => {
     fileTerpilih.value = null
     form.items = []
+    PreviewComponent.value = null
 }
 
 const pilihFile = (file) => {
@@ -180,17 +177,78 @@ const pilihFile = (file) => {
         lot: null,
         net: null
     }))
+
+    const folderJenis = form.jenis
+    const namaKomponen = `${folderJenis}_${file.pola}`
+
+    PreviewComponent.value = defineAsyncComponent(() =>
+        import(`../components/stiker_${folderJenis}/${namaKomponen}.vue`)
+            .catch(() => ({ template: '<div class="text-slate-400 text-xs text-center p-4">File komponen preview (<b>' + namaKomponen + '.vue</b>) belum dibuat di folder komponen.</div>' }))
+    )
 }
 
-const submitStiker = () => {
+const formatTanggalLokal = (date) => {
+    if (!date) return null
+    const tahun = date.getFullYear()
+    const bulan = String(date.getMonth() + 1).padStart(2, '0')
+    const hari = String(date.getDate()).padStart(2, '0')
+    return `${tahun}-${bulan}-${hari}`
+}
+
+const validasiForm = () => {
+    for (const [idx, item] of form.items.entries()) {
+        const netKosong = item.net === null || item.net === undefined
+        if (!item.nama_item?.trim() || !item.tipe?.trim() || !item.lot || netKosong) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Data belum lengkap',
+                detail: `Grup Input ${idx + 1} masih ada field yang kosong`,
+                life: 3000
+            })
+            return false
+        }
+    }
+    return true
+}
+
+const submitStiker = async () => {
+    if (!fileTerpilih.value || isSubmitting.value) return
+    if (!validasiForm()) return
+
     const payload = {
         jenis: form.jenis,
+        template_id: fileTerpilih.value.id,
         items: form.items.map(item => ({
-            ...item,
-            lot: item.lot ? item.lot.toISOString().split('T')[0] : null 
+            nama_item: item.nama_item,
+            tipe: item.tipe,
+            lot: formatTanggalLokal(item.lot),
+            net: item.net
         }))
     }
-    console.log("Payload siap dikirim ke backend:", payload)
+
+    isSubmitting.value = true
+    try {
+        const response = await api.post('fitur/generate-stiker/', payload, {
+            responseType: 'blob'
+        })
+        
+        const dataBlob = response.data
+
+        const url = window.URL.createObjectURL(new Blob([dataBlob], { type: 'application/pdf' }))
+        window.open(url, '_blank')
+
+        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Stiker berhasil dibuat', life: 3000 })
+    } catch (err) {
+        console.error('Gagal generate stiker:', err)
+        toast.add({
+            severity: 'error',
+            summary: 'Gagal membuat stiker',
+            detail: err?.response?.data?.detail || 'Terjadi kesalahan pada server',
+            life: 4000
+        })
+    } finally {
+        isSubmitting.value = false
+    }
 }
 </script>
 

@@ -5,7 +5,6 @@ export const apiDistribusi = {
         const response = await api.get('logistik/kendaraan/') 
         return response.data
     },
-
     getKurir: async () => {
         try {
             const response = await api.get('logistik/kurir/') 
@@ -14,14 +13,12 @@ export const apiDistribusi = {
             return []
         }
     },
-
     getDistribusiTersedia: async (entitasId = '') => {
         const response = await api.get('logistik/distribusi-tersedia/', { 
             params: { entitas: entitasId } 
         })
         return response.data
     },
-
     getSemuaPengiriman: async (params = {}) => {
         const response = await api.get('logistik/pengiriman/', { params })
         return response.data
@@ -29,6 +26,11 @@ export const apiDistribusi = {
 
     rakitPengiriman: async (payload) => {
         const response = await api.post('logistik/pengiriman/', payload)
+        return response.data
+    },
+
+    createDistribusi: async (payload) => {
+        const response = await api.post('warehouse/distribusi/', payload)
         return response.data
     },
 
@@ -40,12 +42,10 @@ export const apiDistribusi = {
             return { rincian: [], results: [] }
         }
     },
-
     getKolamTugas: async () => {
         const response = await api.get('logistik/pengiriman/kolam-tugas/')
         return response.data
     },
-
     klaimTugas: async (pengirimanId) => {
         const response = await api.post(`logistik/pengiriman/${pengirimanId}/klaim/`)
         return response.data

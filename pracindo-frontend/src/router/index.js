@@ -3,7 +3,6 @@ import { useGuards } from './guards'
 import ruteProduksi from '@/features/produksi/routes.js'
 import ruteWarehouse from '@/features/warehouse/routes.js'
 import ruteDistribusi from '@/features/distribusi/routes.js'
-import ruteLogistik from '@/features/logistik/routes.js'
 import { retailRoutes } from '@/features/retail/routes.js'
 import ruteAccounting from '@/features/accounting/routes.js' 
 import ruteHelper from '@/features/helper/routes.js'
@@ -67,7 +66,6 @@ const routes = [
   ...ruteProduksi,
   ...ruteWarehouse,
   ...ruteDistribusi,
-  ...ruteLogistik,
   ...retailRoutes,
   ...ruteHelper, 
   ...kurirRoutes, 

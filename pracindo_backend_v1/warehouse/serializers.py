@@ -187,9 +187,6 @@ class TutupSelisihSerializer(serializers.Serializer):
     alasan = serializers.CharField()
 
 
-# =========================================================
-# DISTRIBUSI BARANG KELUAR (OUTBOUND)
-# =========================================================
 
 class ItemDistribusiSerializer(serializers.ModelSerializer):
     produk_nama = serializers.CharField(source='produk.nama', read_only=True)
@@ -206,7 +203,6 @@ class DistribusiSerializer(serializers.ModelSerializer):
     entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
     tujuan_cabang_kode = serializers.CharField(source='tujuan_cabang.kode', read_only=True, default=None)
     
-    # Menghindari error jika user ditarik tanpa nama
     diterima_oleh_nama = serializers.SerializerMethodField()
 
     class Meta:
@@ -225,7 +221,8 @@ class DistribusiSerializer(serializers.ModelSerializer):
 
 
 class BarisDistribusiSerializer(serializers.Serializer):
-    produk_id = serializers.IntegerField()
+    produk_id = serializers.CharField(max_length=50) 
+    
     kemasan = serializers.CharField(max_length=50)
     stiker = serializers.CharField(max_length=100, required=False, allow_blank=True)
     qty = serializers.IntegerField(min_value=1)

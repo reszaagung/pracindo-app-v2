@@ -300,9 +300,6 @@ class LaporanSelisih(DiauditModel):
         raise ValidationError('Laporan selisih tidak jangan dihapus. Tutup saja.')
 
 
-# =========================================================
-# DISTRIBUSI (OUTBOUND) - MENGGANTIKAN DELIVERY ORDER LAMA
-# =========================================================
 
 class StatusDistribusi(models.TextChoices):
     DRAFT = 'DRAFT', 'Draft / Belum Dipotong Stok'
@@ -357,9 +354,9 @@ class Distribusi(models.Model):
 
 class ItemDistribusi(models.Model):
     distribusi = models.ForeignKey(Distribusi, on_delete=models.CASCADE, related_name='item')
-    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT)
-    kemasan = models.CharField(max_length=50) 
+    produk = models.ForeignKey('master.MasterProduk', on_delete=models.PROTECT)
     
+    kemasan = models.CharField(max_length=50) 
     stiker = models.CharField(max_length=100, blank=True, help_text="Barang berstiker tidak bisa diklaim lagi.")
     qty = models.IntegerField(default=1)
 
@@ -367,4 +364,4 @@ class ItemDistribusi(models.Model):
         db_table = 'warehouse_item_distribusi'
 
     def __str__(self):
-        return f"{self.produk.nama} - {self.qty} {self.kemasan}"
+        return f"{self.produk.nama_item} - {self.qty} {self.kemasan}"

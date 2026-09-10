@@ -33,10 +33,6 @@ from django.utils import timezone
 from core.models import CounterDokumen, DiauditModel, TimeStampedModel
 
 
-# =========================================================
-# ACUAN
-# =========================================================
-
 class Kendaraan(TimeStampedModel):
     kode = models.CharField(max_length=16, unique=True)
     nama = models.CharField(max_length=120)
@@ -82,9 +78,6 @@ class TarifOngkos(TimeStampedModel):
         return cls.objects.filter(berlaku_sejak__lte=tanggal).first()
 
 
-# =========================================================
-# PENGIRIMAN
-# =========================================================
 
 class StatusPengiriman(models.TextChoices):
     DISIAPKAN = 'DISIAPKAN', 'Disiapkan'
@@ -124,9 +117,6 @@ class Pengiriman(DiauditModel):
 
     jarak_total_km = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0'))
-    # Disimpan, bukan dihitung ulang saat dibaca. Tarif bisa berubah, dan
-    # perkiraan yang berubah sendiri setelah perjalanan selesai tidak bisa
-    # dibandingkan dengan biaya sebenarnya.
     ongkos_perkiraan = models.DecimalField(
         max_digits=14, decimal_places=2, default=Decimal('0'))
 
@@ -192,10 +182,7 @@ class Perhentian(models.Model):
     pengiriman = models.ForeignKey(
         Pengiriman, on_delete=models.CASCADE, related_name='perhentian')
 
-    # Rujukan lintas app: INTEGER, bukan FK. Lihat catatan kepala berkas.
     distribusi_id = models.PositiveIntegerField(db_index=True)
-    # Salinan untuk tampilan, diambil sekali saat perakitan. Disalin supaya
-    # riwayat perjalanan tetap terbaca walau data hulu berubah kemudian.
     nomor_distribusi = models.CharField(max_length=32, blank=True)
     pelanggan_nama = models.CharField(max_length=200, blank=True)
 
@@ -231,9 +218,6 @@ class Perhentian(models.Model):
         return self.status in (StatusPerhentian.DITERIMA, StatusPerhentian.DIRETUR)
 
 
-# =========================================================
-# PELACAKAN
-# =========================================================
 
 class JejakPosisi(models.Model):
     """
@@ -250,8 +234,7 @@ class JejakPosisi(models.Model):
     lat = models.DecimalField(max_digits=10, decimal_places=7)
     lng = models.DecimalField(max_digits=10, decimal_places=7)
     akurasi_m = models.PositiveSmallIntegerField(null=True, blank=True)
-    # Waktu server. Jam perangkat kurir tidak dipercaya untuk jejak yang
-    # nantinya dipakai menelusuri sengketa.
+
     waktu = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -265,9 +248,6 @@ class JejakPosisi(models.Model):
         return f"{self.pengiriman_id} @ {self.waktu:%H:%M}"
 
 
-# =========================================================
-# BUKTI TERIMA & RETUR
-# =========================================================
 
 class BuktiTerima(models.Model):
     """
@@ -290,8 +270,6 @@ class BuktiTerima(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
         related_name='bukti_terima_diunggah')
 
-    # Dibuat klien. Antrean offline yang dikirim ulang harus memakai kunci
-    # yang sama supaya tidak jadi dua foto untuk satu peristiwa.
     idem_key = models.CharField(max_length=128, blank=True, db_index=True)
 
     class Meta:

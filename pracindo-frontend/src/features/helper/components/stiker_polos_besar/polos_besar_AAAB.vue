@@ -17,7 +17,6 @@
 <script setup>
 import { ref } from 'vue'
 
-// Array data terbaru: A, A, A, B
 const items = ref(['A', 'A', 'A', 'B'])
 </script>
 

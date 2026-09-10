@@ -1,4 +1,7 @@
+import os
 import logging
+from django.conf import settings
+from django.core.files import File
 from django.db import transaction
 from .models import StikerBesar, GenerateStikerBesar
 
@@ -10,8 +13,26 @@ def petakan_template(generate_obj: GenerateStikerBesar, jenis: str, pola: str):
     try:
         template = StikerBesar.objects.get(nama_file=nama_file_target, aktif=True)
     except StikerBesar.DoesNotExist:
-        logger.error("Template '%s' belum ada di Master Data.", nama_file_target)
-        return None
+        physical_path = os.path.join(settings.BASE_DIR, 'fitur', 'templates', jenis, nama_file_target)
+        
+        if os.path.exists(physical_path):
+            try:
+                with open(physical_path, 'rb') as f:
+                    django_file = File(f, name=nama_file_target)
+                    template, _ = StikerBesar.objects.update_or_create(
+                        nama_file=nama_file_target,
+                        defaults={
+                            'file_template': django_file,
+                            'aktif': True
+                        }
+                    )
+                logger.info("Template '%s' otomatis didaftarkan ke database dari direktori fisik.", nama_file_target)
+            except Exception as e:
+                logger.error("Gagal mendaftarkan file fisik '%s': %s", nama_file_target, e)
+                return None
+        else:
+            logger.error("Template '%s' tidak ditemukan di Master Data maupun folder fisik: %s", nama_file_target, physical_path)
+            return None
 
     with transaction.atomic():
         generate_obj.pola_terdeteksi = pola
