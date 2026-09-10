@@ -8,13 +8,13 @@ export default [
         children: [
             {
                 path: '',
-                name: 'distribusi-jadwal',
-                component: () => import('./views/DeliverySchedule.vue')
+                name: 'delivery-request',
+                component: () => import('./views/DeliveryOrderRequest.vue')
             },
             {
-                path: 'buat',
-                name: 'distribusi-buat',
-                component: () => import('./views/PengirimanCreate.vue')
+                path: 'monitoring',
+                name: 'distribusi-monitoring',
+                component: () => import('./views/OrderMonitoring.vue')
             },
             {
                 path: 'loading',

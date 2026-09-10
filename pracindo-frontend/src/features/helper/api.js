@@ -2,7 +2,7 @@ import axios from 'axios'
 import { showGlobalLoginModal } from '@/utils/authModalState'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1/',
   headers: { Accept: 'application/json' },
 })
 

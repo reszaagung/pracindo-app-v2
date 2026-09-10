@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from core.services import pastikan_periode_terbuka
 
-# Hapus DeliveryOrder, masukkan Distribusi
 from .models import (
     JenisKemasan, JenisSelisih, LaporanSelisih, PenerimaanBarang,
     PenerimaanItem, Resolusi, StatusSelisih, 
@@ -23,9 +22,6 @@ def ambang_toleransi():
     return {"toleransi_berat_persen": str(TOLERANSI_BERAT * 100)}
 
 
-# =========================================================
-# PENERIMAAN BARANG (INBOUND)
-# =========================================================
 
 @transaction.atomic
 def terima_barang(*, po_id, baris, no_surat_jalan, tanggal, user,
@@ -372,10 +368,6 @@ def ringkasan_penerimaan(penerimaan_id):
 # =========================================================
 
 def distribusi_siap_kirim(entitas_id=None):
-    """
-    Distribusi yang stoknya sudah dikurangi tapi belum masuk pengiriman.
-    Ini adalah pemenuhan kontrak untuk fungsi logistik/services.py.
-    """
     qs = Distribusi.objects.filter(status=StatusDistribusi.SIAP_KIRIM).order_by('tanggal_dibuat')
     if entitas_id:
         qs = qs.filter(entitas_id=entitas_id)
@@ -393,11 +385,7 @@ def distribusi_siap_kirim(entitas_id=None):
         })
     return hasil
 
-
 def rincian_distribusi(distribusi_id):
-    """
-    Rincian 1 distribusi yang dibawa kurir, termasuk detail baris (stiker, qty, kemasan).
-    """
     try:
         d = Distribusi.objects.prefetch_related('item__produk').get(id=distribusi_id)
     except Distribusi.DoesNotExist:
@@ -424,12 +412,8 @@ def rincian_distribusi(distribusi_id):
         })
     return hasil
 
-
 @transaction.atomic
 def tandai_terkirim(distribusi_id, waktu, oleh):
-    """
-    Dipanggil dari logistik setelah kurir unggah BuktiTerima.
-    """
     d = Distribusi.objects.select_for_update().get(id=distribusi_id)
     if d.status != StatusDistribusi.TERKIRIM:
         d.status = StatusDistribusi.TERKIRIM
@@ -437,47 +421,56 @@ def tandai_terkirim(distribusi_id, waktu, oleh):
         d.diterima_oleh = oleh
         d.save(update_fields=['status', 'waktu_terkirim', 'diterima_oleh'])
 
-
 @transaction.atomic
 def kembalikan_stok(distribusi_id, alasan, oleh):
-    """
-    Dipanggil saat ada retur ditolak pelanggan.
-    Warehouse memanggil inventory.services untuk mengembalikan fisik stok.
-    """
     d = Distribusi.objects.select_for_update().get(id=distribusi_id)
-    
-    # [WAJIB DIBUAT]: Di sini Warehouse harus memanggil `inventory.services`
-    # Contoh pemanggilannya: 
-    # from inventory.services import kembalikan_stok_retur
-    # kembalikan_stok_retur(distribusi_id=d.id, alasan=alasan, oleh=oleh)
-    
-    # Untuk sementara, warehouse menandai dokumen ini batal karena dikembalikan
     d.status = StatusDistribusi.BATAL
     d.save(update_fields=['status'])
 
-
 @transaction.atomic
-def sahkan_distribusi(distribusi_id, user):
-    """
-    Mengubah Distribusi DRAFT menjadi SIAP_KIRIM.
-    SAAT INILAH STOK WAREHOUSE BENAR-BENAR DIPOTONG.
-    """
-    d = Distribusi.objects.select_for_update().get(id=distribusi_id)
-    if d.status != StatusDistribusi.DRAFT:
-        raise ValidationError("Hanya distribusi berstatus DRAFT yang bisa disahkan.")
+def sahkan_distribusi(distribusi_id, user=None):
+    from django.core.exceptions import ValidationError
+    from inventory.models import StokBarangJadi
+    from decimal import Decimal
+    from .models import StatusDistribusi
+
+    d = Distribusi.objects.prefetch_related('item').select_for_update().get(id=distribusi_id)
     
-    # [WAJIB DIBUAT]: Panggil inventory untuk memotong stok.
-    # from inventory.services import potong_stok_distribusi
-    # potong_stok_distribusi(distribusi_id=d.id, user=user)
+    if d.status not in [StatusDistribusi.DRAFT, 'DRAFT']:
+        return d
+    
+    for baris in d.item.all():
+        try:
+            stok = StokBarangJadi.objects.select_for_update().get(
+                item_id=baris.produk_id,
+                kemasan__nama=baris.kemasan
+            )
+            
+            if stok.qty_unit < baris.qty:
+                raise ValidationError(
+                    f"Gagal! Stok {baris.kemasan} tidak mencukupi. "
+                    f"Tersedia {stok.qty_unit}, Diminta {baris.qty}."
+                )
+            
+            if stok.qty_unit == baris.qty:
+                potong_kg = stok.qty_kg
+            else:
+                berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
+                potong_kg = berat_per_unit * Decimal(str(baris.qty))
+            
+            stok.qty_unit -= baris.qty
+            stok.qty_kg -= potong_kg
+            stok.save(update_fields=['qty_unit', 'qty_kg'])
+            
+        except StokBarangJadi.DoesNotExist:
+            raise ValidationError(f"Baris ditolak: Stok fisik untuk '{baris.produk_id}' ({baris.kemasan}) tidak ditemukan di gudang.")
+        except StokBarangJadi.MultipleObjectsReturned:
+            raise ValidationError(f"Baris ditolak: Ditemukan stok ganda untuk '{baris.produk_id}' ({baris.kemasan}).")
 
-    d.status = StatusDistribusi.SIAP_KIRIM
+    d.status = StatusDistribusi.SIAP_KIRIM 
     d.save(update_fields=['status'])
+    
     return d
-
-
-# =========================================================
-# MUTASI STOK (Fungsi Lama Anda, Dipertahankan)
-# =========================================================
 
 def catat_mutasi_stok_pabrik(*, produk, isi_per_kemasan, tipe, arah, qty_kemasan,
                              ref_type, ref_id, dibuat_oleh,
@@ -485,20 +478,39 @@ def catat_mutasi_stok_pabrik(*, produk, isi_per_kemasan, tipe, arah, qty_kemasan
     total_isi = (Decimal(qty_kemasan) * isi_per_kemasan).quantize(Decimal('0.001'))
 
     with transaction.atomic():
-        # Memastikan agar IDE / Django tidak error jika models belum diimport di atas
-        # Anda dapat menyesuaikan lokasi import MutasiStokItemsPabrik ini sesuai aplikasi Anda
-        # from inventory.models import MutasiStokItemsPabrik, StokItemsPabrik
-        
-        # MutasiStokItemsPabrik.objects.create(
-        #     produk=produk, grup_bahan=grup_bahan, isi_per_kemasan=isi_per_kemasan,
-        #     tipe=tipe, arah=arah, qty_kemasan=qty_kemasan, total_isi=total_isi,
-        #     ref_type=ref_type, ref_id=ref_id,
-        #     waktu=waktu or timezone.now(), keterangan=keterangan, dibuat_oleh=dibuat_oleh,
-        # )
-        # saldo, _ = StokItemsPabrik.objects.select_for_update().get_or_create(
-        #     produk=produk, isi_per_kemasan=isi_per_kemasan,
-        # )
-        # saldo.qty_kemasan = models.F('qty_kemasan') + (arah * qty_kemasan)
-        # saldo.total_isi = models.F('total_isi') + (arah * total_isi)
-        # saldo.save(update_fields=['qty_kemasan', 'total_isi'])
         pass
+
+@transaction.atomic
+def kembalikan_potongan_stok(distribusi_id):
+    d = Distribusi.objects.prefetch_related('item').select_for_update().get(id=distribusi_id)
+    
+    if d.status != StatusDistribusi.SIAP_KIRIM:
+        return d
+        
+    from inventory.models import StokBarangJadi
+    from decimal import Decimal
+    
+    for baris in d.item.all():
+        try:
+            stok_id = int(baris.produk_id)
+            stok = StokBarangJadi.objects.select_for_update().get(id=stok_id)
+            
+            sisa_qty = stok.qty_unit
+            stok.qty_unit += baris.qty
+            
+            if sisa_qty > 0:
+                berat_per_unit = stok.qty_kg / Decimal(str(sisa_qty))
+                kembali_kg = berat_per_unit * Decimal(str(baris.qty))
+            else:
+                kembali_kg = Decimal('0')
+                
+            stok.qty_kg += kembali_kg
+            stok.save(update_fields=['qty_unit', 'qty_kg'])
+            
+        except (StokBarangJadi.DoesNotExist, ValueError):
+            pass
+            
+    d.status = StatusDistribusi.DRAFT
+    d.save(update_fields=['status'])
+    
+    return d

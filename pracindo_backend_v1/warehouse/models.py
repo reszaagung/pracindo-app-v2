@@ -7,6 +7,7 @@ from django.db.models import CheckConstraint, Q, UniqueConstraint
 from django.utils import timezone
 from django.conf import settings
 
+
 from core.constants import NILAI_DIGITS, NILAI_PLACES, QTY_DIGITS, QTY_PLACES
 from core.models import CounterDokumen, DiauditModel, TimeStampedModel
 

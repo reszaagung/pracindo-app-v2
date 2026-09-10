@@ -10,10 +10,13 @@ logger = logging.getLogger(__name__)
 def petakan_template(generate_obj: GenerateStikerBesar, jenis: str, pola: str):
     nama_file_target = f"stiker_{jenis}_{pola}.docx"
     
-    try:
-        template = StikerBesar.objects.get(nama_file=nama_file_target, aktif=True)
-    except StikerBesar.DoesNotExist:
-        physical_path = os.path.join(settings.BASE_DIR, 'fitur', 'templates', jenis, nama_file_target)
+    # Pake .first() supaya nggak crash kalau ada duplikat di database
+    template = StikerBesar.objects.filter(nama_file=nama_file_target, aktif=True).first()
+    
+    if not template:
+        # Konversi BASE_DIR ke string untuk menghindari error os.path.join di bbrp versi Django
+        base_dir = str(settings.BASE_DIR)
+        physical_path = os.path.join(base_dir, 'fitur', 'templates', jenis, nama_file_target)
         
         if os.path.exists(physical_path):
             try:

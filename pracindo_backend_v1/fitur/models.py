@@ -28,7 +28,7 @@ class GenerateStikerBesar(models.Model):
         StikerBesar, on_delete=models.SET_NULL, null=True, blank=True
     )
     dibuat_pada = models.DateTimeField(auto_now_add=True)
-
+    file_hasil = models.CharField(max_length=255, blank=True, null=True)
     class Meta:
         ordering = ["-dibuat_pada"]
         verbose_name = "Generate Stiker Besar"

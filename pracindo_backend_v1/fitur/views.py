@@ -1,4 +1,4 @@
-# views.py
+import traceback
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
@@ -28,21 +28,24 @@ class GenerateStikerBesarViewSet(viewsets.ViewSet):
         try:
             with transaction.atomic():
                 generate_obj = GenerateStikerBesar.objects.create(total_unit=len(data["items"]))
-
-                # Sesuaikan pemanggilan ini dengan signature fungsi chunking Anda yang asli
                 hasil = algoritma_chunking(data["items"])
-                # diasumsikan: {"pola": "AABB", "grup_per_item": ["A", "A", "B", "B"]}
 
                 for item_data, grup in zip(data["items"], hasil["grup_per_item"]):
                     ItemCetak.objects.create(generate=generate_obj, grup=grup, **item_data)
 
                 template = petakan_template(generate_obj, jenis=data["jenis"], pola=hasil["pola"])
                 if template is None:
-                    raise ValueError(f"Template untuk pola '{hasil['pola']}' belum terdaftar di Master Data.")
+                    raise ValueError(f"Template '{hasil['pola']}' gagal diproses. File tidak ditemukan.")
+
+            return Response(GenerateStikerBesarSerializer(generate_obj).data, status=status.HTTP_201_CREATED)
+            
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-        return Response(GenerateStikerBesarSerializer(generate_obj).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            # INI DIA DETEKTIFNYA: Menangkap error 500 dan memunculkannya ke Frontend
+            error_msg = str(e)
+            print(traceback.format_exc()) # Print full error ke terminal docker
+            return Response({"detail": f"Backend Crash: {error_msg}"}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def cetak(self, request, pk=None):
@@ -50,7 +53,5 @@ class GenerateStikerBesarViewSet(viewsets.ViewSet):
         if obj.alamat_file is None:
             return Response({"detail": "Belum ada template terpasang."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Dikirim ke antrean, TIDAK dijalankan langsung — request tidak boleh
-        # diblokir oleh proses Word COM Interop (lihat poin 3 di pesan sebelumnya).
-        task_cetak_stiker.delay(obj.pk)
+        task_generate_stiker.delay(obj.pk)
         return Response({"detail": "Perintah cetak dikirim ke antrean."}, status=status.HTTP_202_ACCEPTED)

@@ -27,7 +27,7 @@
         </div>
 
         <div class="w-3/4 flex flex-col">
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full min-h-0">
                 <div v-if="!fileTerpilih" class="flex-1 flex flex-col items-center justify-center text-slate-400">
                     <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                         <i class="pi pi-file-edit text-3xl text-slate-400"></i>
@@ -35,9 +35,9 @@
                     <h3 class="font-bold text-slate-600 mb-1">Belum Ada Template Terpilih</h3>
                     <p class="text-sm">Silakan pilih jenis dan template di panel sebelah kiri.</p>
                 </div>
-                <div v-else class="flex gap-6 h-full">
-                    <div class="flex-1 flex flex-col h-full">
-                        <div class="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start">
+                <div v-else class="flex gap-6 h-full min-h-0">
+                    <div class="flex-1 flex flex-col h-full min-h-0">
+                        <div class="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start flex-shrink-0">
                             <div>
                                 <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1">Input Data Stiker</h2>
                                 <div class="flex items-center gap-2 text-sm">
@@ -83,7 +83,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="pt-6 mt-4 border-t border-slate-200 flex justify-end">
+                        <div class="pt-6 mt-4 border-t border-slate-200 flex justify-end flex-shrink-0">
                             <button 
                                 @click="submitStiker" 
                                 :disabled="isSubmitting"
@@ -94,11 +94,13 @@
                             </button>
                         </div>
                     </div>
-                    <div class="w-80 bg-slate-50/80 p-5 rounded-2xl border border-slate-200 flex flex-col">
-                        <div class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4">Petunjuk Visual</div>
-                        <div class="flex-1 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-white p-4">
-                            <component :is="PreviewComponent" v-if="fileTerpilih" :form="form" class="w-full" />
-                            <div v-else class="text-slate-400 text-xs text-center">Pilih template untuk melihat preview.</div>
+                    <div class="w-80 bg-slate-50/80 p-5 rounded-2xl border border-slate-200 flex flex-col min-h-0">
+                        <div class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 flex-shrink-0">Petunjuk Visual</div>
+                        <div class="flex-1 border-2 border-dashed border-slate-200 rounded-xl bg-white p-4 overflow-y-auto custom-scrollbar min-h-0 flex flex-col">
+                            <div class="m-auto w-full flex items-center justify-center">
+                                <component :is="PreviewComponent" v-if="fileTerpilih" :form="form" class="w-full" />
+                                <div v-else class="text-slate-400 text-xs text-center">Pilih template untuk melihat preview.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,13 +116,13 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Calendar from 'primevue/calendar'
 import { useToast } from 'primevue/usetoast'
-import api from '../api'
+import api from '@/utils/api'
 
 const toast = useToast()
 
 const opsiJenis = [
     { label: 'Polos Besar', value: 'polos_besar' },
-    { label: 'CV Besar', value: 'cv_besar' }
+    { label: 'CV Besar', value: 'cv' }
 ]
 
 const masterTemplates = {
@@ -131,7 +133,7 @@ const masterTemplates = {
         { id: 4, nama_file: 'stiker_polos_besar_AABC', pola: 'AABC', jumlah_input: 3 },
         { id: 5, nama_file: 'stiker_polos_besar_ABCD', pola: 'ABCD', jumlah_input: 4 },
     ],
-    cv_besar: [
+    cv: [
         { id: 6, nama_file: 'stiker_cv_besar_AAAA', pola: 'AAAA', jumlah_input: 1 },
         { id: 7, nama_file: 'stiker_cv_besar_AAAC', pola: 'AAAC', jumlah_input: 2 }, 
         { id: 8, nama_file: 'stiker_cv_besar_AABB', pola: 'AABB', jumlah_input: 2 },
@@ -178,12 +180,12 @@ const pilihFile = (file) => {
         net: null
     }))
 
-    const folderJenis = form.jenis
+    let folderJenis = form.jenis === 'cv' ? 'cv_besar' : form.jenis
     const namaKomponen = `${folderJenis}_${file.pola}`
 
     PreviewComponent.value = defineAsyncComponent(() =>
         import(`../components/stiker_${folderJenis}/${namaKomponen}.vue`)
-            .catch(() => ({ template: '<div class="text-slate-400 text-xs text-center p-4">File komponen preview (<b>' + namaKomponen + '.vue</b>) belum dibuat di folder komponen.</div>' }))
+            .catch(() => ({ template: '<div class="text-slate-400 text-xs text-center p-4">Preview belum tersedia.</div>' }))
     )
 }
 
@@ -217,7 +219,6 @@ const submitStiker = async () => {
 
     const payload = {
         jenis: form.jenis,
-        template_id: fileTerpilih.value.id,
         items: form.items.map(item => ({
             nama_item: item.nama_item,
             tipe: item.tipe,
@@ -228,16 +229,15 @@ const submitStiker = async () => {
 
     isSubmitting.value = true
     try {
-        const response = await api.post('fitur/generate-stiker/', payload, {
-            responseType: 'blob'
-        })
+        const response = await api.post('fitur/generate-stiker/', payload)
+        const stikerId = response.data.id
+
+        await api.post(`fitur/generate-stiker/${stikerId}/cetak/`)
+
+        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Perintah cetak stiker masuk antrean!', life: 3000 })
         
-        const dataBlob = response.data
-
-        const url = window.URL.createObjectURL(new Blob([dataBlob], { type: 'application/pdf' }))
-        window.open(url, '_blank')
-
-        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Stiker berhasil dibuat', life: 3000 })
+        resetPilihan()
+        form.jenis = null
     } catch (err) {
         console.error('Gagal generate stiker:', err)
         toast.add({
