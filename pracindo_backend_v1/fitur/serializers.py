@@ -17,7 +17,10 @@ class ItemCetakSerializer(serializers.ModelSerializer):
         fields = ["id", "grup", "nama_item", "tipe", "lot", "net"]
 
 class GenerateStikerBesarInputSerializer(serializers.Serializer):
-    jenis = serializers.ChoiceField(choices=["polos_besar", "cv_besar"])
+    jenis = serializers.ChoiceField(choices=["Polos Besar", "CV Besar"])
+    
+    pola = serializers.CharField(max_length=10, required=False, allow_blank=True, allow_null=True)
+    
     items = ItemCetakInputSerializer(many=True)
 
     def validate_items(self, value):

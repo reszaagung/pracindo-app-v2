@@ -7,7 +7,7 @@ class StikerBesar(models.Model):
     misal: stiker_polos_besar_AABB"""
 
     nama_file = models.CharField(max_length=100, unique=True)
-    file_template = models.FileField(upload_to="template_stiker_besar/")
+    file_template = models.FileField(upload_to="templates/stiker_besar/")
     aktif = models.BooleanField(default=True)
 
     class Meta:

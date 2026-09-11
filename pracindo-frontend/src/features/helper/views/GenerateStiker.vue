@@ -1,260 +1,167 @@
 <template>
-    <div class="flex gap-6 h-full p-6 bg-slate-50/50">
-        <div class="w-1/4 flex flex-col gap-5">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-3">
-                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-widest">Pilih Jenis</label>
-                <Dropdown :options="opsiJenis" @change="resetPilihan" class="w-full" optionLabel="label" optionValue="value" placeholder="Pilih Jenis..." v-model="form.jenis"/>
-            </div>
-            <div v-if="form.jenis" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-y-auto custom-scrollbar">
-                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 block">Opsi Template</label>
-                <div class="flex flex-col gap-3">
-                    <button 
-                        v-for="file in daftarFileAktif" 
-                        :key="file.id"
-                        @click="pilihFile(file)"
-                        class="w-full p-4 text-left rounded-xl border-2 transition-all flex flex-col gap-1 group"
-                        :class="fileTerpilih?.id === file.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 bg-white hover:border-slate-300'"
-                    >
-                        <div class="font-bold text-base transition-colors" :class="fileTerpilih?.id === file.id ? 'text-slate-900' : 'text-slate-700 group-hover:text-slate-900'">
-                            Pola: {{ file.pola }}
-                        </div>
-                        <div class="text-xs truncate transition-colors" :class="fileTerpilih?.id === file.id ? 'text-slate-500' : 'text-slate-400'">
-                            {{ file.nama_file }}
-                        </div>
-                    </button>
+  <div class="p-6 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">Generate Stiker</h2>
+      <button 
+        @click="submitStiker" 
+        :disabled="isSubmitting" 
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-xl shadow-md transition-colors disabled:bg-blue-400"
+      >
+        {{ isSubmitting ? 'Memproses...' : 'Generate & Download Stiker' }}
+      </button>
+    </div>
+
+    <div class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6">
+      <div class="w-full md:w-1/2">
+        <label class="block text-gray-700 font-bold mb-3">Jenis Stiker:</label>
+        <select 
+          v-model="jenisTerpilih" 
+          class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="Polos Besar">Polos Besar</option>
+          <option value="CV Besar">CV Besar</option>
+        </select>
+      </div>
+
+      <div class="w-full md:w-1/2">
+        <label class="block text-gray-700 font-bold mb-3">Pola Stiker:</label>
+        <select 
+          v-model="polaTerpilih" 
+          @change="resetData" 
+          class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500"
+        >
+          <option :value="null" disabled>-- Pilih Pola --</option>
+          <option value="AAAA">Pola (AAAA)</option>
+          <option value="AAAB">Pola (AAAB)</option>
+          <option value="AABB">Pola (AABB)</option>
+          <option value="AABC">Pola (AABC)</option>
+          <option value="ABCD">Pola (ABCD)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start" v-if="polaTerpilih">
+      <div class="lg:col-span-4 flex justify-center bg-gray-50 py-8 rounded-3xl border border-gray-200 shadow-inner">
+        <component :is="komponenPreviewAktif" />
+      </div>
+
+      <div class="lg:col-span-8 w-full flex flex-col gap-6">
+        <FormGenerateStiker />
+        
+        <div v-if="!hurufAktif" class="flex flex-col items-center justify-center h-full min-h-[300px] p-12 bg-white rounded-2xl border-2 border-dashed border-gray-300 text-gray-400">
+            <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+            <p class="text-lg font-semibold">Klik salah satu kotak stiker di samping</p>
+            <p class="text-sm">untuk mulai mengisi data barang pada slot tersebut.</p>
+        </div>
+
+        <div v-if="adaDataTersimpan" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h4 class="text-lg font-bold text-gray-800 mb-4">Ringkasan Data Tersimpan:</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="huruf in ['A', 'B', 'C', 'D']" :key="huruf">
+                    <div v-if="formData[huruf].is_saved" class="p-4 bg-green-50 border border-green-200 rounded-xl flex flex-col gap-1 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 rounded-bl-lg text-xs font-bold">Grup {{ huruf }}</div>
+                        <p class="font-bold text-gray-800 mt-2">{{ formData[huruf].nama_item || '(Tanpa Nama)' }}</p>
+                        <p class="text-sm text-gray-600">Tipe: {{ formData[huruf].tipe || '-' }}</p>
+                        <p class="text-sm text-gray-600">Lot: {{ formData[huruf].lot || '-' }} | Net: {{ formData[huruf].net || '-' }}</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="w-3/4 flex flex-col">
-            <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-full min-h-0">
-                <div v-if="!fileTerpilih" class="flex-1 flex flex-col items-center justify-center text-slate-400">
-                    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                        <i class="pi pi-file-edit text-3xl text-slate-400"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-600 mb-1">Belum Ada Template Terpilih</h3>
-                    <p class="text-sm">Silakan pilih jenis dan template di panel sebelah kiri.</p>
-                </div>
-                <div v-else class="flex gap-6 h-full min-h-0">
-                    <div class="flex-1 flex flex-col h-full min-h-0">
-                        <div class="border-b border-slate-200 pb-5 mb-6 flex justify-between items-start flex-shrink-0">
-                            <div>
-                                <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-1">Input Data Stiker</h2>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span class="font-semibold text-slate-600">{{ fileTerpilih.nama_file }}</span>
-                                    <span class="text-slate-300">•</span>
-                                    <span class="text-slate-500">Pola <span class="font-bold text-slate-700">{{ fileTerpilih.pola }}</span></span>
-                                </div>
-                            </div>
-                            <div class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-sm">
-                                <i class="pi pi-info-circle"></i>
-                                Butuh {{ form.items.length }} Input
-                            </div>
-                        </div>
-                        <div class="flex-1 overflow-y-auto pr-4 custom-scrollbar flex flex-col gap-6">
-                            <div 
-                                v-for="(item, index) in form.items" 
-                                :key="index"
-                                class="p-6 rounded-2xl border border-slate-200 bg-white shadow-sm flex flex-col gap-5 hover:border-slate-300 transition-colors"
-                            >
-                                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                                    <div class="w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center font-black text-sm shadow-sm">
-                                        {{ index + 1 }}
-                                    </div>
-                                    <h3 class="font-bold text-slate-700 tracking-wide text-sm uppercase">Grup Input {{ index + 1 }}</h3>
-                                </div>
-                                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Nama Barang</label>
-                                        <InputText class="p-3 border-slate-300 rounded-xl" placeholder="Misal: SUPER WHITE" v-model="item.nama_item"/>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tipe Barang</label>
-                                        <InputText class="p-3 border-slate-300 rounded-xl" placeholder="Misal: SC SC" v-model="item.tipe"/>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tanggal Lot</label>
-                                        <Calendar :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" class="w-full" dateFormat="yy-mm-dd" placeholder="Pilih Tanggal" v-model="item.lot"/>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Net (KGS)</label>
-                                        <InputNumber :maxFractionDigits="2" :minFractionDigits="2" :pt="{ input: { class: 'p-3 border-slate-300 rounded-xl w-full' } }" class="w-full" mode="decimal" placeholder="0.00" v-model="item.net"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pt-6 mt-4 border-t border-slate-200 flex justify-end flex-shrink-0">
-                            <button 
-                                @click="submitStiker" 
-                                :disabled="isSubmitting"
-                                class="bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-xl flex items-center gap-3 transition-colors shadow-md"
-                            >
-                                <i :class="isSubmitting ? 'pi pi-spin pi-spinner' : 'pi pi-print'"></i>
-                                {{ isSubmitting ? 'Memproses...' : 'Generate Stiker Sekarang' }}
-                            </button>
-                        </div>
-                    </div>
-                    <div class="w-80 bg-slate-50/80 p-5 rounded-2xl border border-slate-200 flex flex-col min-h-0">
-                        <div class="text-xs font-extrabold text-slate-500 uppercase tracking-widest mb-4 flex-shrink-0">Petunjuk Visual</div>
-                        <div class="flex-1 border-2 border-dashed border-slate-200 rounded-xl bg-white p-4 overflow-y-auto custom-scrollbar min-h-0 flex flex-col">
-                            <div class="m-auto w-full flex items-center justify-center">
-                                <component :is="PreviewComponent" v-if="fileTerpilih" :form="form" class="w-full" />
-                                <div v-else class="text-slate-400 text-xs text-center">Pilih template untuk melihat preview.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, shallowRef, defineAsyncComponent } from 'vue'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
-import Calendar from 'primevue/calendar'
+import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import api from '@/utils/api'
+import api from '../api' 
+import { useStiker } from '../composables/useStiker'
+import FormGenerateStiker from './FormGenerateStiker.vue'
+
+import PreviewAAAA from '../components/stiker_besar/stiker_besar_AAAA.vue'
+import PreviewAAAB from '../components/stiker_besar/stiker_besar_AAAB.vue'
+import PreviewAABB from '../components/stiker_besar/stiker_besar_AABB.vue'
+import PreviewAABC from '../components/stiker_besar/stiker_besar_AABC.vue'
+import PreviewABCD from '../components/stiker_besar/stiker_besar_ABCD.vue'
 
 const toast = useToast()
-
-const opsiJenis = [
-    { label: 'Polos Besar', value: 'polos_besar' },
-    { label: 'CV Besar', value: 'cv' }
-]
-
-const masterTemplates = {
-    polos_besar: [
-        { id: 1, nama_file: 'stiker_polos_besar_AAAA', pola: 'AAAA', jumlah_input: 1 },
-        { id: 2, nama_file: 'stiker_polos_besar_AAAB', pola: 'AAAB', jumlah_input: 2 },
-        { id: 3, nama_file: 'stiker_polos_besar_AABB', pola: 'AABB', jumlah_input: 2 },
-        { id: 4, nama_file: 'stiker_polos_besar_AABC', pola: 'AABC', jumlah_input: 3 },
-        { id: 5, nama_file: 'stiker_polos_besar_ABCD', pola: 'ABCD', jumlah_input: 4 },
-    ],
-    cv: [
-        { id: 6, nama_file: 'stiker_cv_besar_AAAA', pola: 'AAAA', jumlah_input: 1 },
-        { id: 7, nama_file: 'stiker_cv_besar_AAAC', pola: 'AAAC', jumlah_input: 2 }, 
-        { id: 8, nama_file: 'stiker_cv_besar_AABB', pola: 'AABB', jumlah_input: 2 },
-        { id: 9, nama_file: 'stiker_cv_besar_AABC', pola: 'AABC', jumlah_input: 3 },
-        { id: 10, nama_file: 'stiker_cv_besar_ABCD', pola: 'ABCD', jumlah_input: 4 },
-    ]
-}
-
-const fileTerpilih = ref(null)
+const { formData, resetData, hurufAktif } = useStiker() 
 const isSubmitting = ref(false)
-const PreviewComponent = shallowRef(null)
 
-const form = reactive({
-    jenis: null,
-    items: [] 
+const jenisTerpilih = ref('Polos Besar')
+const polaTerpilih = ref(null)
+
+const komponenPreviewAktif = computed(() => {
+    switch (polaTerpilih.value) {
+        case 'AAAA': return PreviewAAAA
+        case 'AAAB': return PreviewAAAB
+        case 'AABB': return PreviewAABB
+        case 'AABC': return PreviewAABC
+        case 'ABCD': return PreviewABCD
+        default: return null
+    }
 })
 
-const getPolaFromFilename = (filename) => {
-    const cleanName = filename.replace('.docx', '')
-    const parts = cleanName.split('_')
-    return parts[parts.length - 1].toUpperCase()
-}
-
-const daftarFileAktif = computed(() => {
-    if (!form.jenis) return []
-    return (masterTemplates[form.jenis] || []).map(file => ({
-        ...file,
-        pola: file.pola || getPolaFromFilename(file.nama_file)
-    }))
+const adaDataTersimpan = computed(() => {
+    return Object.values(formData).some(data => data.is_saved)
 })
-
-const resetPilihan = () => {
-    fileTerpilih.value = null
-    form.items = []
-    PreviewComponent.value = null
-}
-
-const pilihFile = (file) => {
-    fileTerpilih.value = file
-    form.items = Array.from({ length: file.jumlah_input }, () => ({
-        nama_item: '',
-        tipe: '',
-        lot: null,
-        net: null
-    }))
-
-    let folderJenis = form.jenis === 'cv' ? 'cv_besar' : form.jenis
-    const namaKomponen = `${folderJenis}_${file.pola}`
-
-    PreviewComponent.value = defineAsyncComponent(() =>
-        import(`../components/stiker_${folderJenis}/${namaKomponen}.vue`)
-            .catch(() => ({ template: '<div class="text-slate-400 text-xs text-center p-4">Preview belum tersedia.</div>' }))
-    )
-}
 
 const formatTanggalLokal = (date) => {
     if (!date) return null
-    const tahun = date.getFullYear()
-    const bulan = String(date.getMonth() + 1).padStart(2, '0')
-    const hari = String(date.getDate()).padStart(2, '0')
-    return `${tahun}-${bulan}-${hari}`
-}
-
-const validasiForm = () => {
-    for (const [idx, item] of form.items.entries()) {
-        const netKosong = item.net === null || item.net === undefined
-        if (!item.nama_item?.trim() || !item.tipe?.trim() || !item.lot || netKosong) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Data belum lengkap',
-                detail: `Grup Input ${idx + 1} masih ada field yang kosong`,
-                life: 3000
-            })
-            return false
-        }
-    }
-    return true
+    const d = new Date(date)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 const submitStiker = async () => {
-    if (!fileTerpilih.value || isSubmitting.value) return
-    if (!validasiForm()) return
-
-    const payload = {
-        jenis: form.jenis,
-        items: form.items.map(item => ({
-            nama_item: item.nama_item,
-            tipe: item.tipe,
-            lot: formatTanggalLokal(item.lot),
-            net: item.net
-        }))
+    if (!polaTerpilih.value) {
+        toast.add({ severity: 'warn', summary: 'Peringatan', detail: 'Pilih pola stiker terlebih dahulu!', life: 3000 })
+        return
     }
 
     isSubmitting.value = true
+    
+    const itemsArray = Object.keys(formData)
+        .filter(key => formData[key].nama_item !== '')
+        .map(key => ({
+            nama_item: formData[key].nama_item,
+            tipe: formData[key].tipe,
+            lot: formatTanggalLokal(formData[key].lot),
+            net: formData[key].net
+        }))
+
+    if (itemsArray.length === 0) {
+        toast.add({ severity: 'warn', summary: 'Kosong', detail: 'Isi minimal satu barang sebelum generate!', life: 3000 })
+        isSubmitting.value = false
+        return
+    }
+
+    const payload = {
+        jenis: jenisTerpilih.value,
+        pola: polaTerpilih.value,
+        items: itemsArray
+    }
+
     try {
-        const response = await api.post('fitur/generate-stiker/', payload)
-        const stikerId = response.data.id
-
-        await api.post(`fitur/generate-stiker/${stikerId}/cetak/`)
-
-        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Perintah cetak stiker masuk antrean!', life: 3000 })
-        
-        resetPilihan()
-        form.jenis = null
-    } catch (err) {
-        console.error('Gagal generate stiker:', err)
-        toast.add({
-            severity: 'error',
-            summary: 'Gagal membuat stiker',
-            detail: err?.response?.data?.detail || 'Terjadi kesalahan pada server',
-            life: 4000
+        const response = await api.post('fitur/generate-stiker/', payload, {
+            responseType: 'blob'
         })
+        
+        const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+        const link = document.createElement('a')
+        link.href = window.URL.createObjectURL(blob)
+        link.download = `Stiker_${jenisTerpilih.value.replace(' ', '_')}_${polaTerpilih.value}.docx`
+        
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Stiker berhasil diunduh!', life: 3000 })
+    } catch (err) {
+        toast.add({ severity: 'error', summary: 'Gagal', detail: 'Terjadi kesalahan pada server saat merender dokumen', life: 4000 })
     } finally {
         isSubmitting.value = false
     }
 }
 </script>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar { width: 8px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; border: 2px solid white; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-</style>
