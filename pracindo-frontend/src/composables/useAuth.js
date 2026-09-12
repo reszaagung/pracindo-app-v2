@@ -14,6 +14,7 @@ const PERAN_LABEL = {
     GUDANG: 'Gudang',
     SALES: 'Sales',
     AKUNTING: 'Akunting',
+    KURIR: 'Kurir' ,
 }
 
 export function useAuth() {

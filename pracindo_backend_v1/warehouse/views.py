@@ -14,7 +14,8 @@ from .models import (
     LaporanSelisih,
     PenerimaanBarang,
     Distribusi,
-    ItemDistribusi
+    ItemDistribusi,
+    StatusDistribusi 
 )
 from .serializers import (
     LaporanManualSerializer,
@@ -54,7 +55,6 @@ class POSiapTerimaViewSet(viewsets.ReadOnlyModelViewSet):
 class PenerimaanViewSet(viewsets.ModelViewSet):
     modul = 'warehouse'
     permission_classes = [AksesModul]
-    serializer_class = PenerimaanBarangSerializer
     filterset_fields = ['purchase_order', 'ada_selisih', 'tanggal']
     search_fields = ['nomor', 'no_surat_jalan', 'purchase_order__no_po']
 
@@ -67,113 +67,36 @@ class PenerimaanViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return PenerimaanListSerializer
+        if self.action == 'create':
+            return TerimaBarangSerializer
         return PenerimaanBarangSerializer
 
     def create(self, request, *args, **kwargs):
-        """Membuat Distribusi dan LANGSUNG disahkan jadi SIAP_KIRIM."""
-        s = BuatDistribusiSerializer(data=request.data)
+        s = TerimaBarangSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        d = s.validated_data
-        
         try:
             with transaction.atomic():
-                dist = Distribusi.objects.create(
-                    entitas_id=d['entitas_id'],
-                    jenis_tujuan=d['jenis_tujuan'],
-                    tujuan_cabang_id=d.get('tujuan_cabang_id'),
-                    pelanggan_nama=d['pelanggan_nama'],
-                    alamat=d['alamat'],
-                    lat=d.get('lat'),
-                    lng=d.get('lng'),
-                    berat_total_kg=d.get('berat_total_kg', 0)
-                )
-                
-                for brs in d['baris']:
-                    ItemDistribusi.objects.create(
-                        distribusi=dist,
-                        produk_id=brs['produk_id'],
-                        kemasan=brs['kemasan'],
-                        stiker=brs.get('stiker', ''),
-                        qty=brs['qty']
-                    )
-                
-                dist = services.sahkan_distribusi(distribusi_id=dist.id, user=request.user)
-                
+                penerimaan = services.terima_barang(user=request.user, **s.validated_data)
+        except DjangoValidationError as e:
+            return _galat(e)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(DistribusiSerializer(dist).data, status=status.HTTP_201_CREATED)
+        return Response(PenerimaanBarangSerializer(penerimaan).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-        dist = self.get_object()
-        
-        if dist.status in [StatusDistribusi.DIKIRIM, StatusDistribusi.TERKIRIM]:
-            return Response(
-                {'detail': 'Dokumen yang sudah dibawa kurir atau selesai tidak bisa diubah.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        s = BuatDistribusiSerializer(data=request.data)
-        s.is_valid(raise_exception=True)
-        d = s.validated_data
-        
-        try:
-            with transaction.atomic():
-                if dist.status == StatusDistribusi.SIAP_KIRIM:
-                    services.kembalikan_potongan_stok(dist.id)
-                
-                dist.entitas_id = d['entitas_id']
-                dist.jenis_tujuan = d['jenis_tujuan']
-                dist.tujuan_cabang_id = d.get('tujuan_cabang_id')
-                dist.pelanggan_nama = d['pelanggan_nama']
-                dist.alamat = d['alamat']
-                dist.lat = d.get('lat')
-                dist.lng = d.get('lng')
-                dist.berat_total_kg = d.get('berat_total_kg', 0)
-                dist.save()
-                
-                dist.item.all().delete()
-                for brs in d['baris']:
-                    ItemDistribusi.objects.create(
-                        distribusi=dist,
-                        produk_id=brs['produk_id'],
-                        kemasan=brs['kemasan'],
-                        stiker=brs.get('stiker', ''),
-                        qty=brs['qty']
-                    )
-                
-                dist = services.sahkan_distribusi(distribusi_id=dist.id, user=request.user)
-                
-        except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(DistribusiSerializer(dist).data, status=status.HTTP_200_OK)
+        return Response(
+            {'detail': 'Penerimaan barang tidak bisa diubah langsung. Gunakan modul Selisih.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     partial_update = update
 
     def destroy(self, request, *args, **kwargs):
-        dist = self.get_object()
-        
-        if dist.status in [StatusDistribusi.DIKIRIM, StatusDistribusi.TERKIRIM]:
-            return Response(
-                {'detail': 'Dokumen yang sudah dibawa kurir atau selesai tidak bisa dihapus.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        try:
-            with transaction.atomic():
-                if dist.status == StatusDistribusi.SIAP_KIRIM:
-                    services.kembalikan_potongan_stok(dist.id)
-                
-                dist.delete()
-        except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=True, methods=['get'])
-    def ringkasan(self, request, pk=None):
-        return Response(services.ringkasan_penerimaan(pk))
+        return Response(
+            {'detail': 'Penerimaan barang tidak boleh dihapus demi jejak audit.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class LaporanSelisihViewSet(viewsets.ModelViewSet):
@@ -197,15 +120,19 @@ class LaporanSelisihViewSet(viewsets.ModelViewSet):
             return LaporanSelisihAkuntingSerializer
         return LaporanSelisihGudangSerializer
 
-    def create(self, request):
-        s = LaporanManualSerializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        s = TerimaBarangSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         try:
-            lap = services.laporan_manual(user=request.user, **s.validated_data)
+            with transaction.atomic():
+                penerimaan = services.terima_barang(user=request.user, **s.validated_data)
         except DjangoValidationError as e:
             return _galat(e)
-        return Response(LaporanSelisihGudangSerializer(lap).data,
-                        status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        penerimaan_lengkap = self.get_queryset().get(pk=penerimaan.pk)
+        
+        return Response(PenerimaanBarangSerializer(penerimaan_lengkap).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         return Response(
@@ -272,10 +199,6 @@ class LaporanSelisihViewSet(viewsets.ModelViewSet):
         return Response(LaporanSelisihAkuntingSerializer(lap).data)
 
 
-# =========================================================
-# DISTRIBUSI (OUTBOUND) VIEWSET
-# =========================================================
-
 class DistribusiViewSet(viewsets.ModelViewSet):
     modul = 'warehouse'
     permission_classes = [AksesModul]
@@ -322,11 +245,21 @@ class DistribusiViewSet(viewsets.ModelViewSet):
                 
                 dist = services.sahkan_distribusi(distribusi_id=dist.id, user=request.user)
                 
+
+                from logistik.services import rakit_pengiriman
+                rakit_pengiriman(
+                    entitas_id=dist.entitas_id,
+                    distribusi_ids=[dist.id], 
+                    user=request.user,
+                    catatan="Tugas otomatis dari pembuatan DO Gudang"
+                )
+                
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(DistribusiSerializer(dist).data, status=status.HTTP_201_CREATED)
 
+        
     def update(self, request, *args, **kwargs):
         dist = self.get_object()
         
@@ -353,6 +286,7 @@ class DistribusiViewSet(viewsets.ModelViewSet):
                 dist.lat = d.get('lat')
                 dist.lng = d.get('lng')
                 dist.berat_total_kg = d.get('berat_total_kg', 0)
+                dibuat_oleh=request.user
                 dist.save()
                 
                 dist.item.all().delete()

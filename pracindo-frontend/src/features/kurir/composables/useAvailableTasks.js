@@ -1,17 +1,20 @@
 import { ref } from 'vue'
-import { apiKurir } from '../api'
+import { useToast } from 'primevue/usetoast'
+import { apiKurir } from '../api' 
 
 export function useAvailableTasks() {
     const tasks = ref([])
     const isLoading = ref(false)
     const claimingId = ref(null)
+    const toast = useToast()
 
     const loadTasks = async () => {
         isLoading.value = true
         try {
-            tasks.value = await apiKurir.getAvailableTasks()
-        } catch (error) {
-            console.error(error)
+            const data = await apiKurir.getAvailableTasks()
+            tasks.value = data.results || data
+        } catch (err) {
+            toast.add({ severity: 'error', summary: 'Gagal', detail: 'Gagal memuat kolam tugas', life: 3000 })
         } finally {
             isLoading.value = false
         }
@@ -21,21 +24,17 @@ export function useAvailableTasks() {
         claimingId.value = id
         try {
             await apiKurir.claimTask(id)
-            tasks.value = tasks.value.filter(t => t.id !== id)
+            toast.add({ severity: 'success', summary: 'Berhasil', detail: 'Tugas berhasil diklaim!', life: 3000 })
+            await loadTasks()
             return true
-        } catch (error) {
-            console.error(error)
+        } catch (err) {
+            const errorMsg = err.response?.data?.detail || 'Terjadi kesalahan saat klaim'
+            toast.add({ severity: 'error', summary: 'Gagal Klaim', detail: errorMsg, life: 3000 })
             return false
         } finally {
             claimingId.value = null
         }
     }
 
-    return { 
-        tasks, 
-        isLoading, 
-        claimingId, 
-        loadTasks, 
-        claim 
-    }
+    return { tasks, isLoading, claimingId, loadTasks, claim }
 }

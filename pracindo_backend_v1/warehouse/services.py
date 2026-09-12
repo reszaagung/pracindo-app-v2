@@ -405,13 +405,15 @@ def rincian_distribusi(distribusi_id):
     for itm in d.item.all():
         hasil['baris'].append({
             'produk_kode': getattr(itm.produk, 'kode', '-'),
-            'produk_nama': getattr(itm.produk, 'nama', '-'),
+            # BARIS INI YANG DIUBAH:
+            'produk_nama': str(itm.produk) if itm.produk else '-',
             'stiker': itm.stiker if itm.stiker else '-',
             'qty': itm.qty,
             'unit': itm.kemasan
         })
     return hasil
 
+    
 @transaction.atomic
 def tandai_terkirim(distribusi_id, waktu, oleh):
     d = Distribusi.objects.select_for_update().get(id=distribusi_id)

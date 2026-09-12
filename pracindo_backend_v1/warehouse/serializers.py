@@ -204,6 +204,7 @@ class DistribusiSerializer(serializers.ModelSerializer):
     tujuan_cabang_kode = serializers.CharField(source='tujuan_cabang.kode', read_only=True, default=None)
     
     diterima_oleh_nama = serializers.SerializerMethodField()
+    dibuat_oleh_nama = serializers.SerializerMethodField()
 
     class Meta:
         model = Distribusi
@@ -211,12 +212,17 @@ class DistribusiSerializer(serializers.ModelSerializer):
             'id', 'nomor', 'entitas', 'entitas_kode', 'jenis_tujuan',
             'tujuan_cabang', 'tujuan_cabang_kode', 'pelanggan_nama', 'alamat',
             'lat', 'lng', 'berat_total_kg', 'status', 'status_label',
-            'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh_nama', 'item'
+            'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh_nama', 
+            'dibuat_oleh_nama', 'item' 
         ]
         read_only_fields = ['nomor', 'status', 'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh']
 
     def get_diterima_oleh_nama(self, obj):
         u = obj.diterima_oleh
+        return (u.get_full_name() or u.get_username()) if u else None
+
+    def get_dibuat_oleh_nama(self, obj):
+        u = getattr(obj, 'dibuat_oleh', None)
         return (u.get_full_name() or u.get_username()) if u else None
 
 

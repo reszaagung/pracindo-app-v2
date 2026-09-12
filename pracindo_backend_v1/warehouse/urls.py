@@ -13,7 +13,7 @@ router = DefaultRouter()
 router.register('po-siap-terima', POSiapTerimaViewSet, basename='po-siap-terima')
 router.register('penerimaan', PenerimaanViewSet, basename='penerimaan')
 router.register('laporan-selisih', LaporanSelisihViewSet, basename='laporan-selisih')
-router.register('distribusi', DistribusiViewSet, basename='distribusi')  # <-- Rute API Distribusi
+router.register('distribusi', DistribusiViewSet, basename='distribusi')  
 
 urlpatterns = [
     path('', include(router.urls)),

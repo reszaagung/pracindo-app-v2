@@ -27,18 +27,24 @@ export const apiKurir = {
     },
 
     uploadProof: async (pengirimanId, perhentianId, formData, idemKey = '') => {
+        // Hanya kirim Idempotency-Key jika ada.
+        // Axios otomatis men-set Content-Type multipart/form-data beserta boundary-nya.
         const headers = idemKey ? { 'Idempotency-Key': idemKey } : {}
-        const response = await api.post(`logistik/pengiriman/${pengirimanId}/perhentian/${perhentianId}/bukti/`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data', ...headers }
-        })
+        const response = await api.post(
+            `logistik/pengiriman/${pengirimanId}/perhentian/${perhentianId}/bukti/`, 
+            formData, 
+            { headers }
+        )
         return response.data
     },
 
-    recordReturn: async (pengirimanId, perhentianId, data, idemKey = '') => {
+    recordReturn: async (pengirimanId, perhentianId, formData, idemKey = '') => {
         const headers = idemKey ? { 'Idempotency-Key': idemKey } : {}
-        const response = await api.post(`logistik/pengiriman/${pengirimanId}/perhentian/${perhentianId}/retur/`, data, {
-            headers: { ...headers }
-        })
+        const response = await api.post(
+            `logistik/pengiriman/${pengirimanId}/perhentian/${perhentianId}/retur/`, 
+            formData, 
+            { headers }
+        )
         return response.data
     }
 }

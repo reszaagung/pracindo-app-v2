@@ -37,47 +37,33 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class SambunganBelumSiap(Exception):
-    """warehouse belum menyediakan fungsi yang dibutuhkan."""
-
+    pass
 
 def _service(nama):
     try:
         from warehouse import services as ws
     except ImportError as exc:
-        raise SambunganBelumSiap(
-            'Modul warehouse belum tersedia. Lihat kontrak di '
-            'logistik/integrasi_warehouse.py.'
-        ) from exc
-
+        raise SambunganBelumSiap() from exc
+    
     fn = getattr(ws, nama, None)
     if fn is None:
-        raise SambunganBelumSiap(
-            f'warehouse.services.{nama}() belum ada. '
-            f'Lihat kontrak di logistik/integrasi_warehouse.py.'
-        )
+        raise SambunganBelumSiap()
     return fn
-
 
 def distribusi_siap_kirim(entitas_id=None):
     return _service('distribusi_siap_kirim')(entitas_id=entitas_id)
 
-
 def rincian_distribusi(distribusi_id):
     return _service('rincian_distribusi')(distribusi_id)
-
 
 def tandai_terkirim(distribusi_id, waktu, oleh):
     return _service('tandai_terkirim')(distribusi_id, waktu=waktu, oleh=oleh)
 
-
 def kembalikan_stok(distribusi_id, alasan, oleh):
     return _service('kembalikan_stok')(distribusi_id, alasan=alasan, oleh=oleh)
 
-
 def tersedia():
-    """Cek cepat untuk endpoint kesehatan dan pesan galat yang ramah."""
     try:
         _service('distribusi_siap_kirim')
         return True

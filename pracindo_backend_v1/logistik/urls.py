@@ -20,7 +20,6 @@ router.register(r'retur', ReturViewSet, basename='retur')
 router.register(r'kendaraan', KendaraanViewSet, basename='kendaraan')
 
 urlpatterns = [
-    path('distribusi-tersedia/', DistribusiTersediaView.as_view(),
-         name='distribusi-tersedia'),
+    path('distribusi-tersedia/', DistribusiTersediaView.as_view(), name='distribusi-tersedia'),
     path('', include(router.urls)),
 ]

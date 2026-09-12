@@ -14,10 +14,6 @@ from core.models import CounterDokumen, DiauditModel, TimeStampedModel
 D0 = Decimal("0")
 
 
-# =========================================================
-# KEMASAN & PENERIMAAN BARANG (INBOUND)
-# =========================================================
-
 class JenisKemasan(models.TextChoices):
     KARUNG  = 'KARUNG',  'Karung'
     DRUM    = 'DRUM',    'Drum'
@@ -338,6 +334,7 @@ class Distribusi(models.Model):
     
     tanggal_dibuat = models.DateTimeField(auto_now_add=True)
     waktu_terkirim = models.DateTimeField(null=True, blank=True)
+    dibuat_oleh = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='distribusi_dibuat')
     diterima_oleh = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:

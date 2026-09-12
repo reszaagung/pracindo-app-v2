@@ -14,15 +14,12 @@ from .integrasi_warehouse import SambunganBelumSiap
 from .models import Kendaraan, Pengiriman, Retur, StatusPengiriman
 from .permissions import HanyaKurirPengiriman, KurirTidakMengubahRute, batasi_ke_kurir
 
-
 def _galat(e):
     pesan = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
     return Response({'detail': pesan}, status=http.HTTP_400_BAD_REQUEST)
 
-
 def _belum_siap(e):
     return Response({'detail': str(e)}, status=http.HTTP_503_SERVICE_UNAVAILABLE)
-
 
 class PengirimanViewSet(viewsets.ModelViewSet):
     permission_classes = [AksesModul, KurirTidakMengubahRute, HanyaKurirPengiriman]
@@ -31,7 +28,7 @@ class PengirimanViewSet(viewsets.ModelViewSet):
 
     queryset = (
         Pengiriman.objects
-        .select_related('kurir', 'kendaraan', 'entitas')
+        .select_related('kurir', 'kendaraan', 'entitas','dibuat_oleh')
         .all()
     )
 
@@ -84,22 +81,6 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             )
         for posisi, hid in enumerate(diminta, start=1):
             kirim.perhentian.filter(pk=hid).update(urutan=posisi)
-        try:
-            services.hitung_rute(kirim.id)
-        except DjangoValidationError as e:
-            return _galat(e)
-        return self._balas(kirim.id)
-
-    @action(detail=True, methods=['post'], url_path='hitung-rute')
-    def hitung_rute(self, request, pk=None):
-        ser = s.PakaiUsulanSerializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        kirim = self.get_object()
-        try:
-            services.hitung_rute(
-                kirim.id, pakai_usulan=ser.validated_data['pakai_usulan'])
-        except DjangoValidationError as e:
-            return _galat(e)
         return self._balas(kirim.id)
 
     @action(detail=False, methods=['get'], url_path='kolam-tugas')
@@ -149,24 +130,6 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             status__in=[StatusPengiriman.DISIAPKAN, StatusPengiriman.BERANGKAT],
         ).order_by('tanggal', 'id')
         return Response(s.PengirimanDetailSerializer(qs, many=True).data)
-
-    @action(detail=True, methods=['post'])
-    def posisi(self, request, pk=None):
-        kirim = self.get_object()
-        ser = s.PosisiSerializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        try:
-            services.catat_posisi(
-                pengiriman_id=kirim.id, oleh=request.user, **ser.validated_data)
-        except DjangoValidationError as e:
-            return _galat(e)
-        return Response(status=http.HTTP_204_NO_CONTENT)
-
-    @action(detail=True, methods=['get'])
-    def jejak(self, request, pk=None):
-        kirim = self.get_object()
-        return Response(
-            s.JejakPosisiSerializer(kirim.jejak.all(), many=True).data)
 
     @action(detail=True, methods=['post'],
             url_path=r'perhentian/(?P<hid>\d+)/sampai')
@@ -242,13 +205,11 @@ class ReturViewSet(viewsets.ReadOnlyModelViewSet):
             return _galat(e)
         return Response(s.ReturSerializer(self.get_object()).data)
 
-
 class KendaraanViewSet(viewsets.ModelViewSet):
     permission_classes = [AksesModul]
     modul = 'logistik'
     queryset = Kendaraan.objects.all()
     serializer_class = s.KendaraanSerializer
-
 
 class DistribusiTersediaView(APIView):
     permission_classes = [AksesModul]

@@ -1,8 +1,6 @@
-// src/features/accounting/routes.js
 import ModulLayout from '@/components/layout/ModulLayout.vue'
 
 export default [
-  // 1. RUTE TRANSAKSI (Menggunakan Layout Transaksi)
   {
     path: '/accounting/input',
     meta: { perluLogin: true, modul: 'akunting' },
