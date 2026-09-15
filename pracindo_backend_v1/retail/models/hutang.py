@@ -17,7 +17,6 @@ class BukuHutangRetail(models.Model):
     tanggal_hutang = models.DateField(default=timezone.now)
     jatuh_tempo = models.DateField(blank=True, null=True)
     keterangan = models.TextField(blank=True)
-
     total_hutang = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_dibayar = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     

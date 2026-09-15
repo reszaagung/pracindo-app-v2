@@ -29,6 +29,13 @@ export function useNavRetailLayout() {
             rute: '/retail/penerimaan',
             ikon: 'pi-box',
             activate: true
+        },
+        {
+            id: 'registrasi-cabang',
+            label: 'Pendaftaran Cabang',
+            rute: '/regretail',
+            ikon: 'pi-building',
+            activate: true
         }
     ]
 

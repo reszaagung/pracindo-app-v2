@@ -10,5 +10,6 @@ export const retailModul = {
     { label: 'Penerimaan Stok', rute: '/retail/penerimaan' },
     { label: 'Riwayat Penjualan', rute: '/retail/riwayat' },
     { label: 'Keuangan Shift', rute: '/retail/keuangan' },
+    { label: 'Pendaftaran Cabang', rute: '/regretail' } 
   ],
 }

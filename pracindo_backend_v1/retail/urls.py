@@ -1,13 +1,15 @@
 from django.urls import path
 from .views import (
+    RetailLoginView,
     KatalogPOSAPIView, CheckoutPOSAPIView, RiwayatTransaksiAPIView, SesiKasirAPIView,
     PelangganRetailAPIView, SalesRetailAPIView,
     AkunBukuBesarAPIView, JurnalUmumAPIView, BukuBesarMutasiAPIView,
     DaftarPenerimaanAPIView, ProsesPenerimaanAPIView,
-    DaftarPiutangAPIView, BayarPiutangAPIView
+    DaftarPiutangAPIView, BayarPiutangAPIView, CabangTokoAPIView
 )
 
 urlpatterns = [
+    path('login/', RetailLoginView.as_view(), name='retail-login'),
     path('pos/katalog/', KatalogPOSAPIView.as_view(), name='pos-katalog'),
     path('pos/checkout/', CheckoutPOSAPIView.as_view(), name='pos-checkout'),
     path('riwayat/', RiwayatTransaksiAPIView.as_view(), name='pos-riwayat'),
@@ -21,4 +23,5 @@ urlpatterns = [
     path('akuntansi/jurnal/', JurnalUmumAPIView.as_view(), name='akuntansi-jurnal'),
     path('piutang/', DaftarPiutangAPIView.as_view(), name='retail-piutang'),
     path('piutang/<int:pk>/bayar/', BayarPiutangAPIView.as_view(), name='retail-bayar-piutang'),
+    path('cabang/', CabangTokoAPIView.as_view(), name='retail-cabang'),
 ]

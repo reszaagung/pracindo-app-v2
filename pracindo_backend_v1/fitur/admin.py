@@ -1,6 +1,5 @@
-# admin.py
 from django.contrib import admin
-from .models import StikerBesar, GenerateStikerBesar, ItemCetak
+from .models import StikerBesar, GenerateStikerBesar, ItemCetak, StikerKecil12
 
 
 @admin.register(StikerBesar)
@@ -21,3 +20,10 @@ class GenerateStikerBesarAdmin(admin.ModelAdmin):
     list_filter = ("pola_terdeteksi",)
     readonly_fields = ("pola_terdeteksi", "alamat_file")
     inlines = [ItemCetakInline]
+
+
+@admin.register(StikerKecil12)
+class StikerKecil12Admin(admin.ModelAdmin):
+    list_display = ["nama_file", "aktif"]
+    list_filter = ["aktif"]
+    search_fields = ["nama_file"]

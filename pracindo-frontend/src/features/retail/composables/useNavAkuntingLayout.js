@@ -5,7 +5,6 @@ export function useNavAkuntingLayout() {
     const route = useRoute()
     const router = useRouter()
 
-    // Kita tetap mengambil fungsi tutup menu mobile dari useLayout utama
     const { tutupDiMobile } = useLayout()
 
     const menuAkuntansi = [

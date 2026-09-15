@@ -1,16 +1,18 @@
 import { useRoute } from 'vue-router'
 
-/**
- * Konfigurasi menu sidebar untuk modul Helper.
- * `ikon` memakai nama kelas PrimeIcons lengkap (mis. 'pi-print'),
- * karena di HelperLayout.vue dipakai sebagai :class="['pi', menu.ikon]".
- */
 const MENU_HELPER = [
   {
     id: 'helper-stiker',
     label: 'Cetak Stiker',
     ikon: 'pi-print',
     rute: '/helper/stiker',
+    activate: true
+  },
+  {
+    id: 'helper-stiker-kecil-12',
+    label: 'Cetak Stiker Kecil',
+    ikon: 'pi-tags',
+    rute: '/helper/stiker-kecil-12',
     activate: true
   }
 ]

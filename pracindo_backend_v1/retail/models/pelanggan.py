@@ -1,8 +1,12 @@
 from django.db import models
+from django.conf import settings
 from .cabang import CabangToko
 from .sales import SalesRetail
 
 class PelangganRetail(models.Model):
+    # Tambahkan baris ini
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    
     cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE, related_name='pelanggan')
     nama = models.CharField(max_length=100)
     nomor_telepon = models.CharField(max_length=20, blank=True, null=True)

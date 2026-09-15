@@ -71,12 +71,19 @@ class PenerimaanViewSet(viewsets.ModelViewSet):
             return TerimaBarangSerializer
         return PenerimaanBarangSerializer
 
+    @action(detail=True, methods=['get'])
+    def ringkasan(self, request, pk=None):
+        penerimaan = self.get_object()
+        serializer = PenerimaanBarangSerializer(penerimaan)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
     def create(self, request, *args, **kwargs):
         s = TerimaBarangSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         try:
             with transaction.atomic():
-                penerimaan = services.terima_barang(user=request.user, **s.validated_data)
+                penerimaan, laporan, setoran = services.terima_barang(user=request.user, **s.validated_data)
         except DjangoValidationError as e:
             return _galat(e)
         except Exception as e:
@@ -121,18 +128,14 @@ class LaporanSelisihViewSet(viewsets.ModelViewSet):
         return LaporanSelisihGudangSerializer
 
     def create(self, request, *args, **kwargs):
-        s = TerimaBarangSerializer(data=request.data)
+        s = LaporanManualSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         try:
-            with transaction.atomic():
-                penerimaan = services.terima_barang(user=request.user, **s.validated_data)
+            lap = services.laporan_manual(user=request.user, **s.validated_data)
         except DjangoValidationError as e:
             return _galat(e)
-        except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        penerimaan_lengkap = self.get_queryset().get(pk=penerimaan.pk)
-        
-        return Response(PenerimaanBarangSerializer(penerimaan_lengkap).data, status=status.HTTP_201_CREATED)
+            
+        return Response(LaporanSelisihGudangSerializer(lap).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         return Response(

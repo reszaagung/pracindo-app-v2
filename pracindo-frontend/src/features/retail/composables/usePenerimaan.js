@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { http } from '@/utils/http'
+import { retailApi } from '../api'
 
 export function usePenerimaan() {
     const doList = ref([])
@@ -8,8 +8,8 @@ export function usePenerimaan() {
     const fetchDO = async () => {
         isLoading.value = true
         try {
-            const response = await http.get('v1/retail/penerimaan/')
-            doList.value = response.data.results || response.data || []
+            const data = await retailApi.getPenerimaan()
+            doList.value = data.results || data || []
         } catch (error) {
             console.error("Gagal mengambil data DO:", error)
         } finally {
@@ -20,11 +20,14 @@ export function usePenerimaan() {
     const prosesPenerimaan = async (id, items) => {
         isLoading.value = true
         try {
-            const response = await http.post(`v1/retail/penerimaan/${id}/proses/`, { items })
-            return response.data
+            const data = await retailApi.prosesPenerimaan(id, { items })
+            return data
         } catch (error) {
             console.error("Gagal proses DO:", error)
-            return { status: 'gagal', pesan: error.response?.data?.pesan || 'Terjadi kesalahan sistem.' }
+            return { 
+                status: 'gagal', 
+                pesan: error.response?.data?.pesan || error.response?.data?.message || 'Terjadi kesalahan sistem.' 
+            }
         } finally {
             isLoading.value = false
         }

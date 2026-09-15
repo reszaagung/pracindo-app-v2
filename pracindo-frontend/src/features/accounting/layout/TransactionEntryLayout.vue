@@ -26,11 +26,6 @@
 
         <!-- BOTTOM NAVIGATION (Diganti tag <a> agar tidak bentrok dengan CSS Button Global) -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-end z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.03)] px-1 pb-1 w-full max-w-[100vw]">
-            <!-- Beranda -->
-            <a @click="keDashboard" class="flex flex-col items-center justify-center w-full py-2 transition-colors text-slate-400 hover:text-slate-600 cursor-pointer">
-                <div class="h-8 w-12 flex items-center justify-center rounded-full mb-0.5"><i class="pi pi-home text-[1.2rem]"></i></div>
-                <span class="text-[10px] font-medium tracking-tight leading-none">Beranda</span>
-            </a>
 
             <!-- Menu Transaksi -->
             <a v-for="menu in transaksi" :key="menu.id" @click="klikMenu(menu)"

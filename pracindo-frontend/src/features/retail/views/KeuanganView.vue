@@ -7,19 +7,21 @@
                 <div v-if="sesiAktif" class="space-y-4">
                     <div class="flex justify-between border-b pb-2">
                         <span class="text-gray-600">Kasir Aktif</span>
-                        <span class="font-semibold">{{ sesiAktif.nama_kasir }}</span>
+                        <!-- Koreksi: nama_kasir -> kasir_nama -->
+                        <span class="font-semibold">{{ sesiAktif.kasir_nama }}</span>
                     </div>
                     <div class="flex justify-between border-b pb-2">
                         <span class="text-gray-600">Waktu Buka</span>
-                        <span class="font-semibold">{{ sesiAktif.waktu }}</span>
+                        <!-- Koreksi: waktu -> waktu_buka, dan ditambahkan format -->
+                        <span class="font-semibold">{{ formatWaktu(sesiAktif.waktu_buka) }}</span>
                     </div>
                     <div class="flex justify-between border-b pb-2">
                         <span class="text-gray-600">Modal Awal</span>
-                        <span class="font-semibold text-blue-600">Rp {{ sesiAktif.saldo_awal }}</span>
+                        <span class="font-semibold text-blue-600">Rp {{ Number(sesiAktif.saldo_awal).toLocaleString('id-ID') }}</span>
                     </div>
                     <div class="flex justify-between border-b pb-2">
                         <span class="text-gray-600">Total Penjualan</span>
-                        <span class="font-semibold text-green-600">Rp {{ sesiAktif.total_penjualan }}</span>
+                        <span class="font-semibold text-green-600">Rp {{ Number(sesiAktif.total_penjualan).toLocaleString('id-ID') }}</span>
                     </div>
                     <button @click="prosesTutup"
                         class="w-full mt-6 bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors shadow">
@@ -51,6 +53,18 @@ const prosesTutup = async () => {
     if (confirm('Yakin ingin menutup shift dan menyetor pendapatan?')) {
         await tutupShift()
         alert('Shift berhasil ditutup!')
+        fetchSesi() 
     }
+}
+
+const formatWaktu = (isoString) => {
+    if (!isoString) return '-';
+    return new Date(isoString).toLocaleString('id-ID', {
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
 }
 </script>

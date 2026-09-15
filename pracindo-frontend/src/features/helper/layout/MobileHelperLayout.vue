@@ -1,13 +1,17 @@
 <template>
-    <div class="flex flex-col h-screen bg-[#F8FAFC] font-sans text-slate-700 overflow-hidden relative">
+    <div class="flex flex-col bg-[#F8FAFC] font-sans text-slate-700 overflow-hidden relative" style="height: 100vh; height: 100dvh;">
         <header class="flex-shrink-0 h-16 bg-white shadow-sm z-30 flex items-center justify-between px-4 border-b border-slate-100">
-            <div class="flex items-center gap-3">
-                <button @click="toggleSidebar" class="p-2 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors">
+            <div class="flex items-center gap-3 shrink-0">
+                <button @click="toggleSidebar" class="p-2 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0">
                     <i class="pi pi-bars text-xl"></i>
                 </button>
                 <span class="font-bold text-slate-800 text-base">Helper System</span>
             </div>
-            <button @click="kembali" class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform">
+            <button 
+                @click="kembali" 
+                class="shrink-0 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                style="width: 36px; height: 36px; min-width: 36px; background-color: #0f172a;"
+            >
                 <i class="pi pi-arrow-left text-white text-sm"></i>
             </button>
         </header>

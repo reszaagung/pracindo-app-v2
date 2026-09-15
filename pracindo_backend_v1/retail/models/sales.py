@@ -1,8 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 from .cabang import CabangToko
 
 class SalesRetail(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE, related_name='sales')
     nama = models.CharField(max_length=100)
     persentase_bonus = models.DecimalField(max_digits=5, decimal_places=2, default=0)

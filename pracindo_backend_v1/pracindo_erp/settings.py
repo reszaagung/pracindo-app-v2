@@ -1,6 +1,4 @@
-﻿
-
-import os
+﻿import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -145,7 +143,14 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 25,
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
     'DATE_FORMAT': '%Y-%m-%d',
-    'COERCE_DECIMAL_TO_STRING': True,   
+    'COERCE_DECIMAL_TO_STRING': True,
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'cari-produk': '60/minute',
+        'generate-stiker': '10/minute',
+    },
 }
 
 SPECTACULAR_SETTINGS = {

@@ -186,7 +186,6 @@ class PengeluaranKas(TimeStampedModel):
     nominal = models.DecimalField(max_digits=18, decimal_places=2)
     bukti_nota = models.FileField(upload_to='keuangan/nota/', null=True, blank=True)
     
-    # Menautkan bukti pengeluaran ini langsung ke mutasi brankas
     mutasi = models.OneToOneField(
         'keuangan.MutasiKas', null=True, blank=True, 
         on_delete=models.PROTECT, related_name='pengeluaran'

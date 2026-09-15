@@ -52,17 +52,16 @@
               <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-left">Tangki Tujuan</th>
               <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-left">Nama Hasil</th>
               <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-right">Qty Hasil (Kg)</th>
-              <th class="px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide text-right">Harga Per Kg</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
             <tr v-if="loading">
-              <td colspan="5" class="px-4 py-10 text-center text-slate-400">
+              <td colspan="4" class="px-4 py-10 text-center text-slate-400">
                 <i class="pi pi-spin pi-spinner mr-2"></i>Memuat data...
               </td>
             </tr>
             <tr v-else-if="baris.length === 0">
-              <td colspan="5" class="px-4 py-10 text-center text-slate-400">
+              <td colspan="4" class="px-4 py-10 text-center text-slate-400">
                 Belum ada batch produksi yang cocok dengan filter.
               </td>
             </tr>
@@ -71,13 +70,11 @@
               <td class="px-4 py-4 text-slate-700">{{ row.tangki_kode || row.tangki_tujuan_nama || row.tangki || '-' }}</td>
               <td class="px-4 py-4 font-semibold text-blue-700">{{ row.nama_hasil }}</td>
               <td class="px-4 py-4 text-right font-black text-emerald-600">{{ formatAngka(row.qty_hasil) }}</td>
-              <td class="px-4 py-4 text-right text-slate-600">{{ formatRupiah(row.harga_per_kg) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Tampilan Mobile -->
       <div v-else class="flex flex-col gap-4 p-4 bg-slate-50">
         <div v-if="loading" class="text-center text-slate-400 py-10">
           <i class="pi pi-spin pi-spinner mr-2"></i>Memuat data...
@@ -108,10 +105,6 @@
             <div class="flex flex-col gap-1">
               <span class="text-slate-400 font-semibold uppercase">Yield Output</span>
               <span class="text-emerald-600 font-black">{{ formatAngka(row.qty_hasil) }} Kg</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-slate-400 font-semibold uppercase">Harga/Kg</span>
-              <span class="text-slate-700">{{ formatRupiah(row.harga_per_kg) }}</span>
             </div>
           </div>
         </div>

@@ -71,15 +71,9 @@
               <span class="text-slate-500">Yield (Hasil Akhir)</span>
               <span class="font-semibold text-emerald-600">{{ formatKg(batch.qty_hasil) }} Kg</span>
             </div>
-            <div class="flex justify-between border-b border-slate-50 pb-2">
+            <div class="flex justify-between pb-1">
               <span class="text-slate-500">Susut / Tekor</span>
               <span class="font-semibold text-red-500">{{ formatKg(batch.tekor_kg) }} Kg</span>
-            </div>
-            <div class="flex justify-between pb-1">
-              <span class="text-slate-500">Nilai</span>
-              <span class="font-semibold text-slate-800">
-                {{ formatRupiah(hitungHpp(batch)) }} / Kg
-              </span>
             </div>
           </div>
         </div>

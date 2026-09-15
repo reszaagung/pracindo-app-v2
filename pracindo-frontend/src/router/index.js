@@ -21,6 +21,12 @@ const routes = [
     component: () => import('@/views/RegisterView.vue'),
     meta: { publik: true }
   },
+    {
+    path: '/login-retail',
+    name: 'login-retail',
+    component: () => import('@/features/retail/LoginRetail.vue'),
+    meta: { publik: true }
+  },
   {
     path: '/',
     name: 'dashboard',

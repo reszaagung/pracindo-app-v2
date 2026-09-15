@@ -1,11 +1,16 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db import transaction
 from .models import (
     StokRetail, TransaksiPOS, SesiKasir, ItemTransaksi,
     KategoriAkun, AkunBukuBesar, TransaksiJurnal, DetailJurnal,
     SalesRetail, PelangganRetail,
     BukuPiutangRetail, RiwayatBayarPiutang,
-    PenerimaanBarang, ItemPenerimaan
+    PenerimaanBarang, ItemPenerimaan, CabangToko
 )
+
+User = get_user_model()
 
 class KatalogPOSSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='produk.id', read_only=True)
@@ -137,3 +142,20 @@ class MutasiBukuBesarSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetailJurnal
         fields = ['id', 'tanggal', 'nomor_jurnal', 'referensi', 'keterangan', 'debit', 'kredit']
+
+class RegistrasiCabangSerializer(serializers.ModelSerializer):
+    kode = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CabangToko
+        fields = '__all__'
+
+    def validate(self, data):
+        if data.get('user') and CabangToko.objects.filter(user=data.get('user')).exists():
+            raise serializers.ValidationError({"user": "Username ini sudah terikat dengan cabang lain."})
+        return data
+
+class CabangTokoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CabangToko
+        fields = '__all__'

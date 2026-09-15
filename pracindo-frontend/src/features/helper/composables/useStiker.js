@@ -2,11 +2,12 @@ import { ref, reactive } from 'vue'
 
 const hurufAktif = ref(null)
 const formData = reactive({
-    A: { nama_item: '', tipe: '', lot: null, net: null, is_saved: false },
-    B: { nama_item: '', tipe: '', lot: null, net: null, is_saved: false },
-    C: { nama_item: '', tipe: '', lot: null, net: null, is_saved: false },
-    D: { nama_item: '', tipe: '', lot: null, net: null, is_saved: false },
+    A: { nama_item: null, tipe: '', lot: null, net: null, is_saved: false },
+    B: { nama_item: null, tipe: '', lot: null, net: null, is_saved: false },
+    C: { nama_item: null, tipe: '', lot: null, net: null, is_saved: false },
+    D: { nama_item: null, tipe: '', lot: null, net: null, is_saved: false },
 })
+const namaCache = reactive({}) // id produk -> nama, buat tampilan ringkasan (bukan dikirim ke backend)
 
 export function useStiker() {
     const setHurufAktif = (huruf) => {
@@ -26,15 +27,22 @@ export function useStiker() {
     const resetData = () => {
         hurufAktif.value = null
         Object.keys(formData).forEach(key => {
-            formData[key] = { nama_item: '', tipe: '', lot: null, net: null, is_saved: false }
+            formData[key] = { nama_item: null, tipe: '', lot: null, net: null, is_saved: false }
         })
     }
+
+    const simpanNamaTampil = (id, nama) => {
+        if (id != null) namaCache[id] = nama
+    }
+    const namaTampil = (id) => namaCache[id] || '(Tanpa Nama)'
 
     return {
         hurufAktif,
         formData,
         setHurufAktif,
         tutupForm,
-        resetData
+        resetData,
+        simpanNamaTampil,
+        namaTampil
     }
 }

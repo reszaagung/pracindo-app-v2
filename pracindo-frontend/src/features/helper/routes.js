@@ -13,6 +13,11 @@ export default [
                 path: 'stiker',
                 name: 'HelperGenerateStiker',
                 component: () => import('./views/GenerateStiker.vue')
+            },
+            {
+                path: 'stiker-kecil-12',
+                name: 'HelperGenerateStikerKecil12',
+                component: () => import('./views/GenerateStikerKecil12.vue')
             }
         ]
     }

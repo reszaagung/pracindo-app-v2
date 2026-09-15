@@ -9,8 +9,9 @@ from .models import (
 
 @admin.register(CabangToko)
 class CabangTokoAdmin(admin.ModelAdmin):
-    list_display = ('kode', 'nama', 'aktif')
-    search_fields = ('kode', 'nama')
+    # Ditambahkan 'user' untuk mempermudah identifikasi akun login cabang
+    list_display = ('kode', 'nama', 'user', 'aktif')
+    search_fields = ('kode', 'nama', 'user__username')
 
 @admin.register(StokRetail)
 class StokRetailAdmin(admin.ModelAdmin):
@@ -41,6 +42,12 @@ class BukuPiutangRetailAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('pelanggan__nama',)
 
+@admin.register(PelangganRetail)
+class PelangganRetailAdmin(admin.ModelAdmin):
+    list_display = ('nama', 'cabang', 'nomor_telepon', 'limit_piutang')
+    list_filter = ('cabang',)
+    search_fields = ('nama', 'nomor_telepon')
+
 admin.site.register(MutasiStokRetail)
 admin.site.register(SesiKasir)
 admin.site.register(ItemTransaksi)
@@ -51,7 +58,6 @@ admin.site.register(AkunBukuBesar)
 admin.site.register(TransaksiJurnal)
 admin.site.register(DetailJurnal)
 admin.site.register(BonusSales)
-admin.site.register(PelangganRetail)
 admin.site.register(RiwayatBayarPiutang)
 admin.site.register(ItemPenerimaan)
 admin.site.register(SelisihKasir)

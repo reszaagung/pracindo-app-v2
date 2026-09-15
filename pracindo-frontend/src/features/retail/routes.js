@@ -3,20 +3,31 @@ const AkuntansiLayout = () => import('./layout/AkuntansiLayout.vue')
 
 export const retailRoutes = [
   {
+    // RUTE BARU: Halaman Login Retail (Publik / Tanpa Login)
+    path: '/retail/login',
+    name: 'LoginRetail',
+    meta: { perluLogin: false, modul: 'retail' },
+    component: () => import('./LoginRetail.vue')
+  },
+  {
+    // Portal Utama (Pilihan Menu)
     path: '/retail',
     name: 'retail-portal',
     meta: { perluLogin: true, modul: 'retail' },
     component: () => import('./views/DashboardView.vue')
   },
   {
+    // Akses langsung ke pendaftaran cabang dari pracindo.cloud/regretail
+    path: '/regretail',
+    name: 'RegistrasiCabang',
+    meta: { perluLogin: true, modul: 'retail' },
+    component: () => import('./views/RegistrasiCabang.vue')
+  },
+  {
     path: '/retail',
     component: RetailLayout,
     meta: { perluLogin: true, modul: 'retail' },
     children: [
-      {
-        path: '',
-        redirect: { name: 'retail-pos' }
-      },
       {
         path: 'pos',
         name: 'retail-pos',
@@ -25,8 +36,7 @@ export const retailRoutes = [
       {
         path: 'penerimaan',
         name: 'retail-penerimaan',
-        // PERBAIKAN: Arahkan ke file yang ada logikanya, bukan yang dummy!
-        component: () => import('./views/Penerimaan.vue')
+        component: () => import('./views/PenerimaanBarang.vue')
       },
       {
         path: 'piutang',
@@ -41,23 +51,23 @@ export const retailRoutes = [
     ]
   },
   {
-    path: '/retail/keuangan',
+    path: '/akuntansi', 
     component: AkuntansiLayout,
-    meta: { perluLogin: true, modul: 'retail' },
+    meta: { perluLogin: true, modul: 'akuntansi' },
     children: [
       {
         path: '',
-        name: 'retail-keuangan-dashboard',
+        name: 'akuntansi-dashboard',
         component: () => import('./views/KeuanganView.vue')
       },
       {
         path: 'buku-besar',
-        name: 'retail-buku-besar',
+        name: 'akuntansi-buku-besar',
         component: () => import('./views/BukuBesarView.vue')
       },
       {
         path: 'jurnal',
-        name: 'retail-jurnal',
+        name: 'akuntansi-jurnal',
         component: () => import('./views/EntryJurnalView.vue')
       }
     ]

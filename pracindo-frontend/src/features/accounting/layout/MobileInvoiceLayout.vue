@@ -3,9 +3,6 @@
         <!-- HEADER MOBILE -->
         <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 flex items-center justify-between px-4 gap-3 border-b border-slate-100">
             <div class="flex items-center gap-3 min-w-0">
-                <button @click="kembali" class="p-2 shrink-0 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 active:bg-slate-200 transition-colors">
-                    <i class="pi pi-home text-xl"></i>
-                </button>
                 <span class="font-bold text-slate-800 text-base truncate">Invoice & Doc</span>
             </div>
             <button @click="kembali" class="w-9 h-9 shrink-0 bg-slate-900 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform">

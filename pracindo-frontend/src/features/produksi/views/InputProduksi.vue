@@ -18,7 +18,6 @@
             <option value="MIXING">Mixing</option>
             <option value="BLENDING">Blending</option>
           </select>
-          <!-- Filter status dihapus dari sini -->
           <input
             v-model="filter.search"
             type="text"
@@ -33,7 +32,7 @@
         </div>
       </div>
       
-      <div class="ip-table-wrap">
+<div class="ip-table-wrap">
         <table class="ip-table">
           <thead>
             <tr>
@@ -43,17 +42,15 @@
               <th>Tangki Tujuan</th>
               <th>Nama Hasil</th>
               <th>Yield (Kg)</th>
-              <th>Sisa (Kg)</th>
-              <th>Cost Nom</th>
-              <th>Status</th> <!-- Kolom Aksi dihapus -->
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loadingList">
-              <td colspan="9" class="ip-empty">Memuat data...</td>
+              <td colspan="7" class="ip-empty">Memuat data...</td>
             </tr>
             <tr v-else-if="daftarBatch.length === 0">
-              <td colspan="9" class="ip-empty">Belum ada batch produksi.</td>
+              <td colspan="7" class="ip-empty">Belum ada batch produksi.</td>
             </tr>
             <tr v-for="b in daftarBatch" :key="b.id">
               <td class="mono font-medium text-slate-800">{{ b.batch }}</td>
@@ -62,12 +59,7 @@
               <td>{{ b.tangki_tujuan_nama || b.tangki_tujuan }}</td>
               <td>{{ b.nama_hasil }}</td>
               <td class="num">{{ formatKg(b.qty_hasil) }}</td>
-              <td class="num font-bold text-blue-600">{{ formatKg(b.sisa_qty) }}</td>
-              <td class="num font-semibold text-slate-700">
-                {{ formatRupiah(Number(b.qty_hasil) > 0 ? Number(b.nilai_hasil) / Number(b.qty_hasil) : 0) }}
-              </td>
               <td>
-                <!-- Logika Status Baru: PROSES vs SELESAI -->
                 <span class="status" :class="Number(b.qty_hasil) > 0 ? 'status--selesai' : 'status--proses'">
                   {{ Number(b.qty_hasil) > 0 ? 'SELESAI' : 'PROSES' }}
                 </span>
@@ -130,10 +122,6 @@ function formatKg(v) {
   return Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 3, maximumFractionDigits: 3 })
 }
 
-function formatRupiah(v) {
-  return `Rp ${Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
 function formatTanggal(v) {
   if (!v) return '-'
   const d = new Date(v)
@@ -194,7 +182,6 @@ async function saatFormSukses() {
 .mono { font-family: var(--font-mono); }
 .status { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 
-/* Warna Status Baru */
 .status--proses { background: var(--warning-soft); color: #B45309; }
 .status--selesai { background: var(--success-soft); color: #15803D; }
 
