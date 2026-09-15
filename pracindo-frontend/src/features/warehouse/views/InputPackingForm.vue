@@ -131,32 +131,39 @@
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">Kemasan Luar (Dus/Jerigen)</label>
-          <select v-model="form.kemasan" @change="cekKemasanDalam" required class="w-full border border-slate-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all text-slate-700 bg-white" :disabled="isLoadingData">
-             <option value="">{{ isLoadingData ? 'Memuat Kemasan...' : '-- Pilih Kemasan --' }}</option>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Kemasan Utama (Luar)</label>
+          <select v-model="form.kemasan" required class="w-full border border-slate-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all text-slate-700 bg-white" :disabled="isLoadingData">
+             <option value="">{{ isLoadingData ? 'Memuat Kemasan...' : '-- Pilih Kemasan Utama --' }}</option>
              <option v-for="k in kemasanLuarList" :key="k.id" :value="k.id">
                {{ k.produk_nama || k.nama || k.kemasan_nama }}
              </option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">Total Unit (Kemasan Luar)</label>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Total Unit (Kemasan Utama)</label>
           <input type="number" v-model="form.total_unit" required class="w-full border border-slate-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all text-slate-700 bg-slate-50" placeholder="0" />
         </div>
       </div>
 
-      <div v-if="butuhKemasanDalam" class="bg-blue-50/50 p-5 border border-blue-100 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+      <div class="mt-4">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" v-model="butuhKemasanDalam" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 transition-colors" />
+          <span class="text-sm font-bold text-slate-700">Pakai Kemasan Dalam (In-Packing)</span>
+        </label>
+      </div>
+
+      <div v-if="butuhKemasanDalam" class="bg-blue-50/50 p-5 border border-blue-100 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
         <div>
-          <label class="block text-sm font-bold text-blue-800 mb-1">Isi Kemasan Dalam (Botol)</label>
+          <label class="block text-sm font-bold text-blue-800 mb-1">Jenis Kemasan Dalam</label>
           <select v-model="form.kemasan_dalam" required class="w-full border border-blue-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-blue-900 bg-white">
-             <option value="">-- Pilih Botol --</option>
-             <option v-for="k in kemasanDalamList" :key="k.id" :value="k.id">
+             <option value="">-- Pilih Kemasan Dalam --</option>
+             <option v-for="k in kemasanDalamTerfilter" :key="k.id" :value="k.id">
                {{ k.produk_nama || k.nama || k.kemasan_nama }}
              </option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-bold text-blue-800 mb-1">Isi Per Dus (Pcs)</label>
+          <label class="block text-sm font-bold text-blue-800 mb-1">Isi Per Kemasan Utama (Pcs)</label>
           <input type="number" v-model="form.qty_kemasan_dalam" required class="w-full border border-blue-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition-all text-blue-900 bg-white" placeholder="Contoh: 12" />
         </div>
       </div>
@@ -226,6 +233,17 @@ const tangkiTerpilih = computed(() => {
   if (!t) return null
   const isi_kg = hitungSaldo(t.saldo)
   return { ...t, isi_kg }
+})
+
+const kemasanDalamTerfilter = computed(() => {
+  if (!kemasanDalamList.value) return []
+  return kemasanDalamList.value.filter(k => {
+    const nama = (k.produk_nama || k.nama || k.kemasan_nama || '').toUpperCase()
+    return !nama.includes('PAIL') && 
+           !nama.includes('KARDUS') && 
+           !nama.includes('DUS') && 
+           !nama.includes('KARTON')
+  })
 })
 
 const cariBarangJadi = async (query) => {
@@ -344,17 +362,6 @@ onUnmounted(() => {
   clearTimeout(produkDebounceTimer)
 })
 
-const cekKemasanDalam = (event) => {
-  const selectedText = event.target.options[event.target.selectedIndex]?.text?.toUpperCase() || ''
-  if (selectedText.includes('DUS') || selectedText.includes('KARTON')) {
-    butuhKemasanDalam.value = true
-  } else {
-    butuhKemasanDalam.value = false
-    form.kemasan_dalam = ''
-    form.qty_kemasan_dalam = ''
-  }
-}
-
 const submitForm = async () => {
   try {
     const dataSaldo = tangkiTerpilih.value?.saldo;
@@ -379,6 +386,11 @@ const submitForm = async () => {
 
     const hitungTotalKg = parseFloat(form.qty_kg) * parseInt(form.total_unit);
 
+    if (!butuhKemasanDalam.value) {
+      form.kemasan_dalam = null
+      form.qty_kemasan_dalam = 0
+    }
+
     const payload = {
       qty_kg: hitungTotalKg, 
       total_unit: form.total_unit,
@@ -386,8 +398,8 @@ const submitForm = async () => {
       entitas: form.grup,
       batch: batchId,
       produk: form.produk,
-      kemasan_dalam: butuhKemasanDalam.value ? form.kemasan_dalam : null,
-      qty_kemasan_dalam: butuhKemasanDalam.value ? form.qty_kemasan_dalam : 0,
+      kemasan_dalam: form.kemasan_dalam,
+      qty_kemasan_dalam: form.qty_kemasan_dalam,
       status: 'POSTED'
     }
     

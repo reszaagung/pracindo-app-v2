@@ -144,18 +144,40 @@ class MutasiBukuBesarSerializer(serializers.ModelSerializer):
         fields = ['id', 'tanggal', 'nomor_jurnal', 'referensi', 'keterangan', 'debit', 'kredit']
 
 class RegistrasiCabangSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+    
     kode = serializers.CharField(read_only=True)
 
     class Meta:
         model = CabangToko
-        fields = '__all__'
+        fields = ['id', 'username', 'password', 'nama', 'alamat', 'kode', 'aktif']
 
-    def validate(self, data):
-        if data.get('user') and CabangToko.objects.filter(user=data.get('user')).exists():
-            raise serializers.ValidationError({"user": "Username ini sudah terikat dengan cabang lain."})
-        return data
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username ini sudah digunakan.")
+        return value
+
+    @transaction.atomic
+    def create(self, validated_data):
+        username = validated_data.pop('username')
+        password = validated_data.pop('password')
+        
+        user = User.objects.create_user(
+            username=username,
+            password=password
+        )
+        
+        cabang = CabangToko.objects.create(
+            user=user,
+            **validated_data
+        )
+        
+        return cabang
 
 class CabangTokoSerializer(serializers.ModelSerializer):
+    username_kasir = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = CabangToko
-        fields = '__all__'
+        fields = ['id', 'kode', 'nama', 'alamat', 'aktif', 'username_kasir']
