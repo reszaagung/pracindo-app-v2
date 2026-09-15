@@ -1,5 +1,4 @@
 import { produksiModul } from '@/features/produksi/uiConfigProduksi'
-import { retailModul } from '@/features/retail/uiConfigRetail'
 import { helperModul } from '@/features/helper/uiConfigHelper'
 
 export const MODUL = [
@@ -66,7 +65,6 @@ export const MODUL = [
     ],
   },
   produksiModul,
-  retailModul,
   helperModul,
   {
     id: 'logistik',

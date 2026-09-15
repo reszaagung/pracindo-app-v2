@@ -3,7 +3,6 @@ import { useGuards } from './guards'
 import ruteProduksi from '@/features/produksi/routes.js'
 import ruteWarehouse from '@/features/warehouse/routes.js'
 import ruteDistribusi from '@/features/distribusi/routes.js'
-import { retailRoutes } from '@/features/retail/routes.js'
 import ruteAccounting from '@/features/accounting/routes.js' 
 import ruteHelper from '@/features/helper/routes.js'
 import { kurirRoutes } from '@/features/kurir/routes.js' 
@@ -19,12 +18,6 @@ const routes = [
     path: '/register',
     name: 'register',
     component: () => import('@/views/RegisterView.vue'),
-    meta: { publik: true }
-  },
-    {
-    path: '/login-retail',
-    name: 'login-retail',
-    component: () => import('@/features/retail/LoginRetail.vue'),
     meta: { publik: true }
   },
   {
@@ -72,7 +65,6 @@ const routes = [
   ...ruteProduksi,
   ...ruteWarehouse,
   ...ruteDistribusi,
-  ...retailRoutes,
   ...ruteHelper, 
   ...kurirRoutes, 
   {
