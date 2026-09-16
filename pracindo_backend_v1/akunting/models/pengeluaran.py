@@ -110,3 +110,5 @@ class PengeluaranKas(DiauditModel):
         pengeluaran.status = StatusPengeluaran.POSTED
         pengeluaran.save(update_fields=['status'])
         return pengeluaran
+
+

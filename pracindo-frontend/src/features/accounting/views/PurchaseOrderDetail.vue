@@ -145,7 +145,6 @@ onMounted(async () => {
     }
 })
 
-// Utility Format
 const formatNum = (num) => Number(num).toLocaleString('id-ID', { maximumFractionDigits: 2 })
 const formatRupiah = (num) => Number(num).toLocaleString('id-ID')
 

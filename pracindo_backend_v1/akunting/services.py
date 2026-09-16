@@ -468,7 +468,7 @@ def ringkasan_po(po_id):
         'entitas': po.entitas.kode,
         'suplier': po.suplier.nama,
         'status': po.get_status_display(),
-        'total_nilai': po.total_nilai,
+        'total_nilai': po.grand_total,  
         'item': [
             {
                 'produk': i.produk.kode,

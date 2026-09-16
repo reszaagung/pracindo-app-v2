@@ -59,6 +59,7 @@ LOCAL_APPS = [
     'dokumen',
     'inventory.apps.InventoryConfig',
     'akunting',
+    'finance' ,
     'keuangan',
     'pajak',
     'warehouse',
