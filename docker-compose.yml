@@ -75,6 +75,26 @@ services:
     networks:
       - default
 
+  frontend_retail:
+    build:
+      context: ./pracindo-retail-apps  
+      dockerfile: Dockerfile
+    container_name: pracindo_frontend_retail
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pracindo-retail.rule=Host(`pracindo.cloud`) && PathPrefix(`/retail`)
+      - traefik.http.routers.pracindo-retail.entrypoints=websecure
+      - traefik.http.routers.pracindo-retail.tls.certresolver=letsencrypt
+      - traefik.http.routers.pracindo-retail.priority=50 
+      - traefik.http.services.pracindo-retail.loadbalancer.server.port=80
+      - traefik.docker.network=pracindo-app_default
+    networks:
+      - default
+
 networks:
   default:
     name: pracindo-app_default
