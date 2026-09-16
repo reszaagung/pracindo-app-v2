@@ -1,0 +1,137 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import serializers
+
+from .models import (
+    Budget, BudgetLine,
+    FixedCost,
+    RevenueTarget, COGSTarget,
+    Forecast,
+)
+
+
+class FullCleanModelSerializer(serializers.ModelSerializer):
+    """Menjalankan Model.clean() lewat API, supaya aturan bisnis yang
+    sudah ditulis di model (akun aktif, budget terkunci, rentang tanggal)
+    ditegakkan juga dari endpoint, bukan cuma dari admin/shell."""
+
+    def validate(self, attrs):
+        instance = self.instance or self.Meta.model()
+        for field, value in attrs.items():
+            setattr(instance, field, value)
+        try:
+            instance.clean()
+        except DjangoValidationError as exc:
+            detail = exc.message_dict if hasattr(exc, 'message_dict') else {'non_field_errors': exc.messages}
+            raise serializers.ValidationError(detail)
+        return attrs
+
+
+class BudgetLineSerializer(FullCleanModelSerializer):
+    akun_kode = serializers.CharField(source='akun.kode', read_only=True)
+    akun_nama = serializers.CharField(source='akun.nama', read_only=True)
+    dibuat_oleh_nama = serializers.CharField(source='dibuat_oleh.username', read_only=True)
+
+    class Meta:
+        model = BudgetLine
+        fields = [
+            'id', 'budget', 'akun', 'akun_kode', 'akun_nama',
+            'bulan', 'nominal_anggaran', 'keterangan',
+            'is_active', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh_nama',
+        ]
+        read_only_fields = ['budget', 'dibuat_pada', 'diubah_pada']
+
+
+class BudgetSerializer(FullCleanModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    entitas_nama = serializers.CharField(source='entitas.nama', read_only=True)
+    total_anggaran = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    terkunci = serializers.BooleanField(read_only=True)
+    lines = BudgetLineSerializer(many=True, read_only=True)
+    dibuat_oleh_nama = serializers.CharField(source='dibuat_oleh.username', read_only=True)
+
+    class Meta:
+        model = Budget
+        fields = [
+            'id', 'entitas', 'entitas_kode', 'entitas_nama',
+            'nama', 'tahun', 'basis_periode', 'status', 'versi', 'keterangan',
+            'total_anggaran', 'terkunci', 'lines',
+            'is_active', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh_nama',
+        ]
+        read_only_fields = ['dibuat_pada', 'diubah_pada']
+
+
+class FixedCostSerializer(FullCleanModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    entitas_nama = serializers.CharField(source='entitas.nama', read_only=True)
+    akun_beban_kode = serializers.CharField(source='akun_beban.kode', read_only=True)
+    akun_beban_nama = serializers.CharField(source='akun_beban.nama', read_only=True)
+    dibuat_oleh_nama = serializers.CharField(source='dibuat_oleh.username', read_only=True)
+
+    class Meta:
+        model = FixedCost
+        fields = [
+            'id', 'entitas', 'entitas_kode', 'entitas_nama',
+            'akun_beban', 'akun_beban_kode', 'akun_beban_nama',
+            'nama', 'nominal_bulanan', 'tanggal_mulai', 'tanggal_selesai',
+            'aktif', 'auto_masuk_budget', 'keterangan',
+            'is_active', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh_nama',
+        ]
+        read_only_fields = ['dibuat_pada', 'diubah_pada']
+
+
+class RevenueTargetSerializer(FullCleanModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    akun_kode = serializers.CharField(source='akun_pendapatan.kode', read_only=True)
+    akun_nama = serializers.CharField(source='akun_pendapatan.nama', read_only=True)
+
+    class Meta:
+        model = RevenueTarget
+        fields = [
+            'id', 'entitas', 'entitas_kode',
+            'akun_pendapatan', 'akun_kode', 'akun_nama',
+            'tahun', 'bulan', 'nominal_target',
+            'is_active', 'dibuat_pada', 'diubah_pada',
+        ]
+        read_only_fields = ['dibuat_pada', 'diubah_pada']
+
+
+class COGSTargetSerializer(FullCleanModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    akun_kode = serializers.CharField(source='akun_cogs.kode', read_only=True)
+    akun_nama = serializers.CharField(source='akun_cogs.nama', read_only=True)
+
+    class Meta:
+        model = COGSTarget
+        fields = [
+            'id', 'entitas', 'entitas_kode',
+            'akun_cogs', 'akun_kode', 'akun_nama',
+            'tahun', 'bulan', 'nominal_target',
+            'is_active', 'dibuat_pada', 'diubah_pada',
+        ]
+        read_only_fields = ['dibuat_pada', 'diubah_pada']
+
+
+class ForecastSerializer(serializers.ModelSerializer):
+    # entitas tidak disimpan di Forecast — dibaca lewat periode.
+    entitas_kode = serializers.CharField(source='periode.entitas.kode', read_only=True)
+    entitas_nama = serializers.CharField(source='periode.entitas.nama', read_only=True)
+    periode_tahun = serializers.IntegerField(source='periode.tahun', read_only=True)
+    periode_bulan = serializers.IntegerField(source='periode.bulan', read_only=True)
+    periode_ditutup = serializers.BooleanField(source='periode.ditutup', read_only=True)
+
+    forecast_gross_profit = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    forecast_operating_profit = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    forecast_net_profit = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    dibuat_oleh_nama = serializers.CharField(source='dibuat_oleh.username', read_only=True)
+
+    class Meta:
+        model = Forecast
+        fields = [
+            'id', 'periode', 'periode_tahun', 'periode_bulan', 'periode_ditutup',
+            'entitas_kode', 'entitas_nama',
+            'forecast_revenue', 'forecast_cogs', 'forecast_opex',
+            'forecast_other_income', 'forecast_other_expense',
+            'forecast_gross_profit', 'forecast_operating_profit', 'forecast_net_profit',
+            'catatan', 'is_active', 'dibuat_pada', 'dibuat_oleh_nama',
+        ]
+        read_only_fields = ['dibuat_pada']

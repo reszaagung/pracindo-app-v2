@@ -1,5 +1,4 @@
-# retail/models.py
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 
 class CabangToko(models.Model):
@@ -18,24 +17,28 @@ class CabangToko(models.Model):
     class Meta:
         db_table = 'retail_cabang_toko'
         verbose_name = "Cabang Toko"
-        verbose_name_plural = "Cabang Tokos"
+        verbose_name_plural = "Cabang Toko"
 
     def save(self, *args, **kwargs):
         if not self.kode:
-            last_cabang = CabangToko.objects.filter(kode__startswith='pcjm-cbg-').order_by('id').last()
-            
-            if last_cabang:
-                try:
-                    last_number = int(last_cabang.kode.split('-')[-1])
-                    new_number = last_number + 1
-                except ValueError:
+            with transaction.atomic():
+                last_cabang = CabangToko.objects.select_for_update().filter(
+                    kode__startswith='pcjm-cbg-'
+                ).order_by('kode').last()
+
+                if last_cabang:
+                    try:
+                        last_number = int(last_cabang.kode.split('-')[-1])
+                        new_number = last_number + 1
+                    except ValueError:
+                        new_number = 1
+                else:
                     new_number = 1
-            else:
-                new_number = 1                
-            
-            self.kode = f"pcjm-cbg-{new_number:04d}"
-            
-        super().save(*args, **kwargs)
+
+                self.kode = f"pcjm-cbg-{new_number:04d}"
+                super().save(*args, **kwargs)  # tetap di dalam lock
+        else:
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.kode} - {self.nama}"

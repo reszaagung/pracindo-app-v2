@@ -1,98 +1,119 @@
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 from .base import BaseFinanceModel
-from .period import PeriodeFinance
 
 
-class KategoriBudget(models.TextChoices):
-    OPEX = "OPEX", "OPEX"
-    CAPEX = "CAPEX", "CAPEX"
+class BasisPeriode(models.TextChoices):
+    BULANAN = 'BULANAN', 'Bulanan'
+    TAHUNAN = 'TAHUNAN', 'Tahunan'
 
 
 class StatusBudget(models.TextChoices):
-    DRAFT = "DRAFT", "Draft"
-    SUBMITTED = "SUBMITTED", "Submitted"
-    APPROVED = "APPROVED", "Approved"
-    LOCKED = "LOCKED", "Locked"
+    DRAFT   = 'DRAFT',   'Draft'
+    AKTIF   = 'AKTIF',   'Aktif'
+    DITUTUP = 'DITUTUP', 'Ditutup'
+    BATAL   = 'BATAL',   'Batal'
 
 
 class Budget(BaseFinanceModel):
-    periode = models.ForeignKey(
-        PeriodeFinance, on_delete=models.PROTECT, related_name="budgets"
+    """
+    Header anggaran. Bukan transaksi akuntansi — tidak pernah membuat jurnal.
+
+    Dikunci ke tahun, bukan ke PeriodeAkuntansi, karena satu budget
+    membawahi 12 bulan sekaligus. Penguncian per bulan tetap dibaca dari
+    core.PeriodeAkuntansi.ditutup oleh service, bukan dari sini.
+    """
+
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, related_name='budgets',
     )
-    nama_anggaran = models.CharField(max_length=150)
-    kategori = models.CharField(
-        max_length=10, choices=KategoriBudget.choices, default=KategoriBudget.OPEX
+    nama  = models.CharField(max_length=150)
+    tahun = models.PositiveSmallIntegerField()
+    basis_periode = models.CharField(
+        max_length=10, choices=BasisPeriode.choices, default=BasisPeriode.BULANAN,
     )
     status = models.CharField(
-        max_length=10, choices=StatusBudget.choices, default=StatusBudget.DRAFT
+        max_length=10, choices=StatusBudget.choices,
+        default=StatusBudget.DRAFT, db_index=True,
     )
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="budget_approved",
-    )
-    approved_at = models.DateTimeField(null=True, blank=True)
-    catatan = models.TextField(null=True, blank=True)
+    versi = models.PositiveIntegerField(default=1)
+    keterangan = models.TextField(blank=True)
 
     class Meta:
+        db_table = 'finance_budget'
+        ordering = ['-tahun', 'nama', '-versi']
+        verbose_name_plural = 'Budget'
         constraints = [
             models.UniqueConstraint(
-                fields=["periode", "nama_anggaran"], name="uq_budget_periode_nama"
-            )
+                fields=['entitas', 'nama', 'tahun', 'versi'],
+                name='uq_budget_entitas_nama_tahun_versi',
+            ),
         ]
-        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.nama_anggaran} ({self.periode.nama_periode})"
+        return f"{self.nama} {self.tahun} v{self.versi}"
 
     @property
-    def total_budget(self):
-        """Dihitung on-the-fly dari BudgetLine — sengaja tidak disimpan
-        sbg field, biar nggak out-of-sync (PRD §6.2)."""
-        return self.lines.aggregate(total=models.Sum("nominal_budget"))["total"] or 0
+    def terkunci(self):
+        return self.status in (StatusBudget.DITUTUP, StatusBudget.BATAL)
 
     @property
-    def is_locked(self):
-        return self.status == StatusBudget.LOCKED
+    def total_anggaran(self):
+        """Dihitung on-the-fly. Sengaja bukan field tersimpan supaya tidak
+        pernah out-of-sync dengan baris di bawahnya."""
+        return self.lines.aggregate(t=models.Sum('nominal_anggaran'))['t'] or 0
 
 
 class BudgetLine(BaseFinanceModel):
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name="lines")
+    """
+    Rincian anggaran per akun COA. Titik sambung ke akunting: service
+    budget-vs-actual join langsung lewat akun_id, tanpa mapping manual.
+    """
+
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name='lines')
     akun = models.ForeignKey(
-        "akunting.Akun", on_delete=models.PROTECT, related_name="budget_lines"
+        'akunting.Akun', on_delete=models.PROTECT, related_name='budget_lines',
     )
-    nominal_budget = models.DecimalField(max_digits=18, decimal_places=2, default=0)
-    bulan = models.PositiveSmallIntegerField(null=True, blank=True)
-    keterangan = models.TextField(null=True, blank=True)
+    bulan = models.PositiveSmallIntegerField(
+        help_text='0 = seluruh tahun (basis TAHUNAN); 1–12 = bulan spesifik.',
+    )
+    nominal_anggaran = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    keterangan = models.TextField(blank=True)
 
     class Meta:
-        ordering = ["budget", "bulan", "akun"]
-        indexes = [models.Index(fields=["budget", "akun"])]
+        db_table = 'finance_budget_line'
+        ordering = ['budget', 'bulan', 'akun']
+        verbose_name_plural = 'Budget line'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['budget', 'akun', 'bulan'],
+                name='uq_budgetline_budget_akun_bulan',
+            ),
+            models.CheckConstraint(
+                condition=Q(bulan__gte=0) & Q(bulan__lte=12),
+                name='ck_budgetline_bulan_valid',
+            ),
+            models.CheckConstraint(
+                condition=Q(nominal_anggaran__gte=0),
+                name='ck_budgetline_nominal_non_negatif',
+            ),
+        ]
+        indexes = [models.Index(fields=['budget', 'akun'], name='ix_budgetline_budget_akun')]
 
     def __str__(self):
-        return f"{self.budget.nama_anggaran} — {self.akun}"
+        return f"{self.budget.nama} — {self.akun} ({self.bulan})"
 
     def clean(self):
-        if self.nominal_budget is not None and self.nominal_budget < 0:
-            raise ValidationError({"nominal_budget": "Nominal budget tidak boleh negatif."})
-        if self.bulan is not None and not (1 <= self.bulan <= 12):
-            raise ValidationError({"bulan": "Bulan harus antara 1–12."})
-        if self.akun_id and not self.akun.is_active:  # sesuaikan nama field kalau beda di akunting.Akun
-            raise ValidationError({"akun": "Akun yang dipilih tidak aktif."})
-        # Kombinasi (budget, akun, bulan) unik SENGAJA tidak jadi
-        # UniqueConstraint DB — bulan nullable, NULL diperlakukan beda
-        # antar-database di composite unique. Dicek di service/serializer.
+        if self.akun_id and not self.akun.aktif:
+            raise ValidationError({'akun': 'Akun yang dipilih tidak aktif.'})
+        if self.budget_id and self.budget.terkunci:
+            raise ValidationError('Budget DITUTUP/BATAL — baris tidak bisa diubah.')
 
     def save(self, *args, **kwargs):
-        # Guard terakhir di level model spy status LOCKED beneran nggak
-        # bisa ditembus lewat jalur manapun (bukan cuma UI) — kriteria
-        # penerimaan PRD §10. Idealnya dicek juga di serializer.validate()
-        # biar API balikin 400 yang rapi, bukan 500 dari sini.
-        if self.budget_id and self.budget.status == StatusBudget.LOCKED:
-            raise ValidationError("Budget berstatus LOCKED — BudgetLine tidak bisa diubah.")
+        # Guard terakhir di level model: LOCKED harus ditolak lewat jalur
+        # apa pun, bukan cuma lewat form/serializer.
+        if self.budget_id and self.budget.terkunci:
+            raise ValidationError('Budget DITUTUP/BATAL — baris tidak bisa diubah.')
         super().save(*args, **kwargs)

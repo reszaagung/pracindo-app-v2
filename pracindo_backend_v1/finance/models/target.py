@@ -1,52 +1,80 @@
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 from .base import BaseFinanceModel
-from .period import PeriodeFinance
 
 
-class RevenueTarget(BaseFinanceModel):
-    periode = models.ForeignKey(
-        PeriodeFinance, on_delete=models.PROTECT, related_name="revenue_targets"
-    )
-    kategori = models.CharField(max_length=100, default="OVERALL")
+class TargetBulanan(BaseFinanceModel):
+    """Bentuk bersama RevenueTarget & COGSTarget: satu angka per
+    (entitas, akun, tahun, bulan). Actual-nya selalu dari ledger."""
+
+    entitas = models.ForeignKey('core.Entitas', on_delete=models.PROTECT, related_name='+')
+    tahun = models.PositiveSmallIntegerField()
+    bulan = models.PositiveSmallIntegerField()
     nominal_target = models.DecimalField(max_digits=18, decimal_places=2)
-    catatan = models.TextField(null=True, blank=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["periode", "kategori"], name="uq_revenuetarget_periode_kategori"
-            )
-        ]
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.periode.nama_periode} — {self.kategori}"
+        abstract = True
+        ordering = ['-tahun', '-bulan']
 
 
-class COGSTarget(BaseFinanceModel):
-    periode = models.ForeignKey(
-        PeriodeFinance, on_delete=models.PROTECT, related_name="cogs_targets"
+class RevenueTarget(TargetBulanan):
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, related_name='revenue_targets',
     )
-    kategori = models.CharField(max_length=100, default="OVERALL")
-    nominal_target = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
-    persentase_target = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    catatan = models.TextField(null=True, blank=True)
+    akun_pendapatan = models.ForeignKey(
+        'akunting.Akun', on_delete=models.PROTECT, related_name='revenue_targets',
+    )
 
-    class Meta:
+    class Meta(TargetBulanan.Meta):
+        abstract = False
+        db_table = 'finance_revenue_target'
+        verbose_name_plural = 'Revenue target'
         constraints = [
             models.UniqueConstraint(
-                fields=["periode", "kategori"], name="uq_cogstarget_periode_kategori"
-            )
+                fields=['entitas', 'akun_pendapatan', 'tahun', 'bulan'],
+                name='uq_revenuetarget_entitas_akun_tahun_bulan',
+            ),
+            models.CheckConstraint(
+                condition=Q(bulan__gte=1) & Q(bulan__lte=12),
+                name='ck_revenuetarget_bulan_valid',
+            ),
         ]
-        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.periode.nama_periode} — {self.kategori}"
+        return f"{self.akun_pendapatan} — {self.bulan:02d}/{self.tahun}"
 
     def clean(self):
-        if self.nominal_target is None and self.persentase_target is None:
-            raise ValidationError(
-                "Minimal salah satu dari nominal_target atau persentase_target harus diisi."
-            )
+        # TODO: akun_pendapatan wajib bertipe PENDAPATAN.
+        pass
+
+
+class COGSTarget(TargetBulanan):
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, related_name='cogs_targets',
+    )
+    akun_cogs = models.ForeignKey(
+        'akunting.Akun', on_delete=models.PROTECT, related_name='cogs_targets',
+    )
+
+    class Meta(TargetBulanan.Meta):
+        abstract = False
+        db_table = 'finance_cogs_target'
+        verbose_name_plural = 'COGS target'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['entitas', 'akun_cogs', 'tahun', 'bulan'],
+                name='uq_cogstarget_entitas_akun_tahun_bulan',
+            ),
+            models.CheckConstraint(
+                condition=Q(bulan__gte=1) & Q(bulan__lte=12),
+                name='ck_cogstarget_bulan_valid',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.akun_cogs} — {self.bulan:02d}/{self.tahun}"
+
+    def clean(self):
+        # TODO: akun_cogs wajib bertipe COGS/HPP.
+        pass

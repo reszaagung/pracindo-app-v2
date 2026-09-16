@@ -1,56 +1,80 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 from .base import BaseFinanceModel
 
 
-class FrekuensiFixedCost(models.TextChoices):
-    BULANAN = "BULANAN", "Bulanan"
-    TRIWULAN = "TRIWULAN", "Triwulan"
-    TAHUNAN = "TAHUNAN", "Tahunan"
-
-
-class StatusFixedCost(models.TextChoices):
-    AKTIF = "AKTIF", "Aktif"
-    NONAKTIF = "NONAKTIF", "Nonaktif"
-
-
 class FixedCost(BaseFinanceModel):
-    nama_biaya = models.CharField(max_length=150)
-    akun = models.ForeignKey(
-        "akunting.Akun",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="fixed_costs",
+    """
+    Biaya tetap/berulang sebagai input planning.
+
+    FixedCost != actual expense. Baris di sini tidak pernah memposting
+    jurnal; actual tetap datang dari transaksi yang di-posting akunting.
+    Dicocokkan ke satu bulan lewat overlap tanggal, bukan FK ke periode.
+    """
+
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, related_name='fixed_costs',
     )
-    nominal = models.DecimalField(max_digits=18, decimal_places=2)
-    frekuensi = models.CharField(
-        max_length=10, choices=FrekuensiFixedCost.choices, default=FrekuensiFixedCost.BULANAN
+    akun_beban = models.ForeignKey(
+        'akunting.Akun', on_delete=models.PROTECT, related_name='fixed_costs',
     )
-    tanggal_mulai = models.DateField()
-    tanggal_berakhir = models.DateField(null=True, blank=True)
-    status = models.CharField(
-        max_length=10, choices=StatusFixedCost.choices, default=StatusFixedCost.AKTIF
+    nama = models.CharField(max_length=150)
+    nominal_bulanan = models.DecimalField(max_digits=18, decimal_places=2)
+    tanggal_mulai   = models.DateField()
+    tanggal_selesai = models.DateField(null=True, blank=True)
+    aktif = models.BooleanField(default=True, db_index=True)
+    auto_masuk_budget = models.BooleanField(
+        default=False,
+        help_text='Hanya memengaruhi baseline budget/planning. '
+                  'Tidak pernah membuat expense actual.',
     )
-    catatan = models.TextField(null=True, blank=True)
+    keterangan = models.TextField(blank=True)
 
     class Meta:
-        ordering = ["-tanggal_mulai", "nama_biaya"]
-        indexes = [models.Index(fields=["status", "tanggal_mulai", "tanggal_berakhir"])]
+        db_table = 'finance_fixed_cost'
+        ordering = ['-tanggal_mulai', 'nama']
+        verbose_name_plural = 'Fixed cost'
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(nominal_bulanan__gte=0),
+                name='ck_fixedcost_nominal_non_negatif',
+            ),
+            models.CheckConstraint(
+                condition=Q(tanggal_selesai__isnull=True)
+                          | Q(tanggal_selesai__gte=models.F('tanggal_mulai')),
+                name='ck_fixedcost_tanggal_valid',
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=['aktif', 'tanggal_mulai', 'tanggal_selesai'],
+                name='ix_fixedcost_periode_aktif',
+            ),
+        ]
 
     def __str__(self):
-        return self.nama_biaya
+        return self.nama
 
     def clean(self):
-        if self.tanggal_berakhir and self.tanggal_mulai:
-            if self.tanggal_berakhir <= self.tanggal_mulai:
+        # TODO: akun_beban wajib bertipe BEBAN — nunggu nama field tipe
+        # di akunting.Akun.
+        if self.tanggal_selesai and self.tanggal_mulai:
+            if self.tanggal_selesai < self.tanggal_mulai:
                 raise ValidationError(
-                    {"tanggal_berakhir": "Tanggal berakhir harus setelah tanggal mulai."}
+                    {'tanggal_selesai': 'Tanggal selesai tidak boleh sebelum tanggal mulai.'}
                 )
 
-    def overlaps_periode(self, periode):
-        """Helper buat forecast service nanti — cocokkan FixedCost ke
-        PeriodeFinance via overlap tanggal, bukan FK langsung (PRD §6.4)."""
-        akhir = self.tanggal_berakhir or periode.tanggal_selesai
-        return self.tanggal_mulai <= periode.tanggal_selesai and akhir >= periode.tanggal_mulai
+    def berlaku_pada(self, tahun, bulan):
+        """Helper untuk forecast/budget service — overlap tanggal, bukan FK."""
+        import calendar
+        from datetime import date
+
+        awal = date(tahun, bulan, 1)
+        akhir = date(tahun, bulan, calendar.monthrange(tahun, bulan)[1])
+        return (
+            self.aktif
+            and self.tanggal_mulai <= akhir
+            and (self.tanggal_selesai is None or self.tanggal_selesai >= awal)
+        )
