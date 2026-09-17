@@ -6,7 +6,7 @@ from .models import (
     FixedCost,
     RevenueTarget, COGSTarget,
     Forecast,
-    RekapPurchaseOrder,
+    RekapPurchaseOrder, RekapMutasiProduksi, RekapMutasiKlaim,
 )
 
 
@@ -162,3 +162,45 @@ class GenerateRekapSerializer(serializers.Serializer):
     tahun = serializers.IntegerField(min_value=2000, max_value=2100)
     bulan = serializers.IntegerField(min_value=1, max_value=12)
     entitas = serializers.IntegerField(required=False, allow_null=True)
+
+class RekapMutasiProduksiSerializer(serializers.ModelSerializer):
+    total_batch = serializers.IntegerField(read_only=True)
+    persediaan_akhir = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    rasio_susut = serializers.DecimalField(max_digits=10, decimal_places=6, read_only=True)
+
+    class Meta:
+        model = RekapMutasiProduksi
+        fields = [
+            'id', 'tahun', 'bulan',
+            'batch_mixing', 'batch_blending', 'total_batch',
+            'qty_hasil', 'nilai_hasil', 'qty_susut', 'nilai_susut', 'rasio_susut',
+            'qty_packing', 'nilai_packing',
+            'wip_akhir_kg', 'wip_akhir_nilai',
+            'pool_akhir_nilai', 'pool_kemasan_akhir_nilai', 'persediaan_akhir',
+            'dibekukan', 'dihitung_pada', 'is_active',
+        ]
+        read_only_fields = [f for f in fields if f != 'dibekukan']
+
+
+class RekapMutasiKlaimSerializer(serializers.ModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    entitas_nama = serializers.CharField(source='entitas.nama', read_only=True)
+    mutasi_bersih = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    qty_bersih = serializers.DecimalField(max_digits=18, decimal_places=3, read_only=True)
+
+    class Meta:
+        model = RekapMutasiKlaim
+        fields = [
+            'id', 'entitas', 'entitas_kode', 'entitas_nama', 'tahun', 'bulan',
+            'jumlah_mutasi',
+            'qty_setor', 'nilai_setor', 'qty_tarik', 'nilai_tarik',
+            'mutasi_bersih', 'qty_bersih',
+            'saldo_akhir', 'qty_setor_kumulatif', 'qty_tarik_kumulatif',
+            'dibekukan', 'dihitung_pada', 'is_active',
+        ]
+        read_only_fields = [f for f in fields if f != 'dibekukan']
+
+
+class GenerateRekapProduksiSerializer(serializers.Serializer):
+    tahun = serializers.IntegerField(min_value=2000, max_value=2100)
+    bulan = serializers.IntegerField(min_value=1, max_value=12)

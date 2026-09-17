@@ -10,7 +10,7 @@ from .models import (
     FixedCost,
     RevenueTarget, COGSTarget,
     Forecast,
-    RekapPurchaseOrder,
+    RekapPurchaseOrder, RekapMutasiProduksi, RekapMutasiKlaim,
 )
 from .serializers import (
     BudgetSerializer, BudgetLineSerializer,
@@ -18,8 +18,15 @@ from .serializers import (
     RevenueTargetSerializer, COGSTargetSerializer,
     ForecastSerializer,
     RekapPurchaseOrderSerializer, GenerateRekapSerializer,
+    RekapMutasiProduksiSerializer, RekapMutasiKlaimSerializer,
+    GenerateRekapProduksiSerializer,
 )
-from .services import hitung_rekap_po, generate_rekap_po
+from .services import (
+    hitung_rekap_po, generate_rekap_po,
+    hitung_rekap_produksi, generate_rekap_produksi,
+    hitung_rekap_klaim, generate_rekap_klaim,
+    CountRealtime,
+)
 
 
 def batasi_entitas(qs, request, field='entitas'):
@@ -270,3 +277,105 @@ class RekapPurchaseOrderGenerateAPIView(APIView):
             RekapPurchaseOrderSerializer(hasil, many=True).data,
             status=status.HTTP_200_OK,
         )
+
+
+class RekapMutasiProduksiListAPIView(generics.ListAPIView):
+    """Global, tanpa entitas: Tangki dan Batch resource bersama."""
+    serializer_class = RekapMutasiProduksiSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = RekapMutasiProduksi.objects.filter(is_active=True)
+        return _filter_params(qs, self.request, {'tahun': 'tahun', 'bulan': 'bulan'})
+
+
+class RekapMutasiProduksiDetailAPIView(generics.RetrieveUpdateAPIView):
+    queryset = RekapMutasiProduksi.objects.all()
+    serializer_class = RekapMutasiProduksiSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class RekapMutasiProduksiLiveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        s = GenerateRekapProduksiSerializer(data=request.query_params)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        return Response(hitung_rekap_produksi(tahun=d['tahun'], bulan=d['bulan']))
+
+
+class RekapMutasiProduksiGenerateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        s = GenerateRekapProduksiSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        rekap = generate_rekap_produksi(
+            tahun=d['tahun'], bulan=d['bulan'], user=request.user,
+        )
+        return Response(RekapMutasiProduksiSerializer(rekap).data)
+
+
+class RekapMutasiKlaimListAPIView(generics.ListAPIView):
+    serializer_class = RekapMutasiKlaimSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = (RekapMutasiKlaim.objects.filter(is_active=True)
+              .select_related('entitas'))
+        qs = batasi_entitas(qs, self.request)
+        return _filter_params(qs, self.request, {
+            'entitas': 'entitas_id', 'tahun': 'tahun', 'bulan': 'bulan',
+        })
+
+
+class RekapMutasiKlaimDetailAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = RekapMutasiKlaimSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = RekapMutasiKlaim.objects.select_related('entitas')
+        return batasi_entitas(qs, self.request)
+
+
+class RekapMutasiKlaimLiveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        s = GenerateRekapSerializer(data=request.query_params)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        return Response(hitung_rekap_klaim(
+            tahun=d['tahun'], bulan=d['bulan'], entitas=d.get('entitas'),
+        ))
+
+
+class RekapMutasiKlaimGenerateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        s = GenerateRekapSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        hasil = generate_rekap_klaim(
+            tahun=d['tahun'], bulan=d['bulan'],
+            entitas=d.get('entitas'), user=request.user,
+        )
+        return Response(RekapMutasiKlaimSerializer(hasil, many=True).data)
+
+
+class VersiRealtimeAPIView(APIView):
+    """Endpoint murah untuk polling. 304 kalau klien sudah punya versi
+    terbaru, supaya tidak ada payload dikirim."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        versi = CountRealtime.stempel()
+        if request.headers.get('If-None-Match') == versi:
+            return Response(status=status.HTTP_304_NOT_MODIFIED)
+        resp = Response(CountRealtime.ringkas())
+        resp['ETag'] = versi
+        resp['Cache-Control'] = 'no-cache'
+        return resp

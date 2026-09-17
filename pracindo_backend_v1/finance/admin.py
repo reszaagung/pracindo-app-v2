@@ -5,7 +5,7 @@ from .models import (
     FixedCost,
     RevenueTarget, COGSTarget,
     Forecast,
-    RekapPurchaseOrder,
+    RekapPurchaseOrder, RekapMutasiProduksi, RekapMutasiKlaim,
 )
 
 
@@ -73,3 +73,23 @@ class FixedCostAdmin(DiauditAdminMixin, admin.ModelAdmin):
 class RevenueTargetAdmin(DiauditAdminMixin, admin.ModelAdmin):
     list_display = ('entitas', 'akun_pendapatan', 'tahun', 'bulan', 'nominal_target')
     list_filter = ('tahun', 'bulan', 'entitas')
+
+@admin.register(RekapMutasiProduksi)
+class RekapMutasiProduksiAdmin(DiauditAdminMixin, admin.ModelAdmin):
+    list_display = ('tahun', 'bulan', 'total_batch', 'qty_hasil', 'nilai_hasil',
+                    'qty_susut', 'wip_akhir_nilai', 'persediaan_akhir',
+                    'dibekukan', 'dihitung_pada')
+    list_filter = ('tahun', 'bulan', 'dibekukan')
+    readonly_fields = ('dihitung_pada', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh',
+                       'total_batch', 'persediaan_akhir', 'rasio_susut')
+
+
+@admin.register(RekapMutasiKlaim)
+class RekapMutasiKlaimAdmin(DiauditAdminMixin, admin.ModelAdmin):
+    list_display = ('entitas', 'tahun', 'bulan', 'jumlah_mutasi',
+                    'nilai_setor', 'nilai_tarik', 'mutasi_bersih',
+                    'saldo_akhir', 'dibekukan', 'dihitung_pada')
+    list_filter = ('entitas', 'tahun', 'bulan', 'dibekukan')
+    list_select_related = ('entitas',)
+    readonly_fields = ('dihitung_pada', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh',
+                       'mutasi_bersih', 'qty_bersih')
