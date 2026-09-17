@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import LoginRetail from '@/LoginRetail.vue'
-import RegisterCabangForm from '@/RegisterCabangForm.vue'
+import LoginRetail from '@/view/public/LoginRetail.vue'
+import RegisterCabangForm from '@/view/protect/RegisterCabangForm.vue'
+
 import KasirLayout from '@/layouts/kasir_layout/KasirLayout.vue'
 import PosView from '@/features/kasir/views/PosView.vue'
 import PembukuanLayout from '@/layouts/pembukuan_layout/PembukuanLayout.vue'
@@ -60,15 +61,19 @@ const router = createRouter({
     routes
 })
 
-// SATPAM ROUTER
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('retail_token') 
     
-    if (to.name !== 'login' && to.name !== 'register' && !token) {
+    const halamanPublik = ['login', 'register']
+    const tujuanPublik = halamanPublik.includes(to.name)
+
+    if (!tujuanPublik && !token) {
         next({ name: 'login' })
-    } else if ((to.name === 'login' || to.name === 'register') && token) {
+    } 
+    else if (tujuanPublik && token) {
         next('/kasir')
-    } else {
+    } 
+    else {
         next()
     }
 })

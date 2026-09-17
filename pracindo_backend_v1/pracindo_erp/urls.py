@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/v1/core/',        include('core.urls')),
     path('api/v1/master/',      include('master.urls')),
     path('api/v1/dokumen/',     include('dokumen.urls')),
+    path('api/v1/finance/', include('finance.urls')),
     path('api/v1/inventory/',   include('inventory.urls')),
     path('api/v1/akunting/',    include('akunting.urls')),
     path('api/v1/keuangan/',    include('keuangan.urls')),

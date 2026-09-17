@@ -1,11 +1,11 @@
 // src/composables/useAuth.js
 import { ref, computed } from 'vue'
 import api from '@/utils/api'
+import JSEncrypt from 'jsencrypt' 
 const token = ref(localStorage.getItem('token') || null)
 const profil = ref(JSON.parse(localStorage.getItem('profil') || 'null'))
 const modul = ref(JSON.parse(localStorage.getItem('modul') || '[]'))
 const sedangProses = ref(false)
-
 
 const PERAN_LABEL = {
     SUPERVISOR: 'Supervisor',
@@ -51,7 +51,25 @@ export function useAuth() {
     const login = async (username, password) => {
         sedangProses.value = true
         try {
-            const { data } = await api.post('auth/login/', { username, password })
+            let passwordYangDikirim = password 
+            try {
+                const rawPublicKey = import.meta.env.VITE_RSA_PUBLIC_KEY
+                if (rawPublicKey) {
+                    const PUBLIC_KEY = rawPublicKey.replace(/\\n/g, '\n')
+                    
+                    const encryptor = new JSEncrypt()
+                    encryptor.setPublicKey(PUBLIC_KEY)
+                    
+                    const hasilEnkripsi = encryptor.encrypt(password)
+                    if (hasilEnkripsi) {
+                        passwordYangDikirim = hasilEnkripsi 
+                    }
+                }
+            } catch (err) {
+                console.warn("Enkripsi RSA dilewati, mengirim teks biasa. Cek file .env", err)
+            }
+
+            const { data } = await api.post('auth/login/', { username, password: passwordYangDikirim })
             simpan(data)
             return { success: true, data }
         } catch (err) {

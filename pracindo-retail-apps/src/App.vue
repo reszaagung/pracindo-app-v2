@@ -1,5 +1,4 @@
 <template>
-  <!-- Router View adalah kanvas kosong tempat semua halaman (Login, Kasir, dll) dirender -->
   <router-view />
 </template>
 

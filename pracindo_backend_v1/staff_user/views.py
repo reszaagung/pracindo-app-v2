@@ -1,4 +1,7 @@
 """Endpoint pengguna — staff_user/views.py"""
+import os
+import rsa
+import base64
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status, viewsets
@@ -20,6 +23,9 @@ from .serializers import (
     PendaftaranSerializer, PenolakanSerializer, ProfilSerializer,
     ResetPasswordSerializer, RiwayatAksesSerializer, UbahRoleSerializer,
 )
+
+raw_private_key = os.environ.get('RSA_PRIVATE_KEY', '')
+PRIVATE_KEY = raw_private_key.replace('\\n', '\n')
 
 
 def _galat(e):
@@ -61,9 +67,30 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        s = LoginSerializer(data=request.data)
+        data_login = request.data.copy()
+        
+        encrypted_password = data_login.get('password')
+
+        print("\n=== DEBUG LOGIN ===")
+        print("1. Password dari Vue:", encrypted_password)
+        
+        if encrypted_password:
+            try:
+                priv_key = rsa.PrivateKey.load_pkcs1(PRIVATE_KEY.encode('utf-8'))
+                decrypted_pw = rsa.decrypt(base64.b64decode(encrypted_password), priv_key).decode('utf-8')
+                
+                print("2. BERHASIL DIBUKA! Isinya:", decrypted_pw)
+                
+                data_login['password'] = decrypted_pw
+            except Exception as e:
+                print("2. GAGAL BUKA GEMBOK! Error-nya:", str(e))
+                print("Isi PRIVATE_KEY saat ini:", PRIVATE_KEY[:30], "...dst")
+        print("===================\n")
+
+        s = LoginSerializer(data=data_login)
         s.is_valid(raise_exception=True)
         username = s.validated_data['username']
+        
         user = authenticate(
             request, username=username, password=s.validated_data['password'],
         )

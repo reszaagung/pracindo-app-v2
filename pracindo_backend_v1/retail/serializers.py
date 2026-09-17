@@ -163,13 +163,17 @@ class RegistrasiCabangSerializer(serializers.ModelSerializer):
         username = validated_data.pop('username')
         password = validated_data.pop('password')
         
+        validated_data.pop('aktif', None)
+        
         user = User.objects.create_user(
             username=username,
-            password=password
+            password=password,
+            is_active=False  
         )
         
         cabang = CabangToko.objects.create(
             user=user,
+            aktif=False,     
             **validated_data
         )
         

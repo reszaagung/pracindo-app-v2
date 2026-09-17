@@ -1,4 +1,7 @@
 import uuid
+import rsa
+import os  
+import base64
 from decimal import Decimal
 from datetime import timedelta
 from django.utils import timezone
@@ -6,7 +9,7 @@ from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -27,6 +30,10 @@ from .serializers import (
     BukuPiutangRetailSerializer, PenerimaanBarangSerializer,
     MutasiBukuBesarSerializer, CabangTokoSerializer, RegistrasiCabangSerializer
 )
+
+raw_private_key = os.environ.get('RSA_PRIVATE_KEY', '')
+PRIVATE_KEY = raw_private_key.replace('\\n', '\n')
+
 
 class RetailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -50,9 +57,32 @@ class RetailTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
         return data
 
+
 class RetailLoginView(TokenObtainPairView):
     serializer_class = RetailTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        encrypted_password = request.data.get('password')
+        
+        if encrypted_password:
+            try:
+                priv_key = rsa.PrivateKey.load_pkcs1(PRIVATE_KEY.encode('utf-8'))
+                decrypted_pw = rsa.decrypt(base64.b64decode(encrypted_password), priv_key).decode('utf-8')
+                
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = True
+                    
+                request.data['password'] = decrypted_pw
+                
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = False
+
+            except Exception as e:
+                print("GAGAL BUKA GEMBOK RETAIL:", str(e))
+                
+        return super().post(request, *args, **kwargs)
+
+        
 def get_user_cabang(user):
     if hasattr(user, 'cabang_toko') and user.cabang_toko is not None:
         return user.cabang_toko
@@ -423,10 +453,15 @@ class BukuBesarMutasiAPIView(generics.ListAPIView):
         return DetailJurnal.objects.filter(akun_id=akun_id).select_related('jurnal').order_by('jurnal__tanggal', 'id')
 
 class CabangTokoAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
     queryset = CabangToko.objects.all().order_by('-id')
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return RegistrasiCabangSerializer
         return CabangTokoSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [AllowAny()]
+        
+        return [IsAuthenticated()]

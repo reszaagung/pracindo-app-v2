@@ -127,6 +127,7 @@ onMounted(() => {
 
 const handleLogin = async () => {
     pesan.value = ''
+    
     const hasil = await login(form.identifier.trim(), form.password)
 
     if (!hasil.success) {
@@ -156,9 +157,7 @@ const bolehKe = (tujuan) => {
 </script>
 
 <style scoped>
-/* =========================================
-   STYLE MURNI HALAMAN LOGIN (TANPA TAILWIND)
-========================================= */
+
 
 * {
     box-sizing: border-box;
