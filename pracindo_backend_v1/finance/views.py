@@ -409,10 +409,14 @@ class VersiRealtimeAPIView(APIView):
 
 
 class PosisiLikuiditasAPIView(APIView):
-    """Posisi aset lancar dan rasio likuiditas, dihitung saat diminta.
-    Query param entitas opsional; tanpa itu = konsolidasi."""
+    """Posisi aset lancar, hak antar-grup, dan rasio likuiditas.
+    Query param entitas dan grup opsional; tanpa keduanya = konsolidasi."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         entitas = request.query_params.get('entitas')
-        return Response(posisi_likuiditas(entitas=int(entitas) if entitas else None))
+        grup = request.query_params.get('grup')
+        return Response(posisi_likuiditas(
+            entitas=int(entitas) if entitas else None,
+            grup=int(grup) if grup else None,
+        ))
