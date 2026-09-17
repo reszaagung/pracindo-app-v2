@@ -16,11 +16,16 @@ class SalesOrderItemSerializer(serializers.ModelSerializer):
 class SalesOrderSerializer(serializers.ModelSerializer):
     items = SalesOrderItemSerializer(many=True)
     pelanggan_nama = serializers.CharField(source='pelanggan.nama', read_only=True)
+    
+    # --- TAMBAHAN: Untuk menampilkan teks/kode cabang di tabel Vue ---
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True, default='UMUM')
 
     class Meta:
         model = SalesOrder
         fields = [
-            'id', 'nomor_so', 'tanggal', 'pelanggan', 'pelanggan_nama',
+            'id', 'nomor_so', 'tanggal', 
+            'entitas', 'entitas_kode',       # <-- TAMBAHAN
+            'pelanggan', 'pelanggan_nama',
             'catatan', 'status', 'ppn_persen', 'subtotal',
             'ppn_nominal', 'grand_total', 'items'
         ]

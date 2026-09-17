@@ -26,6 +26,7 @@ from .services import (
     hitung_rekap_produksi, generate_rekap_produksi,
     hitung_rekap_klaim, generate_rekap_klaim,
     CountRealtime,
+    posisi_likuiditas,
 )
 
 
@@ -64,6 +65,10 @@ def _filter_params(qs, request, mapping):
             qs = qs.filter(**{field: value})
     return qs
 
+
+# =========================================================
+# BUDGET
+# =========================================================
 
 class BudgetListCreateAPIView(DiauditCreateMixin, generics.ListCreateAPIView):
     serializer_class = BudgetSerializer
@@ -129,6 +134,10 @@ class BudgetLineDetailAPIView(SoftDeleteMixin, generics.RetrieveUpdateDestroyAPI
             raise ValidationError('Budget DITUTUP/BATAL, baris tidak bisa dihapus.')
         super().perform_destroy(instance)
 
+
+# =========================================================
+# FIXED COST & TARGET
+# =========================================================
 
 class FixedCostListCreateAPIView(DiauditCreateMixin, generics.ListCreateAPIView):
     serializer_class = FixedCostSerializer
@@ -198,8 +207,11 @@ class COGSTargetDetailAPIView(SoftDeleteMixin, generics.RetrieveUpdateDestroyAPI
         return batasi_entitas(qs, self.request)
 
 
+# =========================================================
+# FORECAST (append-only: list + create + retrieve saja)
+# =========================================================
+
 class ForecastListCreateAPIView(DiauditCreateMixin, generics.ListCreateAPIView):
-    """Append-only: tidak ada endpoint update/delete."""
     serializer_class = ForecastSerializer
     permission_classes = [IsAuthenticated]
 
@@ -224,6 +236,10 @@ class ForecastDetailAPIView(generics.RetrieveAPIView):
         qs = Forecast.objects.select_related('periode', 'periode__entitas')
         return batasi_entitas(qs, self.request, field='periode__entitas')
 
+
+# =========================================================
+# REKAP PURCHASE ORDER
+# =========================================================
 
 class RekapPurchaseOrderListAPIView(generics.ListAPIView):
     serializer_class = RekapPurchaseOrderSerializer
@@ -279,8 +295,11 @@ class RekapPurchaseOrderGenerateAPIView(APIView):
         )
 
 
+# =========================================================
+# REKAP MUTASI PRODUKSI (global, tanpa entitas)
+# =========================================================
+
 class RekapMutasiProduksiListAPIView(generics.ListAPIView):
-    """Global, tanpa entitas: Tangki dan Batch resource bersama."""
     serializer_class = RekapMutasiProduksiSerializer
     permission_classes = [IsAuthenticated]
 
@@ -317,6 +336,10 @@ class RekapMutasiProduksiGenerateAPIView(APIView):
         )
         return Response(RekapMutasiProduksiSerializer(rekap).data)
 
+
+# =========================================================
+# REKAP MUTASI KLAIM (per entitas)
+# =========================================================
 
 class RekapMutasiKlaimListAPIView(generics.ListAPIView):
     serializer_class = RekapMutasiKlaimSerializer
@@ -366,6 +389,10 @@ class RekapMutasiKlaimGenerateAPIView(APIView):
         return Response(RekapMutasiKlaimSerializer(hasil, many=True).data)
 
 
+# =========================================================
+# REALTIME & LIKUIDITAS
+# =========================================================
+
 class VersiRealtimeAPIView(APIView):
     """Endpoint murah untuk polling. 304 kalau klien sudah punya versi
     terbaru, supaya tidak ada payload dikirim."""
@@ -379,3 +406,13 @@ class VersiRealtimeAPIView(APIView):
         resp['ETag'] = versi
         resp['Cache-Control'] = 'no-cache'
         return resp
+
+
+class PosisiLikuiditasAPIView(APIView):
+    """Posisi aset lancar dan rasio likuiditas, dihitung saat diminta.
+    Query param entitas opsional; tanpa itu = konsolidasi."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        entitas = request.query_params.get('entitas')
+        return Response(posisi_likuiditas(entitas=int(entitas) if entitas else None))

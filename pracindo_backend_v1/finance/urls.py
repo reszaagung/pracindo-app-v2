@@ -13,7 +13,7 @@ from .views import (
     RekapMutasiProduksiLiveAPIView, RekapMutasiProduksiGenerateAPIView,
     RekapMutasiKlaimListAPIView, RekapMutasiKlaimDetailAPIView,
     RekapMutasiKlaimLiveAPIView, RekapMutasiKlaimGenerateAPIView,
-    VersiRealtimeAPIView,
+    VersiRealtimeAPIView, PosisiLikuiditasAPIView,
 )
 
 urlpatterns = [
@@ -34,22 +34,21 @@ urlpatterns = [
     path('forecast/', ForecastListCreateAPIView.as_view(), name='finance-forecast-list'),
     path('forecast/<int:pk>/', ForecastDetailAPIView.as_view(), name='finance-forecast-detail'),
 
-
     path('rekap/purchase-order/', RekapPurchaseOrderListAPIView.as_view(), name='finance-rekap-po-list'),
-    path('rekap/purchase-order/<int:pk>/', RekapPurchaseOrderDetailAPIView.as_view(), name='finance-rekap-po-detail'),
     path('rekap/purchase-order/live/', RekapPurchaseOrderLiveAPIView.as_view(), name='finance-rekap-po-live'),
     path('rekap/purchase-order/generate/', RekapPurchaseOrderGenerateAPIView.as_view(), name='finance-rekap-po-generate'),
-]
-urlpatterns += [
+    path('rekap/purchase-order/<int:pk>/', RekapPurchaseOrderDetailAPIView.as_view(), name='finance-rekap-po-detail'),
+
     path('rekap/produksi/', RekapMutasiProduksiListAPIView.as_view(), name='finance-rekap-produksi-list'),
-    path('rekap/produksi/<int:pk>/', RekapMutasiProduksiDetailAPIView.as_view(), name='finance-rekap-produksi-detail'),
     path('rekap/produksi/live/', RekapMutasiProduksiLiveAPIView.as_view(), name='finance-rekap-produksi-live'),
     path('rekap/produksi/generate/', RekapMutasiProduksiGenerateAPIView.as_view(), name='finance-rekap-produksi-generate'),
+    path('rekap/produksi/<int:pk>/', RekapMutasiProduksiDetailAPIView.as_view(), name='finance-rekap-produksi-detail'),
 
     path('rekap/klaim/', RekapMutasiKlaimListAPIView.as_view(), name='finance-rekap-klaim-list'),
-    path('rekap/klaim/<int:pk>/', RekapMutasiKlaimDetailAPIView.as_view(), name='finance-rekap-klaim-detail'),
     path('rekap/klaim/live/', RekapMutasiKlaimLiveAPIView.as_view(), name='finance-rekap-klaim-live'),
     path('rekap/klaim/generate/', RekapMutasiKlaimGenerateAPIView.as_view(), name='finance-rekap-klaim-generate'),
+    path('rekap/klaim/<int:pk>/', RekapMutasiKlaimDetailAPIView.as_view(), name='finance-rekap-klaim-detail'),
 
     path('realtime/versi/', VersiRealtimeAPIView.as_view(), name='finance-realtime-versi'),
+    path('likuiditas/', PosisiLikuiditasAPIView.as_view(), name='finance-likuiditas'),
 ]
