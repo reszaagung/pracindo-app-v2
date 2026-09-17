@@ -1,0 +1,27 @@
+{
+  "workbench.startupEditor": "none",
+  "git.enabled": false,
+  "git.autofetch": false,
+  "search.followSymlinks": false,
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true
+  },
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true
+  }
+}

@@ -1,72 +1,76 @@
 import { ref, computed } from 'vue'
-import api from '@/utils/api'
+import { accountingApi } from '@/features/accounting/api'
 
 export function useSalesOrder() {
     const listEntitas = ref([])
     const listPelanggan = ref([])
     const listProduk = ref([])
-
     const daftarSO = ref([])
     const isLoading = ref(false)
-
     const sedangProses = ref(false)
     const pesanError = ref('')
     const periodeDitutup = ref(false)
     const previewNomor = ref('Pilih entitas & tanggal')
 
-    // Nomor dokumen dihasilkan CounterDokumen di server, per entitas per
-    // bulan. Preview saja -- angka finalnya bisa bergeser kalau ada SO
-    // lain terbit di antara preview dan submit.
+    const muatDataMaster = async () => {
+        try {
+            const [rEnt, rPlg] = await Promise.allSettled([
+                accountingApi.master.getEntitasCore(),
+                accountingApi.master.getPelanggan()
+            ])
+            const ambil = (r) => (r.status === 'fulfilled' ? (r.value.data.results ?? r.value.data ?? []) : [])
+            listEntitas.value = ambil(rEnt)
+            listPelanggan.value = ambil(rPlg)
+        } catch (error) {
+            pesanError.value = "Gagal memuat data master dari server."
+        }
+    }
+
+const muatStokEntitas = async (entitasId) => {
+        if (!entitasId) {
+            listProduk.value = []
+            return
+        }
+
+        try {
+            const { data } = await accountingApi.inventory.getStokBarangJadi({ entitas: entitasId })
+            
+            const rawData = data.rincian || data.results || data || []
+            
+            const dataSesuaiEntitas = rawData.filter(item => Number(item.entitas_id) === Number(entitasId))
+            
+            listProduk.value = dataSesuaiEntitas.map(item => {
+                const namaBarang = item.item_nama || item.nama || item.label || 'Produk'
+                const kemasan = item.kemasan_nama ? ` (${item.kemasan_nama})` : ''
+                
+                return {
+                    id: item.item_id || item.id,
+                    kode: item.item_id || item.kode || '-',
+                    nama: `${namaBarang}${kemasan}`, 
+                    label: `${namaBarang}${kemasan}`,
+                    satuan_kode: item.kemasan_nama || 'PCS',
+                    stok: Number(item.qty_unit) || Number(item.qty) || 0,
+                    harga_jual: Number(item.harga_jual) || 0
+                }
+            })
+        } catch (error) {
+            console.error("Gagal memuat stok:", error)
+            listProduk.value = []
+        }
+    }
+
     const muatPreviewNomor = async (entitasId, tanggal) => {
         if (!entitasId || !tanggal) {
             previewNomor.value = 'Pilih entitas & tanggal'
             return
         }
         try {
-            const res = await api.get('sales-order/preview-nomor/', {
-                params: { entitas: entitasId, tanggal },
-            })
-            previewNomor.value = res.data?.nomor || 'Otomatis saat disimpan'
-        } catch {
-            previewNomor.value = 'Otomatis saat disimpan'
-        }
-    }
-
-    const muatDataMaster = async () => {
-        try {
-            // allSettled, bukan all.
-            //
-            // Promise.all gagal SELURUHNYA begitu satu request meleset --
-            // satu 404 mengosongkan ketiga dropdown, dan pesannya tidak
-            // menyebut yang mana. Dengan allSettled, yang berhasil tetap
-            // terisi dan yang gagal disebut namanya.
-            //
-            // Entitas ada di app core, bukan master.
-            const [rEnt, rPlg, rPrd] = await Promise.allSettled([
-                api.get('core/entitas/'),
-                api.get('master/pelanggan/'),
-                api.get('master/produk/'),
-            ])
-
-            const ambil = (r) => (r.status === 'fulfilled'
-                ? (r.value.data.results ?? r.value.data ?? [])
-                : [])
-
-            listEntitas.value = ambil(rEnt)
-            listPelanggan.value = ambil(rPlg)
-            listProduk.value = ambil(rPrd)
-
-            const gagal = []
-            if (rEnt.status === 'rejected') gagal.push('entitas')
-            if (rPlg.status === 'rejected') gagal.push('pelanggan')
-            if (rPrd.status === 'rejected') gagal.push('produk')
-            if (gagal.length) {
-                pesanError.value = `Master belum tersedia: ${gagal.join(', ')}.`
-                console.error('Master SO gagal:', gagal)
-            }
+            previewNomor.value = 'Memuat nomor...'
+            const res = await accountingApi.so.getPreviewNomor({ entitas: entitasId, tanggal })
+            previewNomor.value = res.data?.nomor_so || 'Gagal membaca respons'
         } catch (error) {
-            console.error("Gagal memuat master data SO:", error)
-            pesanError.value = "Gagal memuat data master dari server."
+            console.error(error.response?.data || error.message)
+            previewNomor.value = 'Gagal memuat (Cek Console/Server)'
         }
     }
 
@@ -74,22 +78,18 @@ export function useSalesOrder() {
         isLoading.value = true
         pesanError.value = ''
         try {
-            const response = await api.get('sales-order/')
-
-            let rawData = Array.isArray(response.data) ? response.data
-                : (response.data?.results || response.data?.data || [response.data])
-
+            const response = await accountingApi.so.getDaftar()
+            let rawData = Array.isArray(response.data) ? response.data : (response.data?.results || response.data?.data || [response.data])
             daftarSO.value = rawData.map(so => ({
                 id: so.id,
-                nomor_so: so.no_so,
+                nomor_so: so.nomor_so,
                 tanggal: so.tanggal,
-                entitas: so.entitas ? { kode: so.entitas.kode } : { kode: 'UMUM' },
-                pelanggan: so.pelanggan ? { nama: so.pelanggan.nama, kota: so.pelanggan.kota || '-' } : { nama: '-', kota: '-' },
+                entitas: so.entitas_kode ? { kode: so.entitas_kode } : { kode: 'UMUM' },
+                pelanggan: { nama: so.pelanggan_nama || '-', kota: '-' },
                 grand_total: so.grand_total ?? 0,
                 status: so.status
             }))
         } catch (error) {
-            console.error("Gagal mengambil data Sales Order:", error)
             pesanError.value = "Gagal memuat daftar Sales Order."
         } finally {
             isLoading.value = false
@@ -100,7 +100,7 @@ export function useSalesOrder() {
         sedangProses.value = true
         pesanError.value = ''
         try {
-            const res = await api.post('sales-order/', payload)
+            const res = await accountingApi.so.simpanBaru(payload)
             await fetchSO()
             return { success: true, data: res.data }
         } catch (error) {
@@ -114,6 +114,6 @@ export function useSalesOrder() {
     return {
         listEntitas, listPelanggan, listProduk, daftarSO,
         isLoading, sedangProses, pesanError, periodeDitutup,
-        previewNomor, muatDataMaster, muatPreviewNomor, fetchSO, simpanSO
+        previewNomor, muatDataMaster, muatPreviewNomor, fetchSO, simpanSO, muatStokEntitas
     }
 }

@@ -6,6 +6,7 @@ import ruteDistribusi from '@/features/distribusi/routes.js'
 import ruteAccounting from '@/features/accounting/routes.js' 
 import ruteHelper from '@/features/helper/routes.js'
 import { kurirRoutes } from '@/features/kurir/routes.js' 
+import ruteSales from '@/features/sales/routes.js'
 
 const routes = [
   {
@@ -67,6 +68,7 @@ const routes = [
   ...ruteDistribusi,
   ...ruteHelper, 
   ...kurirRoutes, 
+  ...ruteSales,
   {
     path: '/work-order',
     name: 'work-order',

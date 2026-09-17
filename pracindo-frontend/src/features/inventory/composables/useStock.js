@@ -15,7 +15,6 @@ export function useStock() {
         sedangProses.value = true
         galat.value = ''
         try {
-            // Arahkan ke endpoint spesifik berdasarkan Lapis yang dipilih
             if (params.lapis === 'ENTITAS') {
                 const { data } = await api.get('inventory/mutasi/rekap/', { params })
                 daftarStok.value = data.entitas || []
@@ -23,7 +22,6 @@ export function useStock() {
                 const { data } = await api.get('inventory/pool/', { params })
                 daftarStok.value = data.rincian || []
             } else if (params.lapis === 'JADI') {
-                // TAMBAHAN: Ambil data stok barang jadi
                 const { data } = await api.get('inventory/barang-jadi/', { params })
                 daftarStok.value = data.rincian || data.results || data || []
             } else {

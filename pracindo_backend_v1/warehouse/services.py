@@ -431,88 +431,144 @@ def kembalikan_stok(distribusi_id, alasan, oleh):
 
 @transaction.atomic
 def sahkan_distribusi(distribusi_id, user=None):
-    from django.core.exceptions import ValidationError
-    from inventory.models import StokBarangJadi
+    """
+    Memotong StokBarangJadi sesuai baris distribusi, lalu menandai
+    SIAP_KIRIM.
+
+    Pencarian stok WAJIB menyertakan entitas: StokBarangJadi unik pada
+    (entitas, grup_bahan, item, kemasan). Tanpa entitas, PT dan CV yang
+    punya produk sama dengan kemasan sama akan bentrok
+    MultipleObjectsReturned dan distribusi tidak bisa disahkan sama sekali.
+    """
     from decimal import Decimal
+
+    from django.core.exceptions import ValidationError
+
+    from inventory.models import StokBarangJadi
+
     from .models import StatusDistribusi
 
-    d = Distribusi.objects.prefetch_related('item').select_for_update().get(id=distribusi_id)
-    
-    if d.status not in [StatusDistribusi.DRAFT, 'DRAFT']:
+    d = (Distribusi.objects.prefetch_related('item')
+         .select_for_update().get(id=distribusi_id))
+
+    if d.status == StatusDistribusi.SIAP_KIRIM:
         return d
-    
+    if d.status in (StatusDistribusi.DIKIRIM, StatusDistribusi.TERKIRIM,
+                    StatusDistribusi.BATAL):
+        raise ValidationError(
+            f'Distribusi {d.nomor} sudah {d.get_status_display()}, '
+            f'tidak bisa disahkan ulang.'
+        )
+
     for baris in d.item.all():
         try:
             stok = StokBarangJadi.objects.select_for_update().get(
+                entitas_id=d.entitas_id,
                 item_id=baris.produk_id,
-                kemasan__nama=baris.kemasan
+                kemasan__nama=baris.kemasan,
             )
-            
-            if stok.qty_unit < baris.qty:
-                raise ValidationError(
-                    f"Gagal! Stok {baris.kemasan} tidak mencukupi. "
-                    f"Tersedia {stok.qty_unit}, Diminta {baris.qty}."
-                )
-            
-            if stok.qty_unit == baris.qty:
-                potong_kg = stok.qty_kg
-            else:
-                berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
-                potong_kg = berat_per_unit * Decimal(str(baris.qty))
-            
-            stok.qty_unit -= baris.qty
-            stok.qty_kg -= potong_kg
-            stok.save(update_fields=['qty_unit', 'qty_kg'])
-            
         except StokBarangJadi.DoesNotExist:
-            raise ValidationError(f"Baris ditolak: Stok fisik untuk '{baris.produk_id}' ({baris.kemasan}) tidak ditemukan di gudang.")
+            raise ValidationError(
+                f"Baris ditolak: stok fisik untuk '{baris.produk_id}' "
+                f"({baris.kemasan}) tidak ditemukan di gudang {d.entitas.kode}."
+            )
         except StokBarangJadi.MultipleObjectsReturned:
-            raise ValidationError(f"Baris ditolak: Ditemukan stok ganda untuk '{baris.produk_id}' ({baris.kemasan}).")
+            raise ValidationError(
+                f"Baris ditolak: ditemukan stok ganda untuk '{baris.produk_id}' "
+                f"({baris.kemasan}) di {d.entitas.kode}. Periksa grup bahan."
+            )
 
-    d.status = StatusDistribusi.SIAP_KIRIM 
+        if stok.qty_unit < baris.qty:
+            raise ValidationError(
+                f"Gagal! Stok {baris.kemasan} tidak mencukupi. "
+                f"Tersedia {stok.qty_unit}, diminta {baris.qty}."
+            )
+
+        # Kalau habis, potong seluruh sisa kg supaya tidak ada residu
+        # akibat pembulatan berat per unit.
+        if stok.qty_unit == baris.qty:
+            potong_kg = stok.qty_kg
+        else:
+            berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
+            potong_kg = (berat_per_unit * Decimal(str(baris.qty))).quantize(Q3)
+
+        stok.qty_unit -= baris.qty
+        stok.qty_kg -= potong_kg
+        if stok.qty_unit == 0:
+            stok.qty_kg = Decimal('0')
+        stok.save(update_fields=['qty_unit', 'qty_kg'])
+
+    d.status = StatusDistribusi.SIAP_KIRIM
     d.save(update_fields=['status'])
-    
     return d
 
-def catat_mutasi_stok_pabrik(*, produk, isi_per_kemasan, tipe, arah, qty_kemasan,
-                             ref_type, ref_id, dibuat_oleh,
-                             grup_bahan=None, waktu=None, keterangan=''):
-    total_isi = (Decimal(qty_kemasan) * isi_per_kemasan).quantize(Decimal('0.001'))
-
-    with transaction.atomic():
-        pass
 
 @transaction.atomic
 def kembalikan_potongan_stok(distribusi_id):
-    d = Distribusi.objects.prefetch_related('item').select_for_update().get(id=distribusi_id)
-    
+    """
+    Mengembalikan stok yang dipotong sahkan_distribusi().
+
+    Status TIDAK diubah di sini -- pemanggil yang menentukan. Pada edit,
+    distribusi langsung disahkan ulang; pada hapus, barisnya memang
+    dibuang. DRAFT tidak dipakai di alur saat ini.
+
+    RIWAYAT BUG
+        Versi sebelumnya mencari stok dengan int(baris.produk_id) sebagai
+        primary key StokBarangJadi. produk adalah FK ke master.MasterProduk
+        yang PK-nya CharField, jadi int() hampir selalu ValueError -- dan
+        ValueError itu ditangkap lalu diabaikan diam-diam. Akibatnya setiap
+        edit distribusi memotong stok dua kali (kembalikan gagal, potong
+        jalan), dan setiap hapus membuang stok permanen. Tanpa satu pun
+        pesan galat.
+    """
+    from decimal import Decimal
+
+    from django.core.exceptions import ValidationError
+
+    from inventory.models import Kemasan, StokBarangJadi
+
+    from .models import StatusDistribusi
+
+    d = (Distribusi.objects.prefetch_related('item')
+         .select_for_update().get(id=distribusi_id))
+
     if d.status != StatusDistribusi.SIAP_KIRIM:
         return d
-        
-    from inventory.models import StokBarangJadi
-    from decimal import Decimal
-    
+
     for baris in d.item.all():
-        try:
-            stok_id = int(baris.produk_id)
-            stok = StokBarangJadi.objects.select_for_update().get(id=stok_id)
-            
-            sisa_qty = stok.qty_unit
-            stok.qty_unit += baris.qty
-            
-            if sisa_qty > 0:
-                berat_per_unit = stok.qty_kg / Decimal(str(sisa_qty))
-                kembali_kg = berat_per_unit * Decimal(str(baris.qty))
-            else:
-                kembali_kg = Decimal('0')
-                
-            stok.qty_kg += kembali_kg
-            stok.save(update_fields=['qty_unit', 'qty_kg'])
-            
-        except (StokBarangJadi.DoesNotExist, ValueError):
-            pass
-            
-    d.status = StatusDistribusi.DRAFT
-    d.save(update_fields=['status'])
-    
+        stok = StokBarangJadi.objects.select_for_update().filter(
+            entitas_id=d.entitas_id,
+            item_id=baris.produk_id,
+            kemasan__nama=baris.kemasan,
+        ).first()
+
+        if stok is None:
+            # Barisnya habis lalu terhapus, atau memang belum pernah ada.
+            # Dibuat ulang supaya stoknya kembali, bukan hilang diam-diam.
+            kemasan = Kemasan.objects.filter(nama=baris.kemasan).first()
+            if kemasan is None:
+                raise ValidationError(
+                    f"Tidak bisa mengembalikan stok: kemasan "
+                    f"'{baris.kemasan}' tidak ada di master."
+                )
+            stok = StokBarangJadi.objects.create(
+                entitas_id=d.entitas_id,
+                grup_bahan_id=d.entitas.grup_bahan_id,
+                item_id=baris.produk_id,
+                kemasan=kemasan,
+                qty_unit=0,
+                qty_kg=Decimal('0'),
+            )
+
+        if stok.qty_unit > 0:
+            berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
+        else:
+            berat_per_unit = stok.kemasan.bobot_kg
+
+        kembali_kg = (berat_per_unit * Decimal(str(baris.qty))).quantize(Q3)
+
+        stok.qty_unit += baris.qty
+        stok.qty_kg += kembali_kg
+        stok.save(update_fields=['qty_unit', 'qty_kg'])
+
     return d

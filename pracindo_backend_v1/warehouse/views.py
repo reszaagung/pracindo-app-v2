@@ -280,6 +280,9 @@ class DistribusiViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 if dist.status == StatusDistribusi.SIAP_KIRIM:
                     services.kembalikan_potongan_stok(dist.id)
+                    dist.status = StatusDistribusi.DRAFT
+                    dist.save(update_fields=['status'])
+
                 
                 dist.entitas_id = d['entitas_id']
                 dist.jenis_tujuan = d['jenis_tujuan']

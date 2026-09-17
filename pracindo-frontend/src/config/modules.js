@@ -89,12 +89,15 @@ export const MODUL = [
   {
     id: 'sales_order',
     nama: 'Sales Order',
-    ringkas: 'Pesanan penjualan dan piutang',
+    ringkas: 'Manajemen CRM prospek, konversi SO, dan pelacakan target',
     ikon: 'transaksi',
-    rute: '/sales-order',
-    siap: false,
-    catatan: 'Belum dibangun backend maupun frontend',
-    menu: [],
+    rute: '/sales/crm', 
+    siap: true, 
+    catatan: '', 
+    menu: [
+      { label: 'Papan CRM', rute: '/sales/crm' },
+      { label: 'Sales Orders', rute: '/sales/orders' }
+    ],
   },
   {
     id: 'inventory',
