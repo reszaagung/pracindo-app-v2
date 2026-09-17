@@ -1,34 +1,26 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+
+from akunting.models import TipeAkun
 
 from .base import BaseFinanceModel
 
 
-class TargetBulanan(BaseFinanceModel):
-    """Bentuk bersama RevenueTarget & COGSTarget: satu angka per
-    (entitas, akun, tahun, bulan). Actual-nya selalu dari ledger."""
-
-    entitas = models.ForeignKey('core.Entitas', on_delete=models.PROTECT, related_name='+')
-    tahun = models.PositiveSmallIntegerField()
-    bulan = models.PositiveSmallIntegerField()
-    nominal_target = models.DecimalField(max_digits=18, decimal_places=2)
-
-    class Meta:
-        abstract = True
-        ordering = ['-tahun', '-bulan']
-
-
-class RevenueTarget(TargetBulanan):
+class RevenueTarget(BaseFinanceModel):
     entitas = models.ForeignKey(
         'core.Entitas', on_delete=models.PROTECT, related_name='revenue_targets',
     )
     akun_pendapatan = models.ForeignKey(
         'akunting.Akun', on_delete=models.PROTECT, related_name='revenue_targets',
     )
+    tahun = models.PositiveSmallIntegerField()
+    bulan = models.PositiveSmallIntegerField()
+    nominal_target = models.DecimalField(max_digits=18, decimal_places=2)
 
-    class Meta(TargetBulanan.Meta):
-        abstract = False
+    class Meta:
         db_table = 'finance_revenue_target'
+        ordering = ['-tahun', '-bulan']
         verbose_name_plural = 'Revenue target'
         constraints = [
             models.UniqueConstraint(
@@ -45,21 +37,24 @@ class RevenueTarget(TargetBulanan):
         return f"{self.akun_pendapatan} — {self.bulan:02d}/{self.tahun}"
 
     def clean(self):
-        # TODO: akun_pendapatan wajib bertipe PENDAPATAN.
-        pass
+        if self.akun_pendapatan_id and self.akun_pendapatan.tipe != TipeAkun.PENDAPATAN:
+            raise ValidationError({'akun_pendapatan': 'Harus akun bertipe Pendapatan.'})
 
 
-class COGSTarget(TargetBulanan):
+class COGSTarget(BaseFinanceModel):
     entitas = models.ForeignKey(
         'core.Entitas', on_delete=models.PROTECT, related_name='cogs_targets',
     )
     akun_cogs = models.ForeignKey(
         'akunting.Akun', on_delete=models.PROTECT, related_name='cogs_targets',
     )
+    tahun = models.PositiveSmallIntegerField()
+    bulan = models.PositiveSmallIntegerField()
+    nominal_target = models.DecimalField(max_digits=18, decimal_places=2)
 
-    class Meta(TargetBulanan.Meta):
-        abstract = False
+    class Meta:
         db_table = 'finance_cogs_target'
+        ordering = ['-tahun', '-bulan']
         verbose_name_plural = 'COGS target'
         constraints = [
             models.UniqueConstraint(
@@ -76,5 +71,8 @@ class COGSTarget(TargetBulanan):
         return f"{self.akun_cogs} — {self.bulan:02d}/{self.tahun}"
 
     def clean(self):
-        # TODO: akun_cogs wajib bertipe COGS/HPP.
-        pass
+        # Bagan akun ini tidak punya tipe khusus HPP — 5100 (HPP) dan 6100
+        # (beban umum) sama-sama BEBAN. Validasi sengaja longgar; membedakan
+        # HPP lewat prefix kode akun terlalu rapuh.
+        if self.akun_cogs_id and self.akun_cogs.tipe != TipeAkun.BEBAN:
+            raise ValidationError({'akun_cogs': 'Harus akun bertipe Beban (HPP).'})

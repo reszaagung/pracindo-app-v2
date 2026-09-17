@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from akunting.models import TipeAkun
+
 from .base import BaseFinanceModel
 
 
@@ -58,8 +60,11 @@ class FixedCost(BaseFinanceModel):
         return self.nama
 
     def clean(self):
-        # TODO: akun_beban wajib bertipe BEBAN — nunggu nama field tipe
-        # di akunting.Akun.
+        if self.akun_beban_id:
+            if not self.akun_beban.aktif:
+                raise ValidationError({'akun_beban': 'Akun yang dipilih tidak aktif.'})
+            if self.akun_beban.tipe != TipeAkun.BEBAN:
+                raise ValidationError({'akun_beban': 'Harus akun bertipe Beban.'})
         if self.tanggal_selesai and self.tanggal_mulai:
             if self.tanggal_selesai < self.tanggal_mulai:
                 raise ValidationError(

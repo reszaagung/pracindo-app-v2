@@ -5,6 +5,7 @@ from .models import (
     FixedCost,
     RevenueTarget, COGSTarget,
     Forecast,
+    RekapPurchaseOrder,
 )
 
 
@@ -42,6 +43,7 @@ class BudgetAdmin(DiauditAdminMixin, admin.ModelAdmin):
                     'status', 'total_anggaran', 'is_active')
     list_filter = ('status', 'basis_periode', 'tahun', 'entitas', 'is_active')
     search_fields = ('nama', 'entitas__kode', 'entitas__nama')
+    list_select_related = ('entitas', 'dibuat_oleh')
     readonly_fields = ('total_anggaran', 'dibuat_pada', 'diubah_pada', 'dibuat_oleh')
     inlines = [BudgetLineInline]
 
@@ -51,7 +53,8 @@ class BudgetLineAdmin(DiauditAdminMixin, admin.ModelAdmin):
     list_display = ('budget', 'akun', 'bulan', 'nominal_anggaran')
     list_filter = ('budget__tahun', 'budget__entitas', 'bulan')
     search_fields = ('budget__nama', 'akun__kode', 'akun__nama')
-    autocomplete_fields = ('budget', 'akun')
+    list_select_related = ('budget', 'akun')
+    autocomplete_fields = ('akun',)
     readonly_fields = ('dibuat_pada', 'diubah_pada', 'dibuat_oleh')
 
 
@@ -61,6 +64,7 @@ class FixedCostAdmin(DiauditAdminMixin, admin.ModelAdmin):
                     'tanggal_mulai', 'tanggal_selesai', 'aktif', 'auto_masuk_budget')
     list_filter = ('aktif', 'auto_masuk_budget', 'entitas')
     search_fields = ('nama', 'akun_beban__kode', 'akun_beban__nama')
+    list_select_related = ('entitas', 'akun_beban')
     autocomplete_fields = ('akun_beban',)
     readonly_fields = ('dibuat_pada', 'diubah_pada', 'dibuat_oleh')
 
@@ -69,32 +73,3 @@ class FixedCostAdmin(DiauditAdminMixin, admin.ModelAdmin):
 class RevenueTargetAdmin(DiauditAdminMixin, admin.ModelAdmin):
     list_display = ('entitas', 'akun_pendapatan', 'tahun', 'bulan', 'nominal_target')
     list_filter = ('tahun', 'bulan', 'entitas')
-    search_fields = ('akun_pendapatan__kode', 'akun_pendapatan__nama')
-    autocomplete_fields = ('akun_pendapatan',)
-    readonly_fields = ('dibuat_pada', 'diubah_pada', 'dibuat_oleh')
-
-
-@admin.register(COGSTarget)
-class COGSTargetAdmin(DiauditAdminMixin, admin.ModelAdmin):
-    list_display = ('entitas', 'akun_cogs', 'tahun', 'bulan', 'nominal_target')
-    list_filter = ('tahun', 'bulan', 'entitas')
-    search_fields = ('akun_cogs__kode', 'akun_cogs__nama')
-    autocomplete_fields = ('akun_cogs',)
-    readonly_fields = ('dibuat_pada', 'diubah_pada', 'dibuat_oleh')
-
-
-@admin.register(Forecast)
-class ForecastAdmin(DiauditAdminMixin, admin.ModelAdmin):
-    # entitas itu property (lewat periode) → boleh di list_display,
-    # TIDAK boleh di list_filter. Filter entitas lewat periode__entitas.
-    list_display = ('periode', 'entitas', 'forecast_revenue', 'forecast_cogs',
-                    'forecast_opex', 'forecast_net_profit', 'dibuat_pada')
-    list_filter = ('periode__entitas', 'periode__tahun')
-    readonly_fields = ('dibuat_pada', 'dibuat_oleh', 'entitas',
-                       'forecast_gross_profit', 'forecast_operating_profit',
-                       'forecast_net_profit')
-
-    def has_change_permission(self, request, obj=None):
-        # Append-only: Forecast.save() menolak update. Jangan tampilkan
-        # tombol Save yang ujungnya error.
-        return obj is None

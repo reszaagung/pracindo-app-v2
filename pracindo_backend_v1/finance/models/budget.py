@@ -2,6 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from akunting.models import TipeAkun
+
 from .base import BaseFinanceModel
 
 
@@ -106,8 +108,17 @@ class BudgetLine(BaseFinanceModel):
         return f"{self.budget.nama} — {self.akun} ({self.bulan})"
 
     def clean(self):
-        if self.akun_id and not self.akun.aktif:
-            raise ValidationError({'akun': 'Akun yang dipilih tidak aktif.'})
+        if self.akun_id:
+            if not self.akun.aktif:
+                raise ValidationError({'akun': 'Akun yang dipilih tidak aktif.'})
+            if not self.akun.boleh_diposting:
+                raise ValidationError(
+                    {'akun': 'Akun header hanya untuk pengelompokan, tidak bisa dianggarkan.'}
+                )
+            if self.akun.tipe not in (TipeAkun.PENDAPATAN, TipeAkun.BEBAN):
+                raise ValidationError(
+                    {'akun': 'Budget hanya untuk akun pendapatan atau beban.'}
+                )
         if self.budget_id and self.budget.terkunci:
             raise ValidationError('Budget DITUTUP/BATAL — baris tidak bisa diubah.')
 

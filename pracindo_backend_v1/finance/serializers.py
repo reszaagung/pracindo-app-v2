@@ -6,12 +6,13 @@ from .models import (
     FixedCost,
     RevenueTarget, COGSTarget,
     Forecast,
+    RekapPurchaseOrder,
 )
 
 
 class FullCleanModelSerializer(serializers.ModelSerializer):
     """Menjalankan Model.clean() lewat API, supaya aturan bisnis yang
-    sudah ditulis di model (akun aktif, budget terkunci, rentang tanggal)
+    sudah ditulis di model (tipe akun, budget terkunci, rentang tanggal)
     ditegakkan juga dari endpoint, bukan cuma dari admin/shell."""
 
     def validate(self, attrs):
@@ -21,7 +22,8 @@ class FullCleanModelSerializer(serializers.ModelSerializer):
         try:
             instance.clean()
         except DjangoValidationError as exc:
-            detail = exc.message_dict if hasattr(exc, 'message_dict') else {'non_field_errors': exc.messages}
+            detail = (exc.message_dict if hasattr(exc, 'message_dict')
+                      else {'non_field_errors': exc.messages})
             raise serializers.ValidationError(detail)
         return attrs
 
@@ -135,3 +137,28 @@ class ForecastSerializer(serializers.ModelSerializer):
             'catatan', 'is_active', 'dibuat_pada', 'dibuat_oleh_nama',
         ]
         read_only_fields = ['dibuat_pada']
+
+
+class RekapPurchaseOrderSerializer(serializers.ModelSerializer):
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
+    entitas_nama = serializers.CharField(source='entitas.nama', read_only=True)
+    entitas_jenis = serializers.CharField(source='entitas.jenis', read_only=True)
+    nilai_belum_diterima = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    nilai_pesan_dengan_ppn = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = RekapPurchaseOrder
+        fields = [
+            'id', 'entitas', 'entitas_kode', 'entitas_nama', 'entitas_jenis',
+            'tahun', 'bulan', 'jumlah_po', 'jumlah_item',
+            'nilai_pesan', 'nilai_diterima', 'nilai_belum_diterima',
+            'nilai_ppn', 'nilai_pesan_dengan_ppn',
+            'dibekukan', 'dihitung_pada', 'is_active',
+        ]
+        read_only_fields = [f for f in fields if f not in ('dibekukan',)]
+
+
+class GenerateRekapSerializer(serializers.Serializer):
+    tahun = serializers.IntegerField(min_value=2000, max_value=2100)
+    bulan = serializers.IntegerField(min_value=1, max_value=12)
+    entitas = serializers.IntegerField(required=False, allow_null=True)

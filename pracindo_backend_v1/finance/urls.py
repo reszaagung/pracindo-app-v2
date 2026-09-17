@@ -7,6 +7,8 @@ from .views import (
     RevenueTargetListCreateAPIView, RevenueTargetDetailAPIView,
     COGSTargetListCreateAPIView, COGSTargetDetailAPIView,
     ForecastListCreateAPIView, ForecastDetailAPIView,
+    RekapPurchaseOrderListAPIView, RekapPurchaseOrderDetailAPIView,
+    RekapPurchaseOrderLiveAPIView, RekapPurchaseOrderGenerateAPIView,
 )
 
 urlpatterns = [
@@ -26,4 +28,9 @@ urlpatterns = [
 
     path('forecast/', ForecastListCreateAPIView.as_view(), name='finance-forecast-list'),
     path('forecast/<int:pk>/', ForecastDetailAPIView.as_view(), name='finance-forecast-detail'),
+
+    path('rekap/purchase-order/', RekapPurchaseOrderListAPIView.as_view(), name='finance-rekap-po-list'),
+    path('rekap/purchase-order/<int:pk>/', RekapPurchaseOrderDetailAPIView.as_view(), name='finance-rekap-po-detail'),
+    path('rekap/purchase-order/live/', RekapPurchaseOrderLiveAPIView.as_view(), name='finance-rekap-po-live'),
+    path('rekap/purchase-order/generate/', RekapPurchaseOrderGenerateAPIView.as_view(), name='finance-rekap-po-generate'),
 ]
