@@ -4,7 +4,8 @@ export default [
   {
     path: '/sales',
     component: () => import('./layout/SalesLayout.vue'),
-    meta: { perluLogin: true, modul: 'sales' },
+    // PERBAIKAN: Ubah menjadi 'sales_order' agar dikenali oleh useGuards dan backend
+    meta: { perluLogin: true, modul: 'sales_order' },
     children: [
       {
         path: '',

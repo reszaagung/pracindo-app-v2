@@ -19,7 +19,7 @@ api.interceptors.request.use((cfg) => {
 
     if (token && !endpointPublik(cfg.url)) {
         if (isRetail) {
-            cfg.headers.Authorization = `Bearer ${token}`
+            cfg.headers.Authorization = `Token ${token}` 
         } else {
             cfg.headers.Authorization = `Token ${token}`
         }
@@ -34,7 +34,11 @@ api.interceptors.response.use(
 
         if (!response) return Promise.reject(err)
 
+        // JIKA KENA 401 (TOKEN MATI)
         if (response.status === 401 && !endpointPublik(config?.url)) {
+            console.warn("🚨 Token Expired! Auto-logout dipicu untuk:", config.url)
+            
+            // 👇 FITUR AUTO-LOGOUT DINYALAKAN KEMBALI
             if (config.url.includes('retail/')) {
                 localStorage.removeItem('retail_token')
                 localStorage.removeItem('retail_user')
@@ -44,9 +48,9 @@ api.interceptors.response.use(
                 localStorage.removeItem('modul')
             }
 
+            // 👇 LEMPAR KEMBALI KE HALAMAN LOGIN
             const { default: router } = await import('@/router')
             const kini = router.currentRoute.value
-
             if (kini.name !== 'login') {
                 router.push({
                     name: 'login', 

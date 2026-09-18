@@ -12,24 +12,16 @@ export function formatTanggal(v) {
   if (!v) return '-'
   const d = new Date(v)
   if (isNaN(d)) return v
-  return (
-    d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
-  )
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-// 1. EXPORT INI DIBUTUHKAN OLEH SalesLayout.vue (UNTUK SIDEBAR)
-export const salesMenu = [
-    { label: 'CRM & Eksekusi', icon: 'pi pi-users', to: '/sales/crm' },
-    { label: 'Sales & Distribusi', icon: 'pi pi-chart-line', to: '/sales/orders' }
-]
-
-// 2. EXPORT INI DIBUTUHKAN OLEH DashboardView.vue (UNTUK KOTAK MENU)
+// Format State Modul (Persis seperti produksiModul)
 export const salesModul = {
     id: 'sales_order',
     nama: 'Sales Order',
     ringkas: 'Manajemen CRM prospek, konversi SO, dan pelacakan target',
     ikon: 'transaksi', 
-    rute: '/sales/crm', 
+    rute: '/sales/crm',
     siap: true,
     catatan: '',
     menu: [
@@ -37,3 +29,9 @@ export const salesModul = {
         { label: 'Sales Orders', rute: '/sales/orders' }
     ]
 }
+
+// Menu Khusus untuk Sidebar di SalesLayout.vue
+export const salesMenu = [
+    { label: 'CRM & Eksekusi', icon: 'pi pi-users', to: '/sales/crm' },
+    { label: 'Sales & Distribusi', icon: 'pi pi-chart-line', to: '/sales/orders' }
+]

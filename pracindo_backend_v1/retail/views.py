@@ -10,9 +10,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import get_user_model, authenticate
 
 User = get_user_model()
 
@@ -28,19 +27,44 @@ from .serializers import (
     AkunBukuBesarSerializer, TransaksiJurnalSerializer,
     PelangganRetailSerializer, SalesRetailSerializer,
     BukuPiutangRetailSerializer, PenerimaanBarangSerializer,
-    MutasiBukuBesarSerializer, CabangTokoSerializer, RegistrasiCabangSerializer
+    MutasiBukuBesarSerializer, CabangTokoSerializer, RegistrasiCabangSerializer ,StokRetailSerializer
 )
 
 raw_private_key = os.environ.get('RSA_PRIVATE_KEY', '')
 PRIVATE_KEY = raw_private_key.replace('\\n', '\n')
 
 
-class RetailTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        user = self.user
-        cabang_data = None
+def get_user_cabang(user):
+    if hasattr(user, 'cabang_toko') and user.cabang_toko is not None:
+        return user.cabang_toko
+    return None
+
+
+class RetailLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        encrypted_password = request.data.get('password')
+        password = encrypted_password
+
+        # Buka gembok RSA
+        if encrypted_password:
+            try:
+                priv_key = rsa.PrivateKey.load_pkcs1(PRIVATE_KEY.encode('utf-8'))
+                password = rsa.decrypt(base64.b64decode(encrypted_password), priv_key).decode('utf-8')
+            except Exception as e:
+                print("GAGAL BUKA GEMBOK RETAIL:", str(e))
+
+        user = authenticate(username=username, password=password)
         
+        if not user:
+            return Response({'detail': 'Username atau password salah'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
+
+        cabang_data = None
         if hasattr(user, 'cabang_toko') and user.cabang_toko is not None:
             cabang = user.cabang_toko
             cabang_data = {
@@ -49,44 +73,27 @@ class RetailTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'nama': cabang.nama
             }
 
-        data['user'] = {
-            'id': user.id,
-            'username': user.username,
-            'is_master': cabang_data is None,
-            'cabang': cabang_data
-        }
-        return data
+        return Response({
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'is_master': cabang_data is None,
+                'cabang': cabang_data
+            }
+        })
+
+class RetailLogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            request.user.auth_token.delete()
+        except Exception:
+            pass
+        return Response({'status': 'Berhasil logout, token dihancurkan'}, status=status.HTTP_200_OK)
 
 
-class RetailLoginView(TokenObtainPairView):
-    serializer_class = RetailTokenObtainPairSerializer
-
-    def post(self, request, *args, **kwargs):
-        encrypted_password = request.data.get('password')
-        
-        if encrypted_password:
-            try:
-                priv_key = rsa.PrivateKey.load_pkcs1(PRIVATE_KEY.encode('utf-8'))
-                decrypted_pw = rsa.decrypt(base64.b64decode(encrypted_password), priv_key).decode('utf-8')
-                
-                if hasattr(request.data, '_mutable'):
-                    request.data._mutable = True
-                    
-                request.data['password'] = decrypted_pw
-                
-                if hasattr(request.data, '_mutable'):
-                    request.data._mutable = False
-
-            except Exception as e:
-                print("GAGAL BUKA GEMBOK RETAIL:", str(e))
-                
-        return super().post(request, *args, **kwargs)
-
-        
-def get_user_cabang(user):
-    if hasattr(user, 'cabang_toko') and user.cabang_toko is not None:
-        return user.cabang_toko
-    return None
 
 class KatalogPOSAPIView(generics.ListAPIView):
     serializer_class = KatalogPOSSerializer
@@ -94,7 +101,7 @@ class KatalogPOSAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         cabang = get_user_cabang(self.request.user)
-        qs = StokRetail.objects.filter(total_unit__gt=0).select_related('produk', 'kemasan')
+        qs = StokRetail.objects.filter(total_unit__gt=0).select_related('produk')
         if cabang:
             return qs.filter(cabang=cabang)
         return qs
@@ -255,6 +262,7 @@ class SesiKasirAPIView(APIView):
             return Response({'status': 'sukses'})
         return Response({'status': 'gagal'}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class AkunBukuBesarAPIView(generics.ListCreateAPIView):
     serializer_class = AkunBukuBesarSerializer
     permission_classes = [IsAuthenticated]
@@ -310,6 +318,15 @@ class JurnalUmumAPIView(APIView):
             )
 
         return Response({'status': 'sukses', 'nomor_jurnal': jurnal.nomor_jurnal}, status=status.HTTP_201_CREATED)
+
+class BukuBesarMutasiAPIView(generics.ListAPIView):
+    serializer_class = MutasiBukuBesarSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        akun_id = self.kwargs.get('pk')
+        return DetailJurnal.objects.filter(akun_id=akun_id).select_related('jurnal').order_by('jurnal__tanggal', 'id')
+
 
 class PelangganRetailAPIView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -390,6 +407,7 @@ class BayarPiutangAPIView(APIView):
 
         return Response({'status': 'sukses'}, status=status.HTTP_200_OK)
 
+
 class DaftarPenerimaanAPIView(generics.ListAPIView):
     serializer_class = PenerimaanBarangSerializer
     permission_classes = [IsAuthenticated]
@@ -444,13 +462,6 @@ class ProsesPenerimaanAPIView(APIView):
 
         return Response({'status': 'sukses'})
 
-class BukuBesarMutasiAPIView(generics.ListAPIView):
-    serializer_class = MutasiBukuBesarSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        akun_id = self.kwargs.get('pk')
-        return DetailJurnal.objects.filter(akun_id=akun_id).select_related('jurnal').order_by('jurnal__tanggal', 'id')
 
 class CabangTokoAPIView(generics.ListCreateAPIView):
     queryset = CabangToko.objects.all().order_by('-id')
@@ -463,5 +474,16 @@ class CabangTokoAPIView(generics.ListCreateAPIView):
     def get_permissions(self):
         if self.request.method == 'POST':
             return [AllowAny()]
-        
         return [IsAuthenticated()]
+
+class DaftarStokAPIView(generics.ListAPIView):
+    serializer_class = StokRetailSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        cabang = get_user_cabang(self.request.user)
+        qs = StokRetail.objects.select_related('produk').all()        
+        if cabang:
+            return qs.filter(cabang=cabang)
+        return qs
+

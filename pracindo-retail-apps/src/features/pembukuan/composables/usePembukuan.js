@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { apiPembukuan } from '@/services/apiPembukuan' // Asumsi apiPembukuan.js sudah lu buat di folder services
+import { apiPembukuan } from '@/services/apiPembukuan' 
 
 export function usePembukuan() {
     const akunList = ref([])

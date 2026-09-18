@@ -7,7 +7,7 @@ from .models import (
     KategoriAkun, AkunBukuBesar, TransaksiJurnal, DetailJurnal,
     SalesRetail, PelangganRetail,
     BukuPiutangRetail, RiwayatBayarPiutang,
-    PenerimaanBarang, ItemPenerimaan, CabangToko
+    PenerimaanBarang, ItemPenerimaan, CabangToko ,StokRetail
 )
 
 User = get_user_model()
@@ -185,3 +185,11 @@ class CabangTokoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CabangToko
         fields = ['id', 'kode', 'nama', 'alamat', 'aktif', 'username_kasir']
+
+class StokRetailSerializer(serializers.ModelSerializer):
+    nama_produk = serializers.CharField(source='produk.nama', read_only=True)
+    kode_produk = serializers.CharField(source='produk.kode', read_only=True)
+
+    class Meta:
+        model = StokRetail
+        fields = '__all__'

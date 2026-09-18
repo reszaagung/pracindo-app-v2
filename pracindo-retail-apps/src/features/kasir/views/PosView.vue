@@ -4,12 +4,22 @@
         <!-- HEADER POS -->
         <header
             class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
-            <div>
-                <p class="text-sm text-slate-500 mb-1">Retail / Point of Sale</p>
-                <h1 class="text-2xl font-bold text-slate-800">Mesin Kasir Utama</h1>
+            
+            <!-- Kiri: Tombol Back & Judul -->
+            <div class="flex items-center gap-5">
+                <!-- 👇 TOMBOL KEMBALI KE DASHBOARD 👇 -->
+                <button @click="router.push('/dashboard')" 
+                    class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                    <i class="pi pi-arrow-left"></i> Dashboard
+                </button>
+
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">Retail / Point of Sale</p>
+                    <h1 class="text-2xl font-bold text-slate-800">Mesin Kasir Utama</h1>
+                </div>
             </div>
 
-            <!-- Search Bar Produk -->
+            <!-- Kanan: Search Bar Produk -->
             <div class="relative w-full md:w-72">
                 <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                 <input v-model="searchQuery" type="text" placeholder="Cari produk atau barcode..."
@@ -183,17 +193,16 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-// Pastikan useRetail.js sudah di-update dan berada di dalam features/kasir/composables/
+import { useRouter } from 'vue-router'
 import { useRetail } from '../composables/useRetail'
 
+const router = useRouter()
 const { posProducts, isLoading, pelangganList, salesList, fetchPosProducts, fetchPelanggan, fetchSales, checkoutCart } = useRetail()
 
-// --- State Aplikasi ---
 const searchQuery = ref('')
 const cart = ref([])
 
-// Form Pembayaran
-const tipePenjualan = ref('END_USER') // Default: 'END_USER' atau 'SALES'
+const tipePenjualan = ref('END_USER')
 const metodeBayar = ref('TUNAI')
 const selectedPelanggan = ref(null)
 const selectedSales = ref(null)
@@ -205,8 +214,6 @@ onMounted(() => {
 })
 
 // --- Logic UI ---
-
-// Filter pencarian barang
 const filteredProducts = computed(() => {
     let data = Array.isArray(posProducts.value) ? posProducts.value : (posProducts.value?.results || [])
     if (searchQuery.value) {
@@ -216,21 +223,16 @@ const filteredProducts = computed(() => {
     return data
 })
 
-// Hitung total harga keranjang
 const totalHarga = computed(() => cart.value.reduce((total, item) => total + (item.harga * item.qty), 0))
 
-// Validasi cerdas: Tombol bayar mati jika kriteria tidak terpenuhi
 const isButtonDisabled = computed(() => {
     if (cart.value.length === 0) return true
     if (isLoading.value) return true
-    // Kalau Tempo, wajib pilih Pelanggan
     if (metodeBayar.value === 'TEMPO' && !selectedPelanggan.value) return true
-    // Kalau tipe Sales, wajib pilih nama Sales-nya
     if (tipePenjualan.value === 'SALES' && !selectedSales.value) return true
     return false
 })
 
-// Reset nama Sales kalau tipe dirubah balik ke End User
 watch(tipePenjualan, (newVal) => {
     if (newVal === 'END_USER') {
         selectedSales.value = null
@@ -239,7 +241,6 @@ watch(tipePenjualan, (newVal) => {
 
 // --- Logic Keranjang ---
 const addToCart = (product) => {
-    // Sesuaikan p.id dengan struktur ID dari backend (produk_id / id)
     const pId = product.produk_id || product.id
     const pStok = product.qty || product.stok || 0
     const existing = cart.value.find(item => item.id === pId)
@@ -250,7 +251,7 @@ const addToCart = (product) => {
         if (pStok > 0) {
             cart.value.push({
                 id: pId,
-                kemasan: product.kemasan_id || product.kemasan || null, // Wajib ada untuk backend
+                kemasan: product.kemasan_id || product.kemasan || null,
                 nama: product.nama_produk || product.nama,
                 harga: product.harga_jual || product.harga,
                 stok: pStok,
@@ -281,7 +282,6 @@ const prosesBayar = async () => {
         metode_bayar: metodeBayar.value,
         pelanggan_id: selectedPelanggan.value,
         sales_id: tipePenjualan.value === 'SALES' ? selectedSales.value : null,
-
         keranjang: cart.value.map(item => ({
             produk_id: item.id,
             kemasan_id: item.kemasan,
@@ -294,7 +294,6 @@ const prosesBayar = async () => {
 
     if (result.status === 'sukses') {
         alert(`Transaksi Berhasil!\nNomor Struk: ${result.nomor_struk}`)
-        // Reset form
         cart.value = []
         metodeBayar.value = 'TUNAI'
         tipePenjualan.value = 'END_USER'
@@ -311,7 +310,6 @@ const prosesBayar = async () => {
 .custom-scrollbar::-webkit-scrollbar {
     width: 5px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 999px;

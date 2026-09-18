@@ -1,7 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import LoginRetail from '@/view/public/LoginRetail.vue'
 import RegisterCabangForm from '@/view/protect/RegisterCabangForm.vue'
+import DashboardRetail from '@/view/protect/DashboardRetail.vue'
+
+// Import modul Inventory asli bawaan lu
+import StokView from '@/features/inventory/views/StokView.vue'
+import PenerimaanViews from '@/features/inventory/views/PenerimaanViews.vue'
 
 import KasirLayout from '@/layouts/kasir_layout/KasirLayout.vue'
 import PosView from '@/features/kasir/views/PosView.vue'
@@ -23,6 +27,21 @@ const routes = [
         path: '/register',
         name: 'register', 
         component: RegisterCabangForm
+    },
+    {
+        path: '/dashboard',          
+        name: 'Dashboard',
+        component: DashboardRetail
+    },
+    {
+        path: '/stok',          
+        name: 'StokView',
+        component: StokView
+    },
+    {
+        path: '/stok/penerimaan',          
+        name: 'PenerimaanBarang',
+        component: PenerimaanViews
     },
     {
         path: '/kasir',
@@ -62,18 +81,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('retail_token') 
+    const token = localStorage.getItem('retail_token')
     
-    const halamanPublik = ['login', 'register']
-    const tujuanPublik = halamanPublik.includes(to.name)
-
-    if (!tujuanPublik && !token) {
+    if (to.name !== 'login' && to.name !== 'register' && !token) {
         next({ name: 'login' })
-    } 
-    else if (tujuanPublik && token) {
-        next('/kasir')
-    } 
-    else {
+    } else if ((to.name === 'login' || to.name === 'register') && token) {
+        next('/dashboard') 
+    } else {
         next()
     }
 })

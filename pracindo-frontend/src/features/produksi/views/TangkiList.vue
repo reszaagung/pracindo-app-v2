@@ -53,12 +53,22 @@
           </template>
 
           <template v-else-if="t.saldo">
-            <div class="mb-4">
-              <p class="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wide">Total Volume Tersedia</p>
-              <p class="text-2xl font-bold" :class="Number(t.saldo.sisa_qty) > 0 ? 'text-emerald-600' : 'text-slate-400'">
-                {{ formatKg(t.saldo.sisa_qty) }} <span class="text-sm font-medium">Kg</span>
-              </p>
+            <!-- PENGGUNAAN TANK VISUALIZER DI SINI -->
+            <div class="flex justify-between items-end mb-4 border-b border-slate-50 pb-4">
+              <div>
+                <p class="text-xs text-slate-500 font-semibold mb-1 uppercase tracking-wide">Total Volume Tersedia</p>
+                <p class="text-2xl font-bold" :class="Number(t.saldo.sisa_qty) > 0 ? 'text-emerald-600' : 'text-slate-400'">
+                  {{ formatKg(t.saldo.sisa_qty) }} <span class="text-sm font-medium">Kg</span>
+                </p>
+              </div>
+              
+              <!-- Memanggil komponen TankVisualizer -->
+              <TankVisualizer 
+                :volume="t.saldo.sisa_qty" 
+                :kapasitas="t.kapasitas" 
+              />
             </div>
+            
             <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
               <div>
                 <p class="text-[11px] text-slate-500 font-semibold uppercase">Total Nilai</p>
@@ -109,10 +119,10 @@
 </template>
 
 <script setup>
-import { useTangkiList } from '../composables/useTangkiList' 
+import { useTangkiList } from '../composables/useTangkiList'
+import TankVisualizer from '../components/ui/TankVisualizers.vue'
 
 const { loading, errorMsg, tangkis, muatData } = useTangkiList()
-
 
 function formatKg(v) {
   return Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 3, maximumFractionDigits: 3 })

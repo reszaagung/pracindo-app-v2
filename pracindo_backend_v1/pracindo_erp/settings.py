@@ -29,7 +29,6 @@ ALLOWED_HOSTS = [
     "pracindo.cloud",
     "www.pracindo.cloud",
     "localhost",
-    "127.0.0.1",          
 ]
 
 

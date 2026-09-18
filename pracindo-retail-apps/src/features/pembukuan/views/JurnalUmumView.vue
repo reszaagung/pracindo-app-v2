@@ -1,11 +1,19 @@
 <template>
-    <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans">
+    <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans mt-4">
 
         <!-- HEADER -->
-        <header class="flex justify-between items-end border-b border-slate-200 pb-4">
-            <div>
-                <p class="text-sm text-slate-500 mb-1">Akuntansi & Keuangan</p>
-                <h1 class="text-2xl font-bold text-slate-800">Jurnal Umum</h1>
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
+            <div class="flex items-center gap-5">
+                <!-- 👇 TOMBOL KEMBALI KE DASHBOARD 👇 -->
+                <button @click="$router.push('/dashboard')" 
+                    class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm">
+                    <i class="pi pi-arrow-left"></i> Dashboard
+                </button>
+
+                <div>
+                    <p class="text-sm text-slate-500 mb-1">Akuntansi & Keuangan</p>
+                    <h1 class="text-2xl font-bold text-slate-800">Jurnal Umum</h1>
+                </div>
             </div>
         </header>
 
@@ -174,8 +182,10 @@
 
 <script setup>
 import { reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePembukuan } from '../composables/usePembukuan'
 
+const router = useRouter()
 const { akunList, jurnalList, isLoading, fetchAkun, fetchJurnal, simpanJurnal } = usePembukuan()
 
 // State Form (Default 2 baris karena minimal harus ada 1 Debit dan 1 Kredit)
@@ -211,14 +221,10 @@ const selisih = computed(() => totalDebit.value - totalKredit.value)
 
 // Validasi Form
 const isFormValid = computed(() => {
-    // 1. Keterangan wajib diisi
     if (!form.keterangan.trim()) return false
-    // 2. Semua baris harus punya akun
     const adaAkunKosong = form.items.some(item => !item.akun_id)
     if (adaAkunKosong) return false
-    // 3. Harus Balance (Debit = Kredit) dan tidak boleh 0
     if (selisih.value !== 0 || totalDebit.value === 0) return false
-
     return true
 })
 
@@ -239,14 +245,12 @@ const submitJurnal = async () => {
     const result = await simpanJurnal(payload)
     if (result.status === 'sukses') {
         alert(`Jurnal ${result.nomor_jurnal} berhasil disimpan!`)
-        // Reset form
         form.referensi = ''
         form.keterangan = ''
         form.items = [
             { akun_id: null, debit: 0, kredit: 0 },
             { akun_id: null, debit: 0, kredit: 0 }
         ]
-        // Refresh histori
         fetchJurnal()
     } else {
         alert(`Gagal: ${result.pesan}`)

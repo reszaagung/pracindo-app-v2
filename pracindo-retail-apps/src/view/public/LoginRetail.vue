@@ -131,8 +131,10 @@ const handleLogin = async () => {
         return
     }
 
-    const tujuan = route.query.next || '/' 
-    router.push(tujuan)
+const tujuan = route.query.next || '/dashboard' 
+
+console.log("Login sukses! Mengalihkan ke:", tujuan)
+router.push(tujuan)
 }
 
 const hubungiAdmin = () => {

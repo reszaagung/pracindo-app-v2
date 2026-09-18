@@ -1,15 +1,18 @@
 from django.urls import path
 from .views import (
     RetailLoginView,
+    RetailLogoutView, # 👈 Import Logout-nya di sini
     KatalogPOSAPIView, CheckoutPOSAPIView, RiwayatTransaksiAPIView, SesiKasirAPIView,
     PelangganRetailAPIView, SalesRetailAPIView,
     AkunBukuBesarAPIView, JurnalUmumAPIView, BukuBesarMutasiAPIView,
     DaftarPenerimaanAPIView, ProsesPenerimaanAPIView,
-    DaftarPiutangAPIView, BayarPiutangAPIView, CabangTokoAPIView
+    DaftarPiutangAPIView, BayarPiutangAPIView, CabangTokoAPIView ,DaftarStokAPIView
 )
 
 urlpatterns = [
+    path('inventory/stok/', DaftarStokAPIView.as_view(), name='retail-inventory-stok'),
     path('login/', RetailLoginView.as_view(), name='retail-login'),
+    path('logout/', RetailLogoutView.as_view(), name='retail-logout'),
     path('pos/katalog/', KatalogPOSAPIView.as_view(), name='pos-katalog'),
     path('pos/checkout/', CheckoutPOSAPIView.as_view(), name='pos-checkout'),
     path('riwayat/', RiwayatTransaksiAPIView.as_view(), name='pos-riwayat'),

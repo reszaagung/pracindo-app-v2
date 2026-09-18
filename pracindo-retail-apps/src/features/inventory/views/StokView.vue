@@ -1,14 +1,32 @@
 <template>
-    <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans">
-
+    <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans mt-4">
         <!-- Header Halaman -->
-        <header
-            class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
-            <div>
-                <p class="text-sm text-slate-500 mb-1">Logistik / Inventory</p>
-                <h1 class="text-2xl font-bold text-slate-800">Manajemen Stok Cabang</h1>
+        <header class="flex flex-col gap-4 border-b border-slate-200 pb-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <!-- Tombol Dashboard -->
+                    <button @click="$router.push('/dashboard')" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition-colors">
+                        <i class="pi pi-arrow-left"></i> Dashboard
+                    </button>
+                    <div>
+                        <p class="text-sm text-slate-500 mb-1">Logistik / Inventory</p>
+                        <h1 class="text-2xl font-bold text-slate-800">Manajemen Stok Cabang</h1>
+                    </div>
+                </div>
+
+                <!-- Tab Navigasi -->
+                <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
+                    <button class="bg-white text-blue-600 shadow-sm font-bold px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2">
+                        <i class="pi pi-box"></i> Stok
+                    </button>
+                    <button @click="$router.push('/stok/penerimaan')" class="text-slate-500 hover:text-slate-700 font-medium px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2">
+                        <i class="pi pi-truck"></i> Terima Barang
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center gap-3 w-full md:w-auto">
+
+            <!-- Search & Refresh -->
+            <div class="flex items-center gap-3 w-full md:w-auto self-end mt-2">
                 <div class="relative w-full md:w-64">
                     <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
                     <input v-model="searchQuery" type="text" placeholder="Cari kode atau nama barang..."
@@ -23,8 +41,7 @@
 
         <!-- Tabel Data Stok -->
         <div
-            class="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden flex flex-col h-[calc(100vh-200px)]">
-
+            class="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden flex flex-col h-[calc(100vh-250px)]">
             <!-- Ringkasan Cepat -->
             <div class="p-4 bg-slate-50/50 border-b border-slate-100 flex gap-6">
                 <div class="flex items-center gap-2">
@@ -33,7 +50,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span class="text-xs font-semibold text-slate-600">Menipis (≤ 5)</span>
+                    <span class="text-xs font-semibold text-slate-600">Menipis (<= 5)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-3 h-3 rounded-full bg-rose-500"></div>
@@ -43,7 +60,6 @@
 
             <!-- Area Tabel (Scrollable) -->
             <div class="flex-1 overflow-y-auto custom-scrollbar relative">
-
                 <!-- Loading State -->
                 <div v-if="isLoading && stokList.length === 0"
                     class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
@@ -54,22 +70,14 @@
                 <table class="min-w-full text-left border-collapse">
                     <thead class="bg-white sticky top-0 shadow-sm z-10 border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Kode
-                                SKU</th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Produk
-                            </th>
-                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">
-                                Kategori</th>
-                            <th
-                                class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32 text-center">
-                                Satuan</th>
-                            <th
-                                class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32 text-right">
-                                Stok Fisik</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Kode SKU</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Produk</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Kategori</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32 text-center">Satuan</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32 text-right">Stok Fisik</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
-
                         <!-- State Kosong / Tidak Ketemu -->
                         <tr v-if="filteredStok.length === 0 && !isLoading">
                             <td colspan="5" class="px-6 py-12 text-center text-slate-400">
@@ -93,7 +101,6 @@
                                 <span class="bg-slate-100 px-2 py-1 rounded-md">{{ item.satuan || 'Pcs' }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <!-- Logika Warna Indikator Stok -->
                                 <div class="inline-flex items-center justify-center px-3 py-1 rounded-lg text-sm font-black min-w-[3rem]"
                                     :class="[
                                         item.qty <= 0 ? 'bg-rose-100 text-rose-700 border border-rose-200' :
@@ -104,7 +111,6 @@
                                 </div>
                             </td>
                         </tr>
-
                     </tbody>
                 </table>
             </div>
@@ -114,8 +120,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useStok } from '../composables/useStok'
-
+import { useRouter } from 'vue-router'
+import { useStok } from '../composables/useStock'
+const router = useRouter()
 const { stokList, isLoading, fetchStok } = useStok()
 const searchQuery = ref('')
 
@@ -123,10 +130,8 @@ onMounted(() => {
     fetchStok()
 })
 
-// Fitur Pencarian Real-time (Filter di sisi Client agar cepat)
 const filteredStok = computed(() => {
     if (!searchQuery.value) return stokList.value
-
     const keyword = searchQuery.value.toLowerCase()
     return stokList.value.filter(item =>
         (item.nama_produk && item.nama_produk.toLowerCase().includes(keyword)) ||
@@ -140,7 +145,6 @@ const filteredStok = computed(() => {
     width: 6px;
     height: 6px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 999px;

@@ -19,12 +19,12 @@
                 </div>
                 <div
                     class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold border-2 border-slate-700">
-                    K
+                    
                 </div>
-                <button @click="prosesLogout"
-                    class="flex items-center gap-2 text-sm font-bold text-rose-400 hover:text-white bg-slate-800 hover:bg-rose-500 px-3 py-2 rounded-lg transition-colors border border-slate-700 hover:border-rose-500">
-                    <i class="pi pi-power-off"></i> <span class="hidden sm:inline">Tutup Shift</span>
-                </button>
+                    <button @click="$router.push('/dashboard')"
+                        class="flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors border border-slate-700 hover:border-slate-500">
+                        <i class="pi pi-th-large"></i> <span class="hidden sm:inline">Dashboard</span>
+                    </button>
             </div>
         </header>
 
