@@ -5,6 +5,12 @@ export const apiDistribusi = {
         const response = await api.get('logistik/kendaraan/') 
         return response.data
     },
+    // 👇 FUNGSI INI YANG BIKIN BISA NYIMPAN ARMADA BARU 👇
+    tambahArmada: async (payload) => {
+        const response = await api.post('logistik/kendaraan/', payload)
+        return response.data
+    },
+
     getKurir: async () => {
         try {
             const response = await api.get('logistik/kurir/') 

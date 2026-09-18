@@ -4,7 +4,7 @@ from .models import Batch, Tangki
 class TangkiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tangki
-        fields = ["id", "kode", "nama", "aktif"]
+        fields = ['id', 'kode', 'nama', 'aktif', 'kapasitas_kg']
 
 class BatchSerializer(serializers.ModelSerializer):
     tangki_kode = serializers.CharField(source="tangki.kode", read_only=True)

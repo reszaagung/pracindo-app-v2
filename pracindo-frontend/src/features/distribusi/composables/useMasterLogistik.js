@@ -14,8 +14,7 @@ export function useMasterLogistik() {
             const [resArmada, resKurir, resToko] = await Promise.all([
                 apiDistribusi.getArmada(),
                 apiDistribusi.getKurir().catch(() => []), 
-            
-                api.get('core/cabangtoko/')
+                api.get('retail/cabang/')
             ])
             
             daftarArmada.value = resArmada.results || resArmada || []

@@ -23,11 +23,11 @@ import { computed } from 'vue'
 
 const props = defineProps({
   volume: { type: [Number, String], required: true },
-  kapasitas: { type: [Number, String], default: 300000 }
+  kapasitas: { type: [Number, String], default: 0 } // Hapus 300000
 })
 
 const persen = computed(() => {
-  const maks = Number(props.kapasitas) || 300000 
+  const maks = Number(props.kapasitas) || 1 
   const isi = Number(props.volume) || 0
   
   const hitung = (isi / maks) * 100

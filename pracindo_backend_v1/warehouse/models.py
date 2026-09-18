@@ -317,7 +317,8 @@ class Distribusi(models.Model):
         max_length=20, 
         choices=[('CABANG', 'Cabang Retail'), ('CUSTOMER', 'Pelanggan Langsung')]
     )
-    tujuan_cabang = models.ForeignKey('core.CabangToko', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    tujuan_cabang = models.ForeignKey('retail.CabangToko', on_delete=models.SET_NULL, null=True, blank=True)
     
     pelanggan_nama = models.CharField(max_length=200)
     alamat = models.TextField()

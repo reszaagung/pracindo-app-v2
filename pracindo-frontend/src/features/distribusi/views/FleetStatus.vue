@@ -85,7 +85,8 @@
             <i class="pi pi-times text-lg"></i>
           </button>
         </div>
-        <form @submit.prevent="submitArmada" class="p-6 flex flex-col gap-5">
+        
+        <form @submit="tanganiSubmit" class="p-6 flex flex-col gap-5">
           <div v-if="formGalat" class="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium flex items-start gap-2">
             <i class="pi pi-exclamation-triangle mt-0.5"></i>
             <span>{{ formGalat }}</span>
@@ -120,9 +121,8 @@
             <button type="button" @click="tutupModal" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
               Batal
             </button>
-            <button type="submit" :disabled="sedangMenyimpan" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white text-sm font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
-              <i v-if="sedangMenyimpan" class="pi pi-spin pi-spinner text-xs"></i>
-              <i v-else class="pi pi-save text-xs"></i>
+            <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-md flex items-center gap-2">
+              <i class="pi pi-save text-xs"></i>
               <span>Simpan Armada</span>
             </button>
           </div>
@@ -141,7 +141,6 @@ const memuat = ref(true)
 const galat = ref(null)
 
 const tampilModal = ref(false)
-const sedangMenyimpan = ref(false)
 const formGalat = ref('')
 
 const form = reactive({
@@ -186,21 +185,46 @@ const tutupModal = () => {
   tampilModal.value = false
 }
 
+const tanganiSubmit = (e) => {
+    e.preventDefault();
+    console.log("Tombol Ditekan! Data form:", { ...form });
+    submitArmada();
+}
+
 const submitArmada = async () => {
-  sedangMenyimpan.value = true
-  formGalat.value = ''
+  formGalat.value = 'Mencoba mengirim data...' 
   try {
     const payload = {
-      ...form,
+      plat_nomor: form.plat_nomor,
+      nama: form.nama,
+      kode: form.kode,
       kapasitas_kg: parseFloat(form.kapasitas_kg)
     }
-    await apiDistribusi.tambahArmada(payload)
+    console.log("Mengirim payload:", payload);
+    
+    await apiDistribusi.tambahArmada(payload) 
+    
+    console.log("Berhasil disimpan!");
     tutupModal()
     await muatDataArmada()
   } catch (err) {
-    formGalat.value = err.response?.data?.detail || 'Gagal menyimpan data armada.'
-  } finally {
-    sedangMenyimpan.value = false
+    console.error("Error aslinya bos:", err) 
+    
+    if (err.response?.data) {
+      const data = err.response.data
+      if (typeof data === 'object') {
+        const errorKey = Object.keys(data)[0]
+        if (Array.isArray(data[errorKey])) {
+           formGalat.value = `${errorKey}: ${data[errorKey][0]}`
+        } else {
+           formGalat.value = data.detail || JSON.stringify(data)
+        }
+      } else {
+        formGalat.value = err.response.data
+      }
+    } else {
+      formGalat.value = err.message || 'Gagal menyimpan data armada. (Cek fungsi tambahArmada di api.js)'
+    }
   }
 }
 

@@ -62,11 +62,10 @@
                 </p>
               </div>
               
-              <!-- Memanggil komponen TankVisualizer -->
-              <TankVisualizer 
-                :volume="t.saldo.sisa_qty" 
-                :kapasitas="t.kapasitas" 
-              />
+                <TankVisualizer 
+                  :volume="t.saldo.sisa_qty" 
+                  :kapasitas="t.kapasitas_kg" 
+                />
             </div>
             
             <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
