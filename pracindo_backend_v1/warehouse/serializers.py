@@ -187,22 +187,28 @@ class TutupSelisihSerializer(serializers.Serializer):
     alasan = serializers.CharField()
 
 
+# =========================================================
+# DISTRIBUSI (OUTBOUND)
+# =========================================================
 
 class ItemDistribusiSerializer(serializers.ModelSerializer):
-    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
-    produk_kode = serializers.CharField(source='produk.kode', read_only=True)
+    produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True,
+                                         default=None)
 
     class Meta:
         model = ItemDistribusi
-        fields = ['id', 'produk', 'produk_kode', 'produk_nama', 'kemasan', 'stiker', 'qty']
+        fields = ['id', 'entitas', 'entitas_kode', 'produk', 'produk_nama',
+                  'kemasan', 'stiker', 'qty']
 
 
 class DistribusiSerializer(serializers.ModelSerializer):
     item = ItemDistribusiSerializer(many=True, read_only=True)
     status_label = serializers.CharField(source='get_status_display', read_only=True)
     entitas_kode = serializers.CharField(source='entitas.kode', read_only=True)
-    tujuan_cabang_kode = serializers.CharField(source='tujuan_cabang.kode', read_only=True, default=None)
-    
+    tujuan_cabang_kode = serializers.CharField(source='tujuan_cabang.kode',
+                                               read_only=True, default=None)
+
     diterima_oleh_nama = serializers.SerializerMethodField()
     dibuat_oleh_nama = serializers.SerializerMethodField()
 
@@ -212,10 +218,11 @@ class DistribusiSerializer(serializers.ModelSerializer):
             'id', 'nomor', 'entitas', 'entitas_kode', 'jenis_tujuan',
             'tujuan_cabang', 'tujuan_cabang_kode', 'pelanggan_nama', 'alamat',
             'lat', 'lng', 'berat_total_kg', 'status', 'status_label',
-            'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh_nama', 
-            'dibuat_oleh_nama', 'item' 
+            'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh_nama',
+            'dibuat_oleh_nama', 'item',
         ]
-        read_only_fields = ['nomor', 'status', 'tanggal_dibuat', 'waktu_terkirim', 'diterima_oleh']
+        read_only_fields = ['nomor', 'status', 'tanggal_dibuat',
+                            'waktu_terkirim', 'diterima_oleh']
 
     def get_diterima_oleh_nama(self, obj):
         u = obj.diterima_oleh
@@ -228,31 +235,44 @@ class DistribusiSerializer(serializers.ModelSerializer):
 
 class BarisDistribusiSerializer(serializers.Serializer):
     produk_id = serializers.CharField(max_length=50) 
-    
     kemasan = serializers.CharField(max_length=50)
     stiker = serializers.CharField(max_length=100, required=False, allow_blank=True)
     qty = serializers.IntegerField(min_value=1)
+    
+    entitas_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class BuatDistribusiSerializer(serializers.Serializer):
     """
-    Payload untuk membuat/merakit draft distribusi baru.
+    Payload untuk membuat atau merakit ulang distribusi.
+
+    Satu DO boleh memuat barang PT dan CV sekaligus: tiap baris bisa
+    menyatakan entitasnya sendiri. Baris yang tidak menyebut entitas ikut
+    entitas header. Entitas tidak pernah ditebak dari teks stiker.
+
+    entitas_id di header tetap wajib: dipakai Distribusi.save() untuk
+    penomoran lewat CounterDokumen, dan diteruskan ke rakit_pengiriman().
     """
     entitas_id = serializers.IntegerField()
-    jenis_tujuan = serializers.ChoiceField(choices=[('CABANG', 'Cabang Retail'), ('CUSTOMER', 'Pelanggan Langsung')])
+    jenis_tujuan = serializers.ChoiceField(
+        choices=[('CABANG', 'Cabang Retail'), ('CUSTOMER', 'Pelanggan Langsung')]
+    )
     tujuan_cabang_id = serializers.IntegerField(required=False, allow_null=True)
-    
+
     pelanggan_nama = serializers.CharField(max_length=200)
     alamat = serializers.CharField()
-    lat = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
-    lng = serializers.DecimalField(max_digits=10, decimal_places=7, required=False, allow_null=True)
-    berat_total_kg = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
+    lat = serializers.DecimalField(max_digits=10, decimal_places=7,
+                                   required=False, allow_null=True)
+    lng = serializers.DecimalField(max_digits=10, decimal_places=7,
+                                   required=False, allow_null=True)
+    berat_total_kg = serializers.DecimalField(max_digits=10, decimal_places=2,
+                                              default=0)
+
     baris = BarisDistribusiSerializer(many=True, allow_empty=False)
 
     def validate(self, data):
         if data.get('jenis_tujuan') == 'CABANG' and not data.get('tujuan_cabang_id'):
             raise serializers.ValidationError(
-                "Tujuan cabang wajib diisi jika jenis tujuan adalah CABANG."
+                'Tujuan cabang wajib diisi jika jenis tujuan adalah CABANG.'
             )
         return data

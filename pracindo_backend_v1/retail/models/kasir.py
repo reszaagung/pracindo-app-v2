@@ -50,7 +50,7 @@ class TransaksiPOS(models.Model):
 
 class ItemTransaksi(models.Model):
     transaksi = models.ForeignKey(TransaksiPOS, on_delete=models.CASCADE, related_name='items')
-    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT)
+    produk = models.ForeignKey('master.MasterProduk', on_delete=models.PROTECT)
     kemasan = models.CharField(max_length=50)
     qty_unit = models.IntegerField(default=1)
     harga_satuan = models.DecimalField(max_digits=12, decimal_places=2)
@@ -60,4 +60,4 @@ class ItemTransaksi(models.Model):
         db_table = 'retail_item_transaksi'
 
     def __str__(self):
-        return f"{self.transaksi.nomor_struk} - {self.produk.nama} ({self.kemasan})"
+        return f"{self.transaksi.nomor_struk} - {self.produk.nama_item} ({self.kemasan})"

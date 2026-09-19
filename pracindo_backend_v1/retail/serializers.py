@@ -13,26 +13,26 @@ from .models import (
 User = get_user_model()
 
 class KatalogPOSSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='produk.id', read_only=True)
-    nama = serializers.CharField(source='produk.nama', read_only=True)
-    barcode = serializers.CharField(source='produk.barcode', default='NO-BARCODE', read_only=True)
+    id = serializers.CharField(source='produk.id', read_only=True)
+    nama = serializers.CharField(source='produk.nama_item', read_only=True)
     kemasan = serializers.CharField(read_only=True)
     stok = serializers.IntegerField(source='total_unit', read_only=True)
-    harga = serializers.DecimalField(source='harga_jual', max_digits=12, decimal_places=2, read_only=True)
+    harga = serializers.DecimalField(source='harga_jual', max_digits=12,
+                                     decimal_places=2, read_only=True)
 
     class Meta:
         model = StokRetail
-        fields = ['id', 'nama', 'barcode', 'kemasan', 'stok', 'harga']
+        fields = ['id', 'nama', 'kemasan', 'stok', 'harga']
 
 class ItemTransaksiSerializer(serializers.ModelSerializer):
-    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
+    produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
 
     class Meta:
         model = ItemTransaksi
         fields = ['id', 'produk', 'produk_nama', 'kemasan', 'qty_unit', 'harga_satuan', 'subtotal']
 
 class RiwayatTransaksiSerializer(serializers.ModelSerializer):
-    items = ItemTransaksiSerializer(many=True, read_only=True)
+    produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
     pelanggan_nama = serializers.CharField(source='pelanggan.nama', read_only=True, allow_null=True)
     sales_nama = serializers.CharField(source='sales.nama', read_only=True, allow_null=True)
 
@@ -119,7 +119,7 @@ class BukuPiutangRetailSerializer(serializers.ModelSerializer):
         ]
 
 class ItemPenerimaanSerializer(serializers.ModelSerializer):
-    produk_nama = serializers.CharField(source='produk.nama', read_only=True)
+    produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
     kemasan_nama = serializers.CharField(source='kemasan.nama', read_only=True)
 
     class Meta:
@@ -187,7 +187,7 @@ class CabangTokoSerializer(serializers.ModelSerializer):
         fields = ['id', 'kode', 'nama', 'alamat', 'aktif', 'username_kasir']
 
 class StokRetailSerializer(serializers.ModelSerializer):
-    nama_produk = serializers.CharField(source='produk.nama', read_only=True)
+    nama_produk = serializers.CharField(source='produk.nama_item', read_only=True)
     kode_produk = serializers.CharField(source='produk.kode', read_only=True)
 
     class Meta:

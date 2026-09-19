@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from core.services import pastikan_periode_terbuka
 
+from django.db import transaction
 from .models import (
     JenisKemasan, JenisSelisih, LaporanSelisih, PenerimaanBarang,
     PenerimaanItem, Resolusi, StatusSelisih, 
@@ -32,7 +33,7 @@ def terima_barang(*, po_id, baris, no_surat_jalan, tanggal, user,
     if not baris:
         raise ValidationError('Tidak ada baris barang yang diterima.')
 
-    po = (PurchaseOrder.objects.select_for_update()
+    po = (PurchaseOrder.objects.select_for_update(of=('self',))
           .select_related('entitas').get(pk=po_id))
 
     if po.status == StatusPO.SELESAI:
@@ -86,7 +87,7 @@ def terima_barang(*, po_id, baris, no_surat_jalan, tanggal, user,
 def _simpan_item(penerimaan, b, po):
     from akunting.models import PurchaseOrderItem
 
-    po_item = PurchaseOrderItem.objects.select_related('produk').select_for_update().get(
+    po_item = PurchaseOrderItem.objects.select_related('produk').select_for_update(of=('self',)).get(
         pk=b['po_item_id'], purchase_order=po)
 
     if po_item.harga_per_kg is None:
@@ -224,7 +225,7 @@ def laporan_manual(*, penerimaan_id, jenis, qty_selisih, uraian, user,
 
 @transaction.atomic
 def ajukan_ke_suplier(*, laporan_id, user):
-    lap = LaporanSelisih.objects.select_for_update().get(pk=laporan_id)
+    lap = LaporanSelisih.objects.select_for_update(of=('self',)).get(pk=laporan_id)
     if lap.status != StatusSelisih.DIBUKA:
         raise ValidationError(f'Laporan sudah {lap.get_status_display()}.')
     if lap.nilai_selisih <= 0:
@@ -241,7 +242,7 @@ def selesaikan_laporan(*, laporan_id, resolusi, user, nilai_klaim=None,
                        catatan=''):
     from akunting.models import StatusPO
 
-    lap = (LaporanSelisih.objects.select_for_update()
+    lap = (LaporanSelisih.objects.select_for_update(of=('self',))
            .select_related('penerimaan__purchase_order').get(pk=laporan_id))
 
     if lap.status in (StatusSelisih.DISELESAIKAN, StatusSelisih.DITUTUP):
@@ -282,7 +283,7 @@ def selesaikan_laporan(*, laporan_id, resolusi, user, nilai_klaim=None,
 
 @transaction.atomic
 def tutup_laporan(*, laporan_id, user, alasan):
-    lap = LaporanSelisih.objects.select_for_update().get(pk=laporan_id)
+    lap = LaporanSelisih.objects.select_for_update(of=('self',)).get(pk=laporan_id)
     if lap.status in (StatusSelisih.DISELESAIKAN, StatusSelisih.DITUTUP):
         raise ValidationError(f'Laporan sudah {lap.get_status_display()}.')
     if not alasan or not alasan.strip():
@@ -367,6 +368,7 @@ def ringkasan_penerimaan(penerimaan_id):
 # Terhubung langsung dengan file logistik/integrasi_warehouse.py
 # =========================================================
 
+
 def distribusi_siap_kirim(entitas_id=None):
     qs = Distribusi.objects.filter(status=StatusDistribusi.SIAP_KIRIM).order_by('tanggal_dibuat')
     if entitas_id:
@@ -384,6 +386,7 @@ def distribusi_siap_kirim(entitas_id=None):
             'berat_kg': d.berat_total_kg
         })
     return hasil
+
 
 def rincian_distribusi(distribusi_id):
     try:
@@ -405,7 +408,6 @@ def rincian_distribusi(distribusi_id):
     for itm in d.item.all():
         hasil['baris'].append({
             'produk_kode': getattr(itm.produk, 'kode', '-'),
-            # BARIS INI YANG DIUBAH:
             'produk_nama': str(itm.produk) if itm.produk else '-',
             'stiker': itm.stiker if itm.stiker else '-',
             'qty': itm.qty,
@@ -413,43 +415,34 @@ def rincian_distribusi(distribusi_id):
         })
     return hasil
 
-    
+
 @transaction.atomic
 def tandai_terkirim(distribusi_id, waktu, oleh):
-    d = Distribusi.objects.select_for_update().get(id=distribusi_id)
+    d = Distribusi.objects.select_for_update(of=('self',)).get(id=distribusi_id)
     if d.status != StatusDistribusi.TERKIRIM:
         d.status = StatusDistribusi.TERKIRIM
         d.waktu_terkirim = waktu
         d.diterima_oleh = oleh
         d.save(update_fields=['status', 'waktu_terkirim', 'diterima_oleh'])
 
+
 @transaction.atomic
 def kembalikan_stok(distribusi_id, alasan, oleh):
-    d = Distribusi.objects.select_for_update().get(id=distribusi_id)
+    d = Distribusi.objects.select_for_update(of=('self',)).get(id=distribusi_id)
     d.status = StatusDistribusi.BATAL
     d.save(update_fields=['status'])
 
+
 @transaction.atomic
 def sahkan_distribusi(distribusi_id, user=None):
-    """
-    Memotong StokBarangJadi sesuai baris distribusi, lalu menandai
-    SIAP_KIRIM.
-
-    Pencarian stok WAJIB menyertakan entitas: StokBarangJadi unik pada
-    (entitas, grup_bahan, item, kemasan). Tanpa entitas, PT dan CV yang
-    punya produk sama dengan kemasan sama akan bentrok
-    MultipleObjectsReturned dan distribusi tidak bisa disahkan sama sekali.
-    """
     from decimal import Decimal
-
     from django.core.exceptions import ValidationError
-
-    from inventory.models import StokBarangJadi
-
+    from inventory.models import StokBarangJadi, Kemasan
     from .models import StatusDistribusi
 
-    d = (Distribusi.objects.prefetch_related('item')
-         .select_for_update().get(id=distribusi_id))
+    d = (Distribusi.objects.select_related('entitas')
+         .prefetch_related('item__entitas')
+         .select_for_update(of=('self',)).get(id=distribusi_id))
 
     if d.status == StatusDistribusi.SIAP_KIRIM:
         return d
@@ -461,31 +454,40 @@ def sahkan_distribusi(distribusi_id, user=None):
         )
 
     for baris in d.item.all():
+        entitas = baris.entitas_efektif
+        if entitas is None:
+            raise ValidationError(
+                f"Baris '{baris.produk_id}' ({baris.kemasan}) tidak punya "
+                f"entitas, dan DO ini juga tidak. Tentukan pemilik stoknya."
+            )
+
+        kemasan_obj = Kemasan.objects.filter(nama=baris.kemasan).first()
+        if not kemasan_obj:
+            raise ValidationError(f"Kemasan '{baris.kemasan}' tidak ditemukan di master data.")
+
         try:
-            stok = StokBarangJadi.objects.select_for_update().get(
-                entitas_id=d.entitas_id,
+            stok = StokBarangJadi.objects.select_for_update(of=('self',)).get(
+                entitas_id=entitas.id,
                 item_id=baris.produk_id,
                 kemasan__nama=baris.kemasan,
             )
         except StokBarangJadi.DoesNotExist:
             raise ValidationError(
                 f"Baris ditolak: stok fisik untuk '{baris.produk_id}' "
-                f"({baris.kemasan}) tidak ditemukan di gudang {d.entitas.kode}."
+                f"({baris.kemasan}) tidak ditemukan di gudang {entitas.kode}."
             )
         except StokBarangJadi.MultipleObjectsReturned:
             raise ValidationError(
                 f"Baris ditolak: ditemukan stok ganda untuk '{baris.produk_id}' "
-                f"({baris.kemasan}) di {d.entitas.kode}. Periksa grup bahan."
+                f"({baris.kemasan}) di {entitas.kode}. Periksa grup bahan."
             )
 
         if stok.qty_unit < baris.qty:
             raise ValidationError(
-                f"Gagal! Stok {baris.kemasan} tidak mencukupi. "
+                f"Gagal! Stok {baris.kemasan} di {entitas.kode} tidak mencukupi. "
                 f"Tersedia {stok.qty_unit}, diminta {baris.qty}."
             )
 
-        # Kalau habis, potong seluruh sisa kg supaya tidak ada residu
-        # akibat pembulatan berat per unit.
         if stok.qty_unit == baris.qty:
             potong_kg = stok.qty_kg
         else:
@@ -500,62 +502,55 @@ def sahkan_distribusi(distribusi_id, user=None):
 
     d.status = StatusDistribusi.SIAP_KIRIM
     d.save(update_fields=['status'])
+
+    if d.jenis_tujuan == 'CABANG' and d.tujuan_cabang_id:
+        from retail.services import buat_penerimaan_dari_do
+        buat_penerimaan_dari_do(d)
+
     return d
 
 
 @transaction.atomic
 def kembalikan_potongan_stok(distribusi_id):
-    """
-    Mengembalikan stok yang dipotong sahkan_distribusi().
-
-    Status TIDAK diubah di sini -- pemanggil yang menentukan. Pada edit,
-    distribusi langsung disahkan ulang; pada hapus, barisnya memang
-    dibuang. DRAFT tidak dipakai di alur saat ini.
-
-    RIWAYAT BUG
-        Versi sebelumnya mencari stok dengan int(baris.produk_id) sebagai
-        primary key StokBarangJadi. produk adalah FK ke master.MasterProduk
-        yang PK-nya CharField, jadi int() hampir selalu ValueError -- dan
-        ValueError itu ditangkap lalu diabaikan diam-diam. Akibatnya setiap
-        edit distribusi memotong stok dua kali (kembalikan gagal, potong
-        jalan), dan setiap hapus membuang stok permanen. Tanpa satu pun
-        pesan galat.
-    """
     from decimal import Decimal
-
     from django.core.exceptions import ValidationError
-
     from inventory.models import Kemasan, StokBarangJadi
-
     from .models import StatusDistribusi
 
-    d = (Distribusi.objects.prefetch_related('item')
-         .select_for_update().get(id=distribusi_id))
+    d = (Distribusi.objects.select_related('entitas')
+         .prefetch_related('item__entitas')
+         .select_for_update(of=('self',)).get(id=distribusi_id))
 
     if d.status != StatusDistribusi.SIAP_KIRIM:
         return d
 
     for baris in d.item.all():
-        stok = StokBarangJadi.objects.select_for_update().filter(
-            entitas_id=d.entitas_id,
+        entitas = baris.entitas_efektif
+        if entitas is None:
+            raise ValidationError(
+                f"Tidak bisa mengembalikan stok baris '{baris.produk_id}': "
+                f"entitasnya tidak diketahui."
+            )
+
+        kemasan_obj = Kemasan.objects.filter(nama=baris.kemasan).first()
+        if kemasan_obj is None:
+            raise ValidationError(
+                f"Tidak bisa mengembalikan stok: kemasan "
+                f"'{baris.kemasan}' tidak ada di master."
+            )
+
+        stok = StokBarangJadi.objects.select_for_update(of=('self',)).filter(
+            entitas_id=entitas.id,
             item_id=baris.produk_id,
-            kemasan__nama=baris.kemasan,
+            kemasan_id=kemasan_obj.id,
         ).first()
 
         if stok is None:
-            # Barisnya habis lalu terhapus, atau memang belum pernah ada.
-            # Dibuat ulang supaya stoknya kembali, bukan hilang diam-diam.
-            kemasan = Kemasan.objects.filter(nama=baris.kemasan).first()
-            if kemasan is None:
-                raise ValidationError(
-                    f"Tidak bisa mengembalikan stok: kemasan "
-                    f"'{baris.kemasan}' tidak ada di master."
-                )
             stok = StokBarangJadi.objects.create(
-                entitas_id=d.entitas_id,
-                grup_bahan_id=d.entitas.grup_bahan_id,
+                entitas_id=entitas.id,
+                grup_bahan_id=entitas.grup_bahan_id,
                 item_id=baris.produk_id,
-                kemasan=kemasan,
+                kemasan=kemasan_obj,
                 qty_unit=0,
                 qty_kg=Decimal('0'),
             )

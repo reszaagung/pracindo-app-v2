@@ -27,6 +27,7 @@ from .services import (
     hitung_rekap_klaim, generate_rekap_klaim,
     CountRealtime,
     posisi_likuiditas,budget_vs_actual, akun_tanpa_anggaran,
+    financial_movement, ringkasan_per_akun,
 )
 
 
@@ -439,3 +440,59 @@ class BudgetVsActualAPIView(APIView):
         if request.query_params.get('tanpa_anggaran') in ('1', 'true'):
             data['tanpa_anggaran'] = akun_tanpa_anggaran(budget.id, bulan=bulan)
         return Response(data)
+
+class FinancialMovementAPIView(APIView):
+    """Mutasi keuangan dari ledger, terbaru lebih dulu.
+
+    Filter: entitas, tahun, bulan, akun, tipe_akun, kejadian, dari,
+    sampai, batas. Tanpa filter tanggal = mutasi terakhir."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        p = request.query_params
+
+        def angka(nama):
+            nilai = p.get(nama)
+            return int(nilai) if nilai else None
+
+        entitas = angka('entitas')
+        if entitas is None:
+            # Tanpa entitas eksplisit, batasi ke entitas yang diizinkan.
+            from akunting.models import JurnalUmum
+            izin = list(
+                batasi_entitas(JurnalUmum.objects.all(), request)
+                .values_list('entitas_id', flat=True).distinct()
+            )
+            if len(izin) == 1:
+                entitas = izin[0]
+
+        return Response(financial_movement(
+            entitas=entitas,
+            tahun=angka('tahun'),
+            bulan=angka('bulan'),
+            akun=angka('akun'),
+            tipe_akun=p.get('tipe_akun'),
+            kejadian=p.get('kejadian'),
+            dari=p.get('dari') or None,
+            sampai=p.get('sampai') or None,
+            batas=angka('batas') or 100,
+        ))
+
+
+class RingkasanAkunAPIView(APIView):
+    """Mutasi dijumlahkan per akun untuk satu periode."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        p = request.query_params
+
+        def angka(nama):
+            nilai = p.get(nama)
+            return int(nilai) if nilai else None
+
+        return Response(ringkasan_per_akun(
+            entitas=angka('entitas'),
+            tahun=angka('tahun'),
+            bulan=angka('bulan'),
+            tipe_akun=p.get('tipe_akun'),
+        ))

@@ -15,6 +15,7 @@ from .views import (
     RekapMutasiKlaimLiveAPIView, RekapMutasiKlaimGenerateAPIView,
     VersiRealtimeAPIView, PosisiLikuiditasAPIView,
     BudgetVsActualAPIView,
+    FinancialMovementAPIView, RingkasanAkunAPIView,
 )
 
 urlpatterns = [
@@ -52,6 +53,9 @@ urlpatterns = [
 
     path('realtime/versi/', VersiRealtimeAPIView.as_view(), name='finance-realtime-versi'),
     path('likuiditas/', PosisiLikuiditasAPIView.as_view(), name='finance-likuiditas'),
+
+    path('movements/', FinancialMovementAPIView.as_view(), name='finance-movements'),
+    path('movements/per-akun/', RingkasanAkunAPIView.as_view(), name='finance-movements-per-akun'),
 
     path('budget/<int:pk>/vs-actual/', BudgetVsActualAPIView.as_view(), name='finance-budget-vs-actual'),
 ]

@@ -157,7 +157,7 @@ class CheckoutPOSAPIView(APIView):
             stok = StokRetail.objects.select_for_update().get(
                 cabang=cabang, 
                 produk_id=item['produk_id'],
-                kemasan_id=item['kemasan_id']
+                kemasan=item['kemasan']
             )
             
             if stok.total_unit < qty_beli:
@@ -167,7 +167,7 @@ class CheckoutPOSAPIView(APIView):
             ItemTransaksi.objects.create(
                 transaksi=transaksi,
                 produk_id=item['produk_id'],
-                kemasan_id=item['kemasan_id'],
+                kemasan=item['kemasan'],
                 qty_unit=qty_beli,
                 harga_satuan=harga_satuan,
                 subtotal=harga_satuan * Decimal(qty_beli)

@@ -311,7 +311,14 @@ class Distribusi(models.Model):
     Memenuhi kontrak logistik (integrasi_warehouse.py).
     """
     nomor = models.CharField(max_length=50, unique=True)
-    entitas = models.ForeignKey('core.Entitas', on_delete=models.PROTECT, related_name='distribusi')
+    
+    entitas = models.ForeignKey(
+        'core.Entitas', 
+        on_delete=models.PROTECT, 
+        related_name='distribusi',
+        null=True,   
+        blank=True   
+    )
     
     jenis_tujuan = models.CharField(
         max_length=20, 
@@ -347,15 +354,46 @@ class Distribusi(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.nomor:
-            self.nomor = CounterDokumen.berikutnya(self.entitas, 'DO', timezone.localdate())
+            if self.entitas:
+                self.nomor = CounterDokumen.berikutnya(self.entitas, 'DO', timezone.localdate())
+            else:
+                tanggal_saat_ini = timezone.localdate()
+                tahun = tanggal_saat_ini.strftime("%Y")
+                bulan_romawi = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"]
+                bulan = bulan_romawi[tanggal_saat_ini.month - 1]
+                
+                last_mix = Distribusi.objects.filter(nomor__startswith=f"DO/MIX/{tahun}/{bulan}/").order_by('-id').first()
+                if last_mix:
+                    try:
+                        urutan_terakhir = int(last_mix.nomor.split("/")[-1])
+                        urutan_baru = urutan_terakhir + 1
+                    except ValueError:
+                        urutan_baru = 1
+                else:
+                    urutan_baru = 1
+                    
+                self.nomor = f"DO/MIX/{tahun}/{bulan}/{urutan_baru:03d}"
+                
         super().save(*args, **kwargs)
 
-
 class ItemDistribusi(models.Model):
+    """
+    Satu baris barang dalam DO.
+
+    Punya `entitas` sendiri karena satu DO boleh memuat barang PT dan CV
+    sekaligus — kurir yang sama, tujuan yang sama, tapi stok yang dipotong
+    berasal dari gudang entitas masing-masing. Entitas dinyatakan di sini,
+    tidak pernah ditebak dari teks stiker.
+    """
     distribusi = models.ForeignKey(Distribusi, on_delete=models.CASCADE, related_name='item')
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, related_name='item_distribusi',
+        null=True, blank=True,
+        help_text='Pemilik stok baris ini. Kosong = ikut entitas header.',
+    )
     produk = models.ForeignKey('master.MasterProduk', on_delete=models.PROTECT)
-    
-    kemasan = models.CharField(max_length=50) 
+
+    kemasan = models.CharField(max_length=50)
     stiker = models.CharField(max_length=100, blank=True, help_text="Barang berstiker tidak bisa diklaim lagi.")
     qty = models.IntegerField(default=1)
 
@@ -364,3 +402,8 @@ class ItemDistribusi(models.Model):
 
     def __str__(self):
         return f"{self.produk.nama_item} - {self.qty} {self.kemasan}"
+
+    @property
+    def entitas_efektif(self):
+        """Entitas yang dipakai untuk memotong stok."""
+        return self.entitas or self.distribusi.entitas

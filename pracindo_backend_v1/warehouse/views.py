@@ -211,7 +211,7 @@ class DistribusiViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (Distribusi.objects
                 .select_related('entitas', 'tujuan_cabang', 'diterima_oleh')
-                .prefetch_related('item__produk')
+                .prefetch_related('item__produk', 'item__entitas')
                 .order_by('-tanggal_dibuat', '-id'))
 
     def get_serializer_class(self):
@@ -219,11 +219,24 @@ class DistribusiViewSet(viewsets.ModelViewSet):
             return BuatDistribusiSerializer
         return DistribusiSerializer
 
+    def _isi_baris(self, dist, baris):
+        """Entitas per baris disimpan apa adanya. Baris yang kosong ikut
+        entitas header saat stok dipotong — lihat ItemDistribusi.entitas_efektif."""
+        for brs in baris:
+            ItemDistribusi.objects.create(
+                distribusi=dist,
+                entitas_id=brs.get('entitas_id'),
+                produk_id=brs['produk_id'],
+                kemasan=brs['kemasan'],
+                stiker=brs.get('stiker', ''),
+                qty=brs['qty'],
+            )
+
     def create(self, request, *args, **kwargs):
         s = BuatDistribusiSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
-        
+
         try:
             with transaction.atomic():
                 dist = Distribusi.objects.create(
@@ -234,48 +247,42 @@ class DistribusiViewSet(viewsets.ModelViewSet):
                     alamat=d['alamat'],
                     lat=d.get('lat'),
                     lng=d.get('lng'),
-                    berat_total_kg=d.get('berat_total_kg', 0)
+                    berat_total_kg=d.get('berat_total_kg', 0),
+                    dibuat_oleh=request.user,
                 )
-                
-                for brs in d['baris']:
-                    ItemDistribusi.objects.create(
-                        distribusi=dist,
-                        produk_id=brs['produk_id'],
-                        kemasan=brs['kemasan'],
-                        stiker=brs.get('stiker', ''),
-                        qty=brs['qty']
-                    )
-                
+
+                self._isi_baris(dist, d['baris'])
+
                 dist = services.sahkan_distribusi(distribusi_id=dist.id, user=request.user)
-                
 
                 from logistik.services import rakit_pengiriman
                 rakit_pengiriman(
                     entitas_id=dist.entitas_id,
-                    distribusi_ids=[dist.id], 
+                    distribusi_ids=[dist.id],
                     user=request.user,
-                    catatan="Tugas otomatis dari pembuatan DO Gudang"
+                    catatan="Tugas otomatis dari pembuatan DO Gudang",
                 )
-                
+
+        except DjangoValidationError as e:
+            return _galat(e)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(DistribusiSerializer(dist).data, status=status.HTTP_201_CREATED)
 
-        
     def update(self, request, *args, **kwargs):
         dist = self.get_object()
-        
+
         if dist.status in [StatusDistribusi.DIKIRIM, StatusDistribusi.TERKIRIM]:
             return Response(
                 {'detail': 'Dokumen yang sudah dibawa kurir atau selesai tidak bisa diubah.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         s = BuatDistribusiSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
-        
+
         try:
             with transaction.atomic():
                 if dist.status == StatusDistribusi.SIAP_KIRIM:
@@ -283,7 +290,6 @@ class DistribusiViewSet(viewsets.ModelViewSet):
                     dist.status = StatusDistribusi.DRAFT
                     dist.save(update_fields=['status'])
 
-                
                 dist.entitas_id = d['entitas_id']
                 dist.jenis_tujuan = d['jenis_tujuan']
                 dist.tujuan_cabang_id = d.get('tujuan_cabang_id')
@@ -292,21 +298,15 @@ class DistribusiViewSet(viewsets.ModelViewSet):
                 dist.lat = d.get('lat')
                 dist.lng = d.get('lng')
                 dist.berat_total_kg = d.get('berat_total_kg', 0)
-                dibuat_oleh=request.user
                 dist.save()
-                
+
                 dist.item.all().delete()
-                for brs in d['baris']:
-                    ItemDistribusi.objects.create(
-                        distribusi=dist,
-                        produk_id=brs['produk_id'],
-                        kemasan=brs['kemasan'],
-                        stiker=brs.get('stiker', ''),
-                        qty=brs['qty']
-                    )
-                
+                self._isi_baris(dist, d['baris'])
+
                 dist = services.sahkan_distribusi(distribusi_id=dist.id, user=request.user)
-                
+
+        except DjangoValidationError as e:
+            return _galat(e)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -316,22 +316,23 @@ class DistribusiViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         dist = self.get_object()
-        
+
         if dist.status in [StatusDistribusi.DIKIRIM, StatusDistribusi.TERKIRIM]:
             return Response(
                 {'detail': 'Dokumen yang sudah dibawa kurir atau selesai tidak bisa dihapus.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         try:
             with transaction.atomic():
                 if dist.status == StatusDistribusi.SIAP_KIRIM:
                     services.kembalikan_potongan_stok(dist.id)
-                
                 dist.delete()
+        except DjangoValidationError as e:
+            return _galat(e)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'])
@@ -340,5 +341,5 @@ class DistribusiViewSet(viewsets.ModelViewSet):
             dist = services.sahkan_distribusi(distribusi_id=pk, user=request.user)
         except DjangoValidationError as e:
             return _galat(e)
-            
+
         return Response(DistribusiSerializer(dist).data, status=status.HTTP_200_OK)

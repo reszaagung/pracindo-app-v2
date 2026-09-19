@@ -23,7 +23,7 @@ class PenerimaanBarang(models.Model):
 
 class ItemPenerimaan(models.Model):
     penerimaan = models.ForeignKey(PenerimaanBarang, on_delete=models.CASCADE, related_name='items')
-    produk = models.ForeignKey('master.Produk', on_delete=models.PROTECT)
+    produk = models.ForeignKey('master.MasterProduk', on_delete=models.PROTECT)
     kemasan = models.CharField(max_length=50)
     unit_dikirim = models.IntegerField(default=0)
     unit_diterima = models.IntegerField(default=0)

@@ -3,7 +3,7 @@ from .cabang import CabangToko
 
 class StokRetail(models.Model):
     cabang = models.ForeignKey(CabangToko, on_delete=models.CASCADE, related_name='stok')
-    produk = models.ForeignKey('master.Produk', on_delete=models.CASCADE)
+    produk = models.ForeignKey('master.MasterProduk', on_delete=models.CASCADE)
     kemasan = models.CharField(max_length=50, default='PCS')
     total_unit = models.IntegerField(default=0)
     harga_jual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -13,8 +13,8 @@ class StokRetail(models.Model):
         db_table = 'retail_stok'
 
     def __str__(self):
-        return f"{self.produk.nama} ({self.kemasan}) - {self.total_unit} unit"
-
+        return f"{self.produk.nama_item} ({self.kemasan}) - {self.total_unit} unit"
+        
 class MutasiStokRetail(models.Model):
     JENIS_MUTASI = [
         ('PENERIMAAN', 'Penerimaan Barang (Inbound)'),
