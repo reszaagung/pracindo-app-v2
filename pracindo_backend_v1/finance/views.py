@@ -26,7 +26,7 @@ from .services import (
     hitung_rekap_produksi, generate_rekap_produksi,
     hitung_rekap_klaim, generate_rekap_klaim,
     CountRealtime,
-    posisi_likuiditas,
+    posisi_likuiditas,budget_vs_actual, akun_tanpa_anggaran,
 )
 
 
@@ -420,3 +420,22 @@ class PosisiLikuiditasAPIView(APIView):
             entitas=int(entitas) if entitas else None,
             grup=int(grup) if grup else None,
         ))
+    
+class BudgetVsActualAPIView(APIView):
+    """Anggaran versus realisasi ledger untuk satu Budget.
+    Query param bulan opsional (1-12); tanpa itu = satu tahun penuh."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        budget = get_object_or_404(
+            batasi_entitas(Budget.objects.all(), request), pk=pk)
+
+        bulan = request.query_params.get('bulan')
+        bulan = int(bulan) if bulan else None
+        if bulan is not None and not (1 <= bulan <= 12):
+            raise ValidationError({'bulan': 'Harus antara 1 dan 12.'})
+
+        data = budget_vs_actual(budget.id, bulan=bulan)
+        if request.query_params.get('tanpa_anggaran') in ('1', 'true'):
+            data['tanpa_anggaran'] = akun_tanpa_anggaran(budget.id, bulan=bulan)
+        return Response(data)
