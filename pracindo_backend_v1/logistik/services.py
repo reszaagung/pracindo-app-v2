@@ -1,3 +1,5 @@
+# logistik/services.py
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -113,8 +115,10 @@ def batalkan_pengiriman(*, pengiriman_id, alasan=''):
 @transaction.atomic
 def tandai_sampai(*, perhentian_id, oleh):
     hentian = Perhentian.objects.select_for_update().select_related('pengiriman').get(pk=perhentian_id)
+    
     if hentian.pengiriman.status != StatusPengiriman.BERANGKAT:
         raise ValidationError('Pengiriman belum berangkat.')
+    
     if hentian.tuntas:
         raise ValidationError(f'Perhentian sudah {hentian.get_status_display()}.')
 

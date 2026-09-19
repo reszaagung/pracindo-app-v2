@@ -236,7 +236,7 @@ class RiwayatTransaksiAPIView(generics.ListAPIView):
         elif hasattr(user, 'pelangganretail'):
             qs = qs.filter(pelanggan=user.pelangganretail)
             
-        return qs.order_by('-waktu_transaksi')[:50]
+        return qs.order_by('-waktu_transaksi')
 
 class SesiKasirAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -422,7 +422,9 @@ class DaftarPenerimaanAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         cabang = get_user_cabang(self.request.user)
-        qs = PenerimaanBarang.objects.all().order_by('status', '-tanggal_terima')
+        qs = (PenerimaanBarang.objects
+              .exclude(status='SELESAI')
+              .order_by('-tanggal_kirim'))
         if cabang:
             return qs.filter(cabang=cabang)
         return qs

@@ -17,12 +17,18 @@ class KatalogPOSSerializer(serializers.ModelSerializer):
     nama = serializers.CharField(source='produk.nama_item', read_only=True)
     kemasan = serializers.CharField(read_only=True)
     stok = serializers.IntegerField(source='total_unit', read_only=True)
-    harga = serializers.DecimalField(source='harga_jual', max_digits=12,
-                                     decimal_places=2, read_only=True)
+    harga = serializers.SerializerMethodField()
 
     class Meta:
         model = StokRetail
         fields = ['id', 'nama', 'kemasan', 'stok', 'harga']
+
+    def get_harga(self, obj):
+        from master.models import HargaJual
+        hj = HargaJual.objects.filter(
+            produk_id=obj.produk_id, kemasan=obj.kemasan, aktif=True
+        ).first()
+        return hj.harga if hj else Decimal('0')
 
 
 class StokRetailSerializer(serializers.ModelSerializer):

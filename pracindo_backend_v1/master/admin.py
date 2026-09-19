@@ -1,6 +1,6 @@
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
-from .models import Produk, Kategori, Satuan, Suplier, Pelanggan, MasterProduk
+from .models import Produk, Kategori, Satuan, Suplier, Pelanggan, MasterProduk ,HargaJual
 
 @admin.register(MasterProduk)
 class MasterProdukAdmin(admin.ModelAdmin):
@@ -60,3 +60,10 @@ class PelangganAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+@admin.register(HargaJual)
+class HargaJualAdmin(admin.ModelAdmin):
+    list_display = ('produk', 'kemasan', 'harga', 'aktif')
+    list_filter = ('aktif',)
+    search_fields = ('produk__nama_item', 'produk__id')
+    list_editable = ('harga', 'aktif')

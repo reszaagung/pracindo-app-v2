@@ -158,3 +158,26 @@ class Pelanggan(TimeStampedModel):
         if not self.kode:
             self.kode = generate_kode_urut(Pelanggan, prefix='CUST', padding=4)
         super().save(*args, **kwargs)
+
+class HargaJual(TimeStampedModel):
+    """
+    Harga jual eceran per produk per kemasan. Ditetapkan pusat, dibaca
+    POS. Terpisah dari StokRetail karena harga tidak ikut pengiriman.
+    """
+    produk = models.ForeignKey('MasterProduk', on_delete=models.PROTECT,
+                               related_name='harga_jual')
+    kemasan = models.CharField(max_length=50)
+    harga = models.DecimalField(max_digits=12, decimal_places=2)
+    aktif = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'master_harga_jual'
+        ordering = ['produk', 'kemasan']
+        verbose_name_plural = 'Harga jual'
+        constraints = [
+            models.UniqueConstraint(fields=['produk', 'kemasan'],
+                                    name='uq_harga_jual_produk_kemasan'),
+        ]
+
+    def __str__(self):
+        return f"{self.produk.nama_item} ({self.kemasan}) - {self.harga}"

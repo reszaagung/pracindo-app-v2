@@ -1,3 +1,5 @@
+# logistik/views.py
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status as http, viewsets
 from rest_framework.decorators import action
@@ -14,12 +16,15 @@ from .integrasi_warehouse import SambunganBelumSiap
 from .models import Kendaraan, Pengiriman, Retur, StatusPengiriman
 from .permissions import HanyaKurirPengiriman, KurirTidakMengubahRute, batasi_ke_kurir
 
+
 def _galat(e):
     pesan = '; '.join(e.messages) if hasattr(e, 'messages') else str(e)
     return Response({'detail': pesan}, status=http.HTTP_400_BAD_REQUEST)
 
+
 def _belum_siap(e):
     return Response({'detail': str(e)}, status=http.HTTP_503_SERVICE_UNAVAILABLE)
+
 
 class PengirimanViewSet(viewsets.ModelViewSet):
     permission_classes = [AksesModul, KurirTidakMengubahRute, HanyaKurirPengiriman]
@@ -83,7 +88,7 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             kirim.perhentian.filter(pk=hid).update(urutan=posisi)
         return self._balas(kirim.id)
 
-    @action(detail=False, methods=['get'], url_path='kolam-tugas')
+    @action(detail=False, methods=['get'], url_path='tersedia')
     def kolam_tugas(self, request):
         qs = super().get_queryset().filter(
             kurir__isnull=True,
@@ -127,7 +132,10 @@ class PengirimanViewSet(viewsets.ModelViewSet):
     def tugas_saya(self, request):
         qs = self.get_queryset().filter(
             kurir=request.user,
-            status__in=[StatusPengiriman.DISIAPKAN, StatusPengiriman.BERANGKAT],
+            status__in=[
+                StatusPengiriman.DISIAPKAN, 
+                StatusPengiriman.BERANGKAT
+            ],
         ).order_by('tanggal', 'id')
         return Response(s.PengirimanDetailSerializer(qs, many=True).data)
 
@@ -205,11 +213,13 @@ class ReturViewSet(viewsets.ReadOnlyModelViewSet):
             return _galat(e)
         return Response(s.ReturSerializer(self.get_object()).data)
 
+
 class KendaraanViewSet(viewsets.ModelViewSet):
     permission_classes = [AksesModul]
     modul = 'logistik'
     queryset = Kendaraan.objects.all()
     serializer_class = s.KendaraanSerializer
+
 
 class DistribusiTersediaView(APIView):
     permission_classes = [AksesModul]

@@ -1,7 +1,7 @@
 """Serializer master data — master/serializers.py"""
 from rest_framework import serializers
 
-from .models import Kategori, Pelanggan, Produk, Satuan, Suplier, MasterProduk
+from .models import Kategori, Pelanggan, Produk, Satuan, Suplier, MasterProduk , HargaJual
 
 
 class KategoriSerializer(serializers.ModelSerializer):
@@ -73,3 +73,12 @@ class MasterProdukSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterProduk
         fields = ['id', 'nama_item', 'nama'] 
+
+
+
+class HargaJualSerializer(serializers.ModelSerializer):
+    produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
+
+    class Meta:
+        model = HargaJual
+        fields = ['id', 'produk', 'produk_nama', 'kemasan', 'harga', 'aktif']

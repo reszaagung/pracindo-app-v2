@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    PelangganViewSet, ProdukViewSet, SatuanViewSet, SuplierViewSet,MasterProdukViewSet
+    PelangganViewSet, ProdukViewSet, SatuanViewSet, SuplierViewSet,MasterProdukViewSet,HargaJualListCreateAPIView, HargaJualDetailAPIView
 )
 
 app_name = 'master'
@@ -15,4 +15,6 @@ router.register('satuan', SatuanViewSet, basename='satuan')
 router.register('pelanggan', PelangganViewSet, basename='pelanggan')
 urlpatterns = [
     path('', include(router.urls)),
+    path('harga-jual/', HargaJualListCreateAPIView.as_view(), name='harga-jual-list'),
+    path('harga-jual/<int:pk>/', HargaJualDetailAPIView.as_view(), name='harga-jual-detail'),
 ]

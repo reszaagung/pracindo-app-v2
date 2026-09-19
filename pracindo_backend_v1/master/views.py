@@ -1,15 +1,15 @@
 """
 Endpoint master data — master/views.py
 """
-from rest_framework import viewsets , filters
+from rest_framework import viewsets, filters, generics
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from staff_user.permissions import HanyaAdmin, SudahLogin, AdminAtauAkunting
-from rest_framework.permissions import AllowAny
-from .models import Pelanggan, Produk, Satuan, Suplier, MasterProduk
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .models import Pelanggan, Produk, Satuan, Suplier, MasterProduk, HargaJual
 from .serializers import (
     PelangganSerializer, ProdukRingkasSerializer,
     ProdukSerializer, SatuanSerializer, SuplierRingkasSerializer,
-    SuplierSerializer, MasterProdukSerializer,
+    SuplierSerializer, MasterProdukSerializer, HargaJualSerializer
 )
 
 class BasisMaster(viewsets.ModelViewSet):
@@ -87,3 +87,20 @@ class MasterProdukViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['id', 'nama_item']
+
+class HargaJualListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = HargaJualSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = HargaJual.objects.select_related('produk').filter(aktif=True)
+        produk = self.request.query_params.get('produk')
+        if produk:
+            qs = qs.filter(produk_id=produk)
+        return qs
+
+
+class HargaJualDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = HargaJual.objects.select_related('produk')
+    serializer_class = HargaJualSerializer
+    permission_classes = [IsAuthenticated]
