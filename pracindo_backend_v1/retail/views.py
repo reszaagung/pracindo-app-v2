@@ -48,7 +48,6 @@ class RetailLoginView(APIView):
         encrypted_password = request.data.get('password')
         password = encrypted_password
 
-        # Buka gembok RSA
         if encrypted_password:
             try:
                 priv_key = rsa.PrivateKey.load_pkcs1(PRIVATE_KEY.encode('utf-8'))
@@ -96,12 +95,21 @@ class RetailLogoutView(APIView):
 
 
 class KatalogPOSAPIView(generics.ListAPIView):
+    """Katalog kasir.
+
+    Stok milik grup yang boleh_dijual_retail=False tidak ditampilkan:
+    barangnya boleh dititipkan di gudang cabang, tapi penjualan eceran
+    bukan jalurnya. Aturannya disimpan sebagai data di GrupBahan, bukan
+    kode kaku di sini, supaya bisa diubah tanpa deploy."""
     serializer_class = KatalogPOSSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         cabang = get_user_cabang(self.request.user)
-        qs = StokRetail.objects.filter(total_unit__gt=0).select_related('produk')
+        qs = (StokRetail.objects
+              .select_related('produk', 'entitas', 'entitas__grup_bahan')
+              .filter(total_unit__gt=0)
+              .exclude(entitas__grup_bahan__boleh_dijual_retail=False))
         if cabang:
             return qs.filter(cabang=cabang)
         return qs
@@ -425,23 +433,31 @@ class ProsesPenerimaanAPIView(APIView):
     @transaction.atomic
     def post(self, request, pk):
         try:
-            penerimaan = PenerimaanBarang.objects.get(id=pk)
+            penerimaan = PenerimaanBarang.objects.select_for_update().get(id=pk)
         except PenerimaanBarang.DoesNotExist:
             return Response({'status': 'gagal'}, status=status.HTTP_404_NOT_FOUND)
 
+        if penerimaan.status == 'SELESAI':
+            return Response(
+                {'status': 'gagal',
+                 'pesan': f'{penerimaan.nomor_penerimaan} sudah pernah diproses.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         items = request.data.get('items', [])
         for item in items:
-            item_obj = ItemPenerimaan.objects.get(id=item['id'])
+            item_obj = ItemPenerimaan.objects.select_for_update().get(id=item['id'])
             qty_terima = int(item.get('unit_diterima', 0))
-            
+
             if qty_terima > 0:
                 item_obj.unit_diterima = qty_terima
                 item_obj.save()
 
-                stok, created = StokRetail.objects.get_or_create(
-                    cabang=penerimaan.cabang, 
+                stok, created = StokRetail.objects.select_for_update().get_or_create(
+                    cabang=penerimaan.cabang,
                     produk=item_obj.produk,
                     kemasan=item_obj.kemasan,
+                    entitas=item_obj.entitas,
                     defaults={'total_unit': 0, 'harga_jual': 0}
                 )
                 stok.total_unit += qty_terima
@@ -455,7 +471,7 @@ class ProsesPenerimaanAPIView(APIView):
                     unit_keluar=0,
                     saldo_akhir=stok.total_unit
                 )
-            
+
         penerimaan.status = 'SELESAI'
         penerimaan.tanggal_terima = timezone.now()
         penerimaan.save()
@@ -476,14 +492,19 @@ class CabangTokoAPIView(generics.ListCreateAPIView):
             return [AllowAny()]
         return [IsAuthenticated()]
 
-class DaftarStokAPIView(generics.ListAPIView):
+
+
+class StokRetailAPIView(generics.ListAPIView):
+    """Seluruh stok cabang, termasuk yang habis.
+
+    Beda dari pos/katalog/ yang hanya menampilkan total_unit > 0 —
+    halaman manajemen stok justru perlu melihat yang kosong."""
     serializer_class = StokRetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         cabang = get_user_cabang(self.request.user)
-        qs = StokRetail.objects.select_related('produk').all()        
+        qs = StokRetail.objects.select_related('produk').order_by('produk__nama_item')
         if cabang:
             return qs.filter(cabang=cabang)
         return qs
-

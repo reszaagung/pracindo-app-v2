@@ -48,6 +48,12 @@ class GrupBahan(TimeStampedModel):
     kode = models.CharField(max_length=16, unique=True)
     nama = models.CharField(max_length=120)
 
+    boleh_dijual_retail = models.BooleanField(
+        default=True,
+        help_text='Kalau False, stok milik grup ini tidak muncul di kasir cabang.',
+    )
+
+
     class Meta:
         db_table = 'core_grup_bahan'
         ordering = ['kode']

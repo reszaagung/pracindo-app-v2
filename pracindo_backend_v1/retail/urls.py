@@ -1,16 +1,15 @@
 from django.urls import path
 from .views import (
     RetailLoginView,
-    RetailLogoutView, # 👈 Import Logout-nya di sini
+    RetailLogoutView,
     KatalogPOSAPIView, CheckoutPOSAPIView, RiwayatTransaksiAPIView, SesiKasirAPIView,
     PelangganRetailAPIView, SalesRetailAPIView,
     AkunBukuBesarAPIView, JurnalUmumAPIView, BukuBesarMutasiAPIView,
     DaftarPenerimaanAPIView, ProsesPenerimaanAPIView,
-    DaftarPiutangAPIView, BayarPiutangAPIView, CabangTokoAPIView ,DaftarStokAPIView
+    DaftarPiutangAPIView, BayarPiutangAPIView, CabangTokoAPIView,
+    StokRetailAPIView,
 )
-
 urlpatterns = [
-    path('inventory/stok/', DaftarStokAPIView.as_view(), name='retail-inventory-stok'),
     path('login/', RetailLoginView.as_view(), name='retail-login'),
     path('logout/', RetailLogoutView.as_view(), name='retail-logout'),
     path('pos/katalog/', KatalogPOSAPIView.as_view(), name='pos-katalog'),
@@ -19,6 +18,7 @@ urlpatterns = [
     path('sesi/', SesiKasirAPIView.as_view(), name='pos-sesi'),
     path('pelanggan/', PelangganRetailAPIView.as_view(), name='retail-pelanggan'),
     path('sales/', SalesRetailAPIView.as_view(), name='retail-sales'),
+    path('stok/', StokRetailAPIView.as_view(), name='retail-stok'),
     path('penerimaan/', DaftarPenerimaanAPIView.as_view(), name='retail-penerimaan-list'),
     path('penerimaan/<int:pk>/proses/', ProsesPenerimaanAPIView.as_view(), name='retail-penerimaan-proses'),
     path('akuntansi/akun/', AkunBukuBesarAPIView.as_view(), name='akuntansi-akun'),

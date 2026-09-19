@@ -482,23 +482,22 @@ def sahkan_distribusi(distribusi_id, user=None):
                 f"({baris.kemasan}) di {entitas.kode}. Periksa grup bahan."
             )
 
-        if stok.qty_unit < baris.qty:
-            raise ValidationError(
-                f"Gagal! Stok {baris.kemasan} di {entitas.kode} tidak mencukupi. "
-                f"Tersedia {stok.qty_unit}, diminta {baris.qty}."
-            )
-
         if stok.qty_unit == baris.qty:
             potong_kg = stok.qty_kg
+            potong_nilai = stok.nilai
         else:
             berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
             potong_kg = (berat_per_unit * Decimal(str(baris.qty))).quantize(Q3)
+            nilai_per_unit = stok.nilai / Decimal(str(stok.qty_unit))
+            potong_nilai = (nilai_per_unit * Decimal(str(baris.qty))).quantize(Q2)
 
         stok.qty_unit -= baris.qty
         stok.qty_kg -= potong_kg
+        stok.nilai -= potong_nilai
         if stok.qty_unit == 0:
             stok.qty_kg = Decimal('0')
-        stok.save(update_fields=['qty_unit', 'qty_kg'])
+            stok.nilai = Decimal('0')
+        stok.save(update_fields=['qty_unit', 'qty_kg', 'nilai'])
 
     d.status = StatusDistribusi.SIAP_KIRIM
     d.save(update_fields=['status'])
@@ -556,14 +555,14 @@ def kembalikan_potongan_stok(distribusi_id):
             )
 
         if stok.qty_unit > 0:
-            berat_per_unit = stok.qty_kg / Decimal(str(stok.qty_unit))
+            nilai_per_unit = stok.nilai / Decimal(str(stok.qty_unit))
         else:
-            berat_per_unit = stok.kemasan.bobot_kg
-
-        kembali_kg = (berat_per_unit * Decimal(str(baris.qty))).quantize(Q3)
+            nilai_per_unit = Decimal('0')
+        kembali_nilai = (nilai_per_unit * Decimal(str(baris.qty))).quantize(Q2)
 
         stok.qty_unit += baris.qty
         stok.qty_kg += kembali_kg
-        stok.save(update_fields=['qty_unit', 'qty_kg'])
+        stok.nilai += kembali_nilai
+        stok.save(update_fields=['qty_unit', 'qty_kg', 'nilai'])
 
     return d

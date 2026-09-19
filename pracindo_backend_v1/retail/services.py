@@ -7,11 +7,9 @@ def buat_penerimaan_dari_do(distribusi):
     """
     Jembatan dari Warehouse ke Retail.
     """
-    # 1. Pastikan DO ini ditujukan ke cabang
     if distribusi.jenis_tujuan != 'CABANG' or not distribusi.tujuan_cabang_id:
         return None
         
-    # 2. Buat nomor struk penerimaan otomatis
     nomor_rcv = f"RCV/{distribusi.nomor.split('/')[-1]}/{timezone.now().strftime('%H%M%S')}"
     
     penerimaan, created = PenerimaanBarang.objects.get_or_create(
@@ -29,7 +27,8 @@ def buat_penerimaan_dari_do(distribusi):
             ItemPenerimaan.objects.create(
                 penerimaan=penerimaan,
                 produk_id=item.produk_id,
-                kemasan=item.kemasan,  
+                entitas=item.entitas_efektif,
+                kemasan=item.kemasan,
                 unit_dikirim=item.qty,
                 unit_diterima=0
             )

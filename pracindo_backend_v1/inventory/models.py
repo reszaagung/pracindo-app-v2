@@ -275,6 +275,11 @@ class StokBarangJadi(TimeStampedModel):
     kemasan = models.ForeignKey("Kemasan", on_delete=models.PROTECT, related_name="stok_barang_jadi")
     qty_unit = models.IntegerField(default=0)
     qty_kg = models.DecimalField(max_digits=18, decimal_places=3, default=D0)
+    nilai = models.DecimalField(
+        max_digits=20, decimal_places=2, default=D0,
+        help_text="Nilai persediaan, akumulasi dari Packing.cost_nom. "
+                  "Bukan harga jual.",
+    )
 
     class Meta:
         db_table = "inventory_stok_barang_jadi"
@@ -283,11 +288,19 @@ class StokBarangJadi(TimeStampedModel):
             UniqueConstraint(fields=["entitas", "grup_bahan", "item", "kemasan"], name="uq_stok_jadi_unik"),
             CheckConstraint(condition=Q(qty_unit__gte=0), name="ck_stok_jadi_unit_non_negatif"),
             CheckConstraint(condition=Q(qty_kg__gte=0), name="ck_stok_jadi_kg_non_negatif"),
+            CheckConstraint(condition=Q(nilai__gte=0), name="ck_stok_jadi_nilai_non_negatif"),
+            CheckConstraint(condition=~Q(qty_unit=0) | Q(nilai=0), name="ck_stok_jadi_kosong_tanpa_nilai"),
         ]
 
     def __str__(self):
         return f"[{self.entitas.kode}] {self.item} - {self.qty_unit} Unit"
 
+    @property
+    def nilai_per_unit(self):
+        """Rata-rata tertimbang. Packing dengan HPP berbeda menyatu di
+        baris yang sama, jadi harganya dirata-rata, bukan diambil dari
+        salah satu dokumen."""
+        return rp(self.nilai / Decimal(self.qty_unit)) if self.qty_unit > 0 else D0
 
 class StokItemsPabrik(TimeStampedModel):
     entitas = models.ForeignKey("core.Entitas", on_delete=models.PROTECT, related_name="stok_items_pabrik")

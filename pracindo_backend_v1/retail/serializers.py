@@ -24,6 +24,20 @@ class KatalogPOSSerializer(serializers.ModelSerializer):
         model = StokRetail
         fields = ['id', 'nama', 'kemasan', 'stok', 'harga']
 
+
+class StokRetailSerializer(serializers.ModelSerializer):
+    kode_produk = serializers.CharField(source='produk.id', read_only=True)
+    nama_produk = serializers.CharField(source='produk.nama_item', read_only=True)
+    satuan = serializers.CharField(source='kemasan', read_only=True)
+    qty = serializers.IntegerField(source='total_unit', read_only=True)
+    entitas_kode = serializers.CharField(source='entitas.kode', read_only=True, default=None)
+    grup_kode = serializers.CharField(source='entitas.grup_bahan.kode', read_only=True, default=None)
+
+    class Meta:
+        model = StokRetail
+        fields = ['id', 'kode_produk', 'nama_produk', 'kemasan', 'satuan',
+                  'qty', 'harga_jual', 'entitas', 'entitas_kode', 'grup_kode']
+
 class ItemTransaksiSerializer(serializers.ModelSerializer):
     produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
 
@@ -120,11 +134,10 @@ class BukuPiutangRetailSerializer(serializers.ModelSerializer):
 
 class ItemPenerimaanSerializer(serializers.ModelSerializer):
     produk_nama = serializers.CharField(source='produk.nama_item', read_only=True)
-    kemasan_nama = serializers.CharField(source='kemasan.nama', read_only=True)
 
     class Meta:
         model = ItemPenerimaan
-        fields = ['id', 'produk', 'produk_nama', 'kemasan', 'kemasan_nama', 'unit_dikirim', 'unit_diterima']
+        fields = ['id', 'produk', 'produk_nama', 'kemasan', 'unit_dikirim', 'unit_diterima']
 
 class PenerimaanBarangSerializer(serializers.ModelSerializer):
     items = ItemPenerimaanSerializer(many=True, read_only=True)
@@ -186,10 +199,3 @@ class CabangTokoSerializer(serializers.ModelSerializer):
         model = CabangToko
         fields = ['id', 'kode', 'nama', 'alamat', 'aktif', 'username_kasir']
 
-class StokRetailSerializer(serializers.ModelSerializer):
-    nama_produk = serializers.CharField(source='produk.nama_item', read_only=True)
-    kode_produk = serializers.CharField(source='produk.kode', read_only=True)
-
-    class Meta:
-        model = StokRetail
-        fields = '__all__'

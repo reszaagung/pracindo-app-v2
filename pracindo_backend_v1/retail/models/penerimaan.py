@@ -24,6 +24,11 @@ class PenerimaanBarang(models.Model):
 class ItemPenerimaan(models.Model):
     penerimaan = models.ForeignKey(PenerimaanBarang, on_delete=models.CASCADE, related_name='items')
     produk = models.ForeignKey('master.MasterProduk', on_delete=models.PROTECT)
+    entitas = models.ForeignKey(
+        'core.Entitas', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='item_penerimaan_retail',
+        help_text='Pemilik barang, dibawa dari ItemDistribusi.',
+    )
     kemasan = models.CharField(max_length=50)
     unit_dikirim = models.IntegerField(default=0)
     unit_diterima = models.IntegerField(default=0)

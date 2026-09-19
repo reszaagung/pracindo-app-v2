@@ -118,7 +118,11 @@ class ItemCetakKecil12(models.Model):
         verbose_name="Grup Pola",
         help_text="Posisi dalam pola, mis. huruf 'A' pada AABBCC... — bukan tipe barang.",
     )
-    nama_item = models.CharField(max_length=255, verbose_name="Nama Barang")
+    nama_item = models.ForeignKey(
+        "master.MasterProduk", on_delete=models.PROTECT,
+        related_name="packing_hasil_kecil12",
+        null=True, blank=True,
+    )
     tipe = models.CharField(
         max_length=100,
         verbose_name="Tipe Barang",

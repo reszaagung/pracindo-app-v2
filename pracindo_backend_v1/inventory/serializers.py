@@ -133,7 +133,6 @@ class PackingSerializer(serializers.ModelSerializer):
             if v is not None and v <= 0:
                 raise serializers.ValidationError({f: f"{f} harus lebih dari 0."})
         
-        # Validasi logika kemasan dalam (Wajib diisi jika kemasan_dalam dipilih)
         kd = data.get("kemasan_dalam", getattr(inst, "kemasan_dalam", None))
         qty_kd = data.get("qty_kemasan_dalam", getattr(inst, "qty_kemasan_dalam", 0))
         if kd and qty_kd <= 0:
@@ -147,7 +146,6 @@ class PackingSerializer(serializers.ModelSerializer):
         if ent is not None and not ent.aktif:
             raise serializers.ValidationError({"entitas": f"Entitas {ent.kode} nonaktif."})
         
-        # Asumsi validasi posted_at untuk batch (tergantung apakah lu pakai field ini di model Batch lu)
         if batch is not None and not getattr(batch, 'posted_at', None):
             raise serializers.ValidationError(
                 {"batch": f"Batch {batch.nomor} belum diposting."}

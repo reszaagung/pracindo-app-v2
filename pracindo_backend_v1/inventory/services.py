@@ -1,4 +1,4 @@
-﻿from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import DecimalField, Sum, Value, Q 
@@ -332,11 +332,12 @@ def eksekusi_packing_langsung(packing, user):
             grup_bahan_id=packing.entitas.grup_bahan_id,
             item_id=packing.nama_hasil_id,
             kemasan=kemasan_cocok,
-            defaults={'qty_unit': 0, 'qty_kg': D0}
+            defaults={'qty_unit': 0, 'qty_kg': D0, 'nilai': D0}
         )
         stok_jadi.qty_unit += packing.total_unit
         stok_jadi.qty_kg += packing.qty_kg
-        stok_jadi.save(update_fields=['qty_unit', 'qty_kg'])
+        stok_jadi.nilai = rp(stok_jadi.nilai + total_cost_nom)
+        stok_jadi.save(update_fields=['qty_unit', 'qty_kg', 'nilai'])
 
     packing.harga_per_kg = harga_rata_tangki
     packing.cost_nom = total_cost_nom
@@ -369,11 +370,38 @@ def eksekusi_packing_langsung(packing, user):
     return packing
 
 @transaction.atomic
-def rollback_hapus_packing(packing, user):
-    from .models import StokBarangJadi, Kemasan
-    
-    _pastikan_periode_terbuka(packing.entitas, timezone.localdate())
+def rollback_hapus_packing(packing):
+    """
+    Mengembalikan seluruh dampak packing: isi tangki, pool kemasan, stok
+    barang jadi, dan hak entitas.
 
+    Nilai yang dikembalikan memakai packing.cost_nom dokumen ini sendiri,
+    bukan rata-rata stok, karena yang ditarik kembali memang packing ini.
+    """
+    from produksi.models import Tangki
+    from .models import Kemasan
+
+    if not packing.posted_at:
+        return
+
+    tangki = Tangki.objects.select_for_update().get(pk=packing.batch.tangki_id)
+    pool_kem = PoolKemasan.objects.select_for_update().get(pk=packing.kemasan_id)
+
+    cost_nom_bahan = rp(packing.qty_kg * packing.harga_per_kg)
+    cost_kemasan = rp(packing.cost_nom - cost_nom_bahan)
+
+    tangki.saldo_kg += packing.qty_kg
+    tangki.saldo_nilai = rp(tangki.saldo_nilai + cost_nom_bahan)
+    tangki.save(update_fields=['saldo_kg', 'saldo_nilai'])
+
+    pool_kem.qty += packing.total_unit
+    pool_kem.nilai = rp(pool_kem.nilai + cost_kemasan)
+    pool_kem.save(update_fields=['qty', 'nilai'])
+
+    # Kemasan dicari dengan cara yang sama seperti saat packing dibuat,
+    # supaya stok yang dikurangi benar-benar baris yang dulu ditambah.
+    # Tanpa ini, produk yang punya stok dalam dua ukuran kemasan bisa
+    # terpotong dari baris yang salah.
     isi_per_kemasan = (packing.qty_kg / Decimal(str(packing.total_unit))).quantize(Decimal("0.001"))
     kemasan_cocok = Kemasan.objects.filter(aktif=True).filter(
         bobot_kg__gte=isi_per_kemasan - Decimal("0.001"),
@@ -390,44 +418,37 @@ def rollback_hapus_packing(packing, user):
         if stok_jadi:
             stok_jadi.qty_unit -= packing.total_unit
             stok_jadi.qty_kg -= packing.qty_kg
-            if stok_jadi.qty_unit < 0: stok_jadi.qty_unit = 0
-            if stok_jadi.qty_kg < 0: stok_jadi.qty_kg = D0
-            stok_jadi.save(update_fields=['qty_unit', 'qty_kg'])
-
-    pool_kem_luar = PoolKemasan.objects.select_for_update().get(pk=packing.kemasan_id)
-    nilai_kemasan_luar = rp(pool_kem_luar.harga_satuan * packing.total_unit)
-    tambah_ke_pool_kemasan(pool_kem_luar.produk_id, packing.total_unit, nilai_kemasan_luar)
-
-    nilai_kemasan_dalam = D0_RP
-    if packing.kemasan_dalam_id and packing.qty_kemasan_dalam > 0:
-        total_unit_dalam = packing.total_unit * packing.qty_kemasan_dalam
-        pool_kem_dalam = PoolKemasan.objects.select_for_update().get(pk=packing.kemasan_dalam_id)
-        nilai_kemasan_dalam = rp(pool_kem_dalam.harga_satuan * total_unit_dalam)
-        tambah_ke_pool_kemasan(pool_kem_dalam.produk_id, total_unit_dalam, nilai_kemasan_dalam)
-
-    cost_nom_bahan = rp(packing.cost_nom - nilai_kemasan_luar - nilai_kemasan_dalam)
-    tangki = Tangki.objects.select_for_update().get(id=packing.batch.tangki_id)
-    tangki.saldo_kg += packing.qty_kg
-    tangki.saldo_nilai += cost_nom_bahan
-    tangki.save(update_fields=['saldo_kg', 'saldo_nilai'])
+            stok_jadi.nilai = rp(stok_jadi.nilai - packing.cost_nom)
+            if stok_jadi.qty_unit <= 0:
+                stok_jadi.qty_unit = 0
+                stok_jadi.qty_kg = D0
+                stok_jadi.nilai = D0
+            if stok_jadi.qty_kg < 0:
+                stok_jadi.qty_kg = D0
+            if stok_jadi.nilai < D0:
+                stok_jadi.nilai = D0
+            stok_jadi.save(update_fields=['qty_unit', 'qty_kg', 'nilai'])
 
     MutasiKlaim.objects.create(
-        entitas=packing.entitas, grup_bahan=packing.entitas.grup_bahan,
-        tipe=TipeMutasi.PENYESUAIAN, arah=1,
-        qty_kg=packing.qty_kg, nilai=packing.cost_nom,
-        ref_type="RollbackPacking", ref_id=packing.id,
-        keterangan=f"Penghapusan Packing {packing.nomor}",
-        waktu=timezone.now(), dibuat_oleh=user
+        entitas_id=packing.entitas_id,
+        grup_bahan_id=packing.entitas.grup_bahan_id,
+        tipe=TipeMutasi.SETOR,
+        arah=1,
+        qty_kg=packing.qty_kg,
+        nilai=packing.cost_nom,
+        ref_type='PACKING_BATAL',
+        ref_id=str(packing.id),
+        keterangan=f'Pembatalan {packing.nomor}',
     )
 
-    se = _kunci_saldo(packing.entitas_id)
-    se.total_tarik = rp(se.total_tarik - packing.cost_nom)
-    se.qty_tarik = qty(se.qty_tarik - packing.qty_kg)
-    se.saldo = rp(se.saldo + packing.cost_nom)
-    se.save(update_fields=["total_tarik", "qty_tarik", "saldo"])
-    
+    saldo = SaldoEntitas.objects.select_for_update().get(entitas_id=packing.entitas_id)
+    saldo.saldo = rp(saldo.saldo + packing.cost_nom)
+    saldo.qty_tarik -= packing.qty_kg
+    saldo.save(update_fields=['saldo', 'qty_tarik'])
+
     assert_invarian()
 
+    
 @transaction.atomic
 def void_packing(packing, alasan, user=None):
     from .models import StokBarangJadi, Kemasan
@@ -458,9 +479,16 @@ def void_packing(packing, alasan, user=None):
         if stok_jadi:
             stok_jadi.qty_unit -= packing.total_unit
             stok_jadi.qty_kg -= packing.qty_kg
-            if stok_jadi.qty_unit < 0: stok_jadi.qty_unit = 0
-            if stok_jadi.qty_kg < 0: stok_jadi.qty_kg = D0
-            stok_jadi.save(update_fields=['qty_unit', 'qty_kg'])
+            stok_jadi.nilai = rp(stok_jadi.nilai - packing.cost_nom)
+            if stok_jadi.qty_unit <= 0:
+                stok_jadi.qty_unit = 0
+                stok_jadi.qty_kg = D0
+                stok_jadi.nilai = D0
+            if stok_jadi.qty_kg < 0:
+                stok_jadi.qty_kg = D0
+            if stok_jadi.nilai < D0:
+                stok_jadi.nilai = D0
+            stok_jadi.save(update_fields=['qty_unit', 'qty_kg', 'nilai'])
 
     pool_kem_luar = PoolKemasan.objects.select_for_update().select_related("produk").get(pk=packing.kemasan_id)
     nilai_kemasan_luar = rp(pool_kem_luar.harga_satuan * packing.total_unit)
