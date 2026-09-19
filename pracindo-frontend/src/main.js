@@ -15,8 +15,8 @@ import { assertBreakpointSync } from '@/utils/assertBreakpointSync'
 const app = createApp(App)
 
 app.config.errorHandler = (err, instance, info) => {
-    const nama = instance?.$options?.name || instance?.$options?.__name || 'komponen tidak dikenal'
-    console.error(`[errorHandler] ${nama} (${info}):`, err)
+const nama = instance?.$options?.name || instance?.$options?.__name || 'komponen tidak dikenal'   
+ console.error(`[errorHandler] ${nama} (${info}):`, err)
 }
 
 app.use(createPinia())
@@ -27,12 +27,16 @@ app.use(PrimeVue, {
     theme: {
         preset: Aura,
         options: {
-            darkModeSelector: 'none'
+            darkModeSelector: 'none',
+            cssLayer: {
+                name: 'primevue'
+            }
         }
     }
 })
+
 app.directive('tooltip', Tooltip)
 
 app.mount('#app')
 
-assertBreakpointSync() 
+assertBreakpointSync()

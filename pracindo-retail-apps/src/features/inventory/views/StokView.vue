@@ -1,10 +1,8 @@
 <template>
     <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans mt-4">
-        <!-- Header Halaman -->
         <header class="flex flex-col gap-4 border-b border-slate-200 pb-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="flex items-center gap-4">
-                    <!-- Tombol Dashboard -->
                     <button @click="$router.push('/dashboard')" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition-colors">
                         <i class="pi pi-arrow-left"></i> Dashboard
                     </button>
@@ -14,7 +12,6 @@
                     </div>
                 </div>
 
-                <!-- Tab Navigasi -->
                 <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
                     <button class="bg-white text-blue-600 shadow-sm font-bold px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2">
                         <i class="pi pi-box"></i> Stok
@@ -25,7 +22,6 @@
                 </div>
             </div>
 
-            <!-- Search & Refresh -->
             <div class="flex items-center gap-3 w-full md:w-auto self-end mt-2">
                 <div class="relative w-full md:w-64">
                     <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
@@ -70,6 +66,7 @@
                 <table class="min-w-full text-left border-collapse">
                     <thead class="bg-white sticky top-0 shadow-sm z-10 border-b border-slate-200">
                         <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Pemilik</th>
                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Kode SKU</th>
                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Nama Produk</th>
                             <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-40">Kategori</th>
@@ -80,14 +77,24 @@
                     <tbody class="divide-y divide-slate-100 bg-white">
                         <!-- State Kosong / Tidak Ketemu -->
                         <tr v-if="filteredStok.length === 0 && !isLoading">
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
                                 <i class="pi pi-box text-4xl mb-3 text-slate-300"></i>
                                 <p>Tidak ada data stok yang ditemukan.</p>
                             </td>
                         </tr>
 
                         <!-- Looping Data Stok -->
-                        <tr v-for="item in filteredStok" :key="item.id" class="hover:bg-slate-50 transition-colors">
+<tr v-for="item in filteredStok" :key="item.id" class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span v-if="item?.grup_kode"
+                                    :class="item?.grup_kode === 'PT'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                        : 'bg-sky-50 text-sky-700 border-sky-200'"
+                                    class="text-xs font-bold px-2 py-1 rounded-md border">
+                                    {{ item.entitas_kode }}
+                                </span>
+                                <span v-else class="text-xs text-slate-300">—</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-700">
                                 {{ item.kode_produk }}
                             </td>
@@ -132,10 +139,11 @@ onMounted(() => {
 
 const filteredStok = computed(() => {
     if (!searchQuery.value) return stokList.value
-    const keyword = searchQuery.value.toLowerCase()
+    const q = searchQuery.value.toLowerCase()
     return stokList.value.filter(item =>
-        (item.nama_produk && item.nama_produk.toLowerCase().includes(keyword)) ||
-        (item.kode_produk && item.kode_produk.toLowerCase().includes(keyword))
+        item.nama_produk?.toLowerCase().includes(q) ||
+        item.kode_produk?.toLowerCase().includes(q) ||
+        item.entitas_kode?.toLowerCase().includes(q)
     )
 })
 </script>

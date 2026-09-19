@@ -113,16 +113,6 @@ export const MODUL = [
     ],
   },
   {
-    id: 'keuangan',
-    nama: 'Keuangan',
-    ringkas: 'Pembayaran dan kas',
-    ikon: 'buku',
-    rute: '/keuangan',
-    siap: false,
-    catatan: 'Sebagian lewat modul akunting, layar sendiri belum ada',
-    menu: [],
-  },
-  {
     id: 'staff_user',
     nama: 'Pengguna',
     ringkas: 'Kelola akun dan persetujuan staf',

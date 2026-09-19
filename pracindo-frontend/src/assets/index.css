@@ -1,2 +1,4 @@
+@layer theme, base, primevue, components, utilities;
+
 @import "tailwindcss";
 @source "../src/**/*.{vue,js,ts,jsx,tsx}";

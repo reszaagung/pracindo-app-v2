@@ -1,9 +1,7 @@
 import KurirLayout from './layout/KurirLayout.vue'
-import KurirDashboard from './views/KurirDashboard.vue'
-import OrderPool from './views/OrderPool.vue'
-import OnGoDelivery from './views/OnGoDelivery.vue'
-import History from './views/History.vue'
-// import WorkOrder from '@/features/work-order/views/WorkOrderBoard.vue' // Sesuaikan jika ada
+import RequestDelivery from './views/RequestDelivery.vue'
+import TaskOwn from './views/TaskOwn.vue'
+import ProfilKurir from './views/ProfilKurir.vue'
 
 export const kurirRoutes = [
     {
@@ -13,28 +11,22 @@ export const kurirRoutes = [
         children: [
             {
                 path: '', 
-                name: 'KurirDashboard',
-                component: KurirDashboard
+                redirect: '/kurir/permintaan'
             },
             {
-                path: 'order-pool',
-                name: 'KurirOrderPool',
-                component: OrderPool
+                path: 'permintaan',
+                name: 'KurirPermintaan',
+                component: RequestDelivery
             },
             {
-                path: 'on-go-delivery',
-                name: 'KurirOnGoDelivery',
-                component: OnGoDelivery
+                path: 'tugas-saya',
+                name: 'KurirTugasSaya',
+                component: TaskOwn
             },
             {
-                path: 'history',
-                name: 'KurirHistory',
-                component: History
-            },
-            {
-                path: 'work-order',
-                name: 'KurirWorkOrder',
-                component: () => import('@/features/work-order/views/WorkOrderBoard.vue') 
+                path: 'profil',
+                name: 'KurirProfil',
+                component: ProfilKurir
             }
         ]
     }

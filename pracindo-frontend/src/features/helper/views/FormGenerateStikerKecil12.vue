@@ -39,7 +39,7 @@
 
       <div class="flex flex-col gap-2">
         <label class="font-semibold text-gray-700">Tipe</label>
-        <input type="text" v-model="formData[hurufAktif].tipe" :disabled="formData[hurufAktif].is_saved" class="p-3 border rounded-lg disabled:bg-gray-100 disabled:text-gray-400 w-full" />
+        <input type="text" v-model="formData[hurufAktif].tipe" :disabled="formData[hurufAktif].is_saved" placeholder="Jika tidak memiliki tipe isi dengan Titik ( . )" class="p-3 border rounded-lg disabled:bg-gray-100 disabled:text-gray-400 w-full" />
       </div>
 
       <div class="flex flex-col gap-2">

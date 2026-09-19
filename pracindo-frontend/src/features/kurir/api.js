@@ -2,7 +2,7 @@ import api from '@/utils/api'
 
 export const apiKurir = {
     getAvailableTasks: async () => {
-        const response = await api.get('logistik/pengiriman/kolam-tugas/')
+        const response = await api.get('logistik/pengiriman/tersedia/')
         return response.data
     },
 
@@ -27,8 +27,6 @@ export const apiKurir = {
     },
 
     uploadProof: async (pengirimanId, perhentianId, formData, idemKey = '') => {
-        // Hanya kirim Idempotency-Key jika ada.
-        // Axios otomatis men-set Content-Type multipart/form-data beserta boundary-nya.
         const headers = idemKey ? { 'Idempotency-Key': idemKey } : {}
         const response = await api.post(
             `logistik/pengiriman/${pengirimanId}/perhentian/${perhentianId}/bukti/`, 
