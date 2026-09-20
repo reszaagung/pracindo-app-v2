@@ -1,30 +1,12 @@
 import { useRoute } from 'vue-router'
+// Mengambil variabel menuTransaksi dari uiConfig
+import { menuTransaksi } from '@/features/accounting/uiConfigAccounting'
 
 export function useNavTransaksi() {
     const route = useRoute()
-    const transaksi = [
-        {
-            id: 'po',
-            label: 'Purchase Order (PO)',
-            ikon: 'pi-file-edit',
-            rute: '/accounting/input/po',
-            activate: true
-        },
-        {
-            id: 'so',
-            label: 'Sales Order (SO)',
-            ikon: 'pi-file-export',
-            rute: '/accounting/input/so',
-            activate: true
-        },
-        {
-            id: 'pengeluaran',
-            label: 'Catat Pengeluaran',
-            ikon: 'pi-wallet',
-            rute: '/accounting/input/pengeluaran/buat',
-            activate: true
-        }
-    ]
+    
+    // Langsung gunakan menu dari uiConfig
+    const transaksi = menuTransaksi
 
     const aktif = (ruteTujuan) => {
         if (!route) return false

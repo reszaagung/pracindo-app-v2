@@ -3,7 +3,6 @@ import LoginRetail from '@/view/public/LoginRetail.vue'
 import RegisterCabangForm from '@/view/protect/RegisterCabangForm.vue'
 import DashboardRetail from '@/view/protect/DashboardRetail.vue'
 
-// Import modul Inventory asli bawaan lu
 import StokView from '@/features/inventory/views/StokView.vue'
 import PenerimaanViews from '@/features/inventory/views/PenerimaanViews.vue'
 

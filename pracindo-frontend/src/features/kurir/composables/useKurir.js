@@ -4,7 +4,10 @@ import { apiKurir } from '../api'
 export function useKurir() {
   const availableTasks = ref([])
   const myDeliveries = ref([])
+  const historyDeliveries = ref([]) // State baru untuk riwayat
+  
   const loading = ref(false)
+  const loadingHistory = ref(false) // State loading khusus riwayat
   const error = ref(null)
 
   const fetchAvailableTasks = async () => {
@@ -35,6 +38,22 @@ export function useKurir() {
     }
   }
 
+  // FUNGSI BARU: Mengambil riwayat pengiriman
+  const fetchHistory = async () => {
+    loadingHistory.value = true
+    error.value = null
+    try {
+      // Pastikan fungsi getHistoryDeliveries ditambahkan juga di file api.js Anda
+      const data = await apiKurir.getHistoryDeliveries()
+      historyDeliveries.value = data || []
+    } catch (err) {
+      error.value = err.message
+      console.error('Gagal mengambil riwayat:', err)
+    } finally {
+      loadingHistory.value = false
+    }
+  }
+
   const claimTask = async (taskId) => {
     try {
       await apiKurir.claimTask(taskId)
@@ -58,7 +77,6 @@ export function useKurir() {
   const markArrived = async (pengirimanId, perhentianId) => {
     try {
       await apiKurir.markArrived(pengirimanId, perhentianId)
-      // PERBAIKAN: Tambahkan feedback UI
       alert('Tugas berhasil ditandai sampai! Memperbarui data...') 
       await fetchMyDeliveries()
     } catch (err) {
@@ -91,10 +109,13 @@ export function useKurir() {
   return {
     availableTasks,
     myDeliveries,
+    historyDeliveries, 
     loading,
+    loadingHistory,    
     error,
     fetchAvailableTasks,
     fetchMyDeliveries,
+    fetchHistory,      
     claimTask,
     startDelivery,
     markArrived,

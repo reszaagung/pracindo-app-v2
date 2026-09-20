@@ -48,32 +48,28 @@
                 <div class="form-row">
                     <div class="input-wrap">
                         <label>Target Penerima Tugas (PIC)</label>
-                        <MultiSelect v-model="formCreate.staff_ids" :options="staffList" optionLabel="nama_lengkap"
-                            optionValue="id" placeholder="Pilih pelaksana..." display="chip" fluid />
+                        <MultiSelect v-model="formCreate.staff_ids" :options="staffTanpaPembuat" optionLabel="nama_lengkap"
+                            optionValue="id" placeholder="Pilih pelaksana..." display="chip" class="neo-input" />
                     </div>
                     <div class="input-wrap">
                         <label>Tenggat Waktu</label>
                         <DatePicker v-model="formCreate.deadline" showTime hourFormat="24" dateFormat="dd/mm/yy"
-                            placeholder="Pilih tanggal & jam..." fluid :pt="{
-                                input: { class: 'neo-input' }
-                            }" />
+                            placeholder="Pilih tanggal & jam..." class="neo-input" />
                     </div>
                 </div>
-                <div class="input-wrap">
-                    <label>Target Penerima Tugas (PIC)</label>
-                    <MultiSelect v-model="formCreate.staff_ids" :options="staffTanpaPembuat" optionLabel="nama_lengkap"
-                        optionValue="id" placeholder="Pilih pelaksana..." display="chip" fluid />
-                </div>
+
                 <div class="input-wrap">
                     <label>Identifikasi Tugas</label>
                     <input type="text" v-model="formCreate.judul" required class="neo-input"
                         placeholder="Masukkan judul spesifik...">
                 </div>
+
                 <div class="input-wrap">
                     <label>Parameter Detail</label>
                     <textarea v-model="formCreate.deskripsi" rows="4" class="neo-input resize-none"
                         placeholder="Uraikan instruksi pekerjaan di sini..."></textarea>
                 </div>
+
                 <div class="form-footer">
                     <button type="button" @click="isCreateOpen = false" class="btn-ghost"
                         :disabled="isCreating">Batalkan</button>
@@ -120,16 +116,17 @@ import DatePicker from 'primevue/datepicker'
 import MultiSelect from 'primevue/multiselect'
 import PostWorkOrderCard from '../components/PostWorkOrderCard.vue'
 import { useDevice } from '@/composables/useDevice'
+import { useAuth } from '@/composables/useAuth'
 
 const { isMobile } = useDevice()
-
+const { profil } = useAuth()
 const {
     isLoading, isSending, isCreating, isChatLoading,
     madingList, staffList, fetchMading, fetchStaff,
     approveTask, sendReply, createTask, fetchChat
 } = useWorkOrder()
 
-const currentUserId = ref(1)
+const currentUserId = computed(() => profil.value?.id || 0)
 
 const staffTanpaPembuat = computed(() => {
     return staffList.value.filter(staff => staff.id !== currentUserId.value)
@@ -225,7 +222,6 @@ const scrollToBottom = () => {
     font-family: 'Inter', -apple-system, sans-serif;
     color: #0f172a;
 }
-
 .btn-primary-tech {
     background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
     color: #fff;
@@ -241,13 +237,11 @@ const scrollToBottom = () => {
     box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.2s;
 }
-
 .btn-primary-tech:hover:not(:disabled) {
     background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
-
 .btn-icon-tech {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -258,13 +252,11 @@ const scrollToBottom = () => {
     transition: all 0.2s;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
-
 .btn-icon-tech:hover {
     background: #f8fafc;
     color: #0f172a;
     border-color: #cbd5e1;
 }
-
 .wo-loading {
     display: flex;
     flex-direction: column;
@@ -275,7 +267,6 @@ const scrollToBottom = () => {
     font-size: 0.875rem;
     font-weight: 500;
 }
-
 .loader-pulse {
     width: 2rem;
     height: 2rem;
@@ -283,22 +274,11 @@ const scrollToBottom = () => {
     background: #14b8a6;
     animation: pulse-glow 1.5s infinite;
 }
-
 @keyframes pulse-glow {
-    0% {
-        transform: scale(0.9);
-        box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 15px rgba(20, 184, 166, 0);
-    }
-    100% {
-        transform: scale(0.9);
-        box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
-    }
+    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); }
+    70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(20, 184, 166, 0); }
+    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
 }
-
 .wo-empty {
     padding: 5rem 2rem;
     text-align: center;
@@ -306,7 +286,6 @@ const scrollToBottom = () => {
     border: 1px dashed #cbd5e1;
     border-radius: 16px;
 }
-
 .empty-glow {
     width: 5rem;
     height: 5rem;
@@ -321,71 +300,36 @@ const scrollToBottom = () => {
     box-shadow: 0 0 30px rgba(13, 148, 136, 0.15);
     border: 1px solid #ccfbf1;
 }
+.wo-empty h3 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; color: #1e293b; }
+.wo-empty p { color: #64748b; font-size: 0.9375rem; margin: 0; }
+.wo-grid { display: grid; gap: 1.5rem; }
+.wo-grid[data-count="1"] { grid-template-columns: 1fr; max-width: 450px; }
+.wo-grid[data-count="2"] { grid-template-columns: repeat(2, 1fr); max-width: 900px; }
+.wo-grid[data-count="3"] { grid-template-columns: repeat(3, 1fr); }
+.wo-grid[data-count="4"], .wo-grid[data-count="more"] { grid-template-columns: repeat(4, 1fr); }
+:deep(.tech-modal .p-dialog-header) { background: #ffffff; border-bottom: 1px solid #f1f5f9; padding: 1.25rem 1.5rem; }
+:deep(.tech-modal .p-dialog-title) { font-weight: 700; font-size: 1.125rem; color: #0f172a; }
+:deep(.tech-modal .p-dialog-content) { padding: 1.5rem; background: #fafaf9; }
 
-.wo-empty h3 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem;
-    color: #1e293b;
-}
-
-.wo-empty p {
-    color: #64748b;
-    font-size: 0.9375rem;
-    margin: 0;
-}
-
-.wo-grid {
-    display: grid;
-    gap: 1.5rem;
-}
-
-.wo-grid[data-count="1"] {
-    grid-template-columns: 1fr;
-    max-width: 450px;
-}
-
-.wo-grid[data-count="2"] {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 900px;
-}
-
-.wo-grid[data-count="3"] {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-.wo-grid[data-count="4"],
-.wo-grid[data-count="more"] {
-    grid-template-columns: repeat(4, 1fr);
-}
-
-:deep(.tech-modal .p-dialog-header) {
-    background: #ffffff;
-    border-bottom: 1px solid #f1f5f9;
-    padding: 1.25rem 1.5rem;
-}
-
-:deep(.tech-modal .p-dialog-title) {
-    font-weight: 700;
-    font-size: 1.125rem;
-    color: #0f172a;
-}
-
-:deep(.tech-modal .p-dialog-content) {
-    padding: 1.5rem;
-    background: #fafaf9;
-}
-
+/* --- PERBAIKAN FORM PRIME VUE --- */
 .tech-form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
+    padding-top: 0.5rem;
 }
 
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    width: 100%;
+}
+
+.input-wrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .input-wrap label {
@@ -411,23 +355,52 @@ const scrollToBottom = () => {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01);
 }
 
-.neo-input:focus {
+.neo-input:focus,
+.neo-input:focus-within {
     outline: none;
     border-color: #14b8a6;
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
 }
 
-.resize-none {
-    resize: none;
+:deep(.p-multiselect.neo-input),
+:deep(.p-datepicker.neo-input) {
+    padding: 0; 
+    display: flex;
+    align-items: center;
 }
 
+:deep(.p-multiselect.neo-input .p-multiselect-label),
+:deep(.p-datepicker.neo-input .p-inputtext) {
+    padding: 0.6rem 1rem; 
+    font-size: 0.875rem;
+    font-family: inherit;
+    width: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+}
+
+:deep(.p-multiselect-token) {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    margin-right: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+:deep(.p-multiselect), :deep(.p-datepicker) {
+    border: none;
+}
+
+.resize-none { resize: none; }
 .form-footer {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
-
 .btn-ghost {
     background: transparent;
     color: #64748b;
@@ -438,142 +411,36 @@ const scrollToBottom = () => {
     border-radius: 8px;
     cursor: pointer;
 }
+.btn-ghost:hover { background: #e2e8f0; color: #0f172a; }
 
-.btn-ghost:hover {
-    background: #e2e8f0;
-    color: #0f172a;
-}
-
-.chat-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 420px;
-}
-
-.chat-feed {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding-right: 0.5rem;
-}
-
-.chat-blank {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #94a3b8;
-    font-size: 0.875rem;
-}
-
-.chat-blank i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.5;
-}
-
-.message-block {
-    display: flex;
-    flex-direction: column;
-}
-
-.sender-id {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: #64748b;
-    margin-bottom: 0.2rem;
-    margin-left: 0.5rem;
-    text-transform: uppercase;
-}
-
-.message-core {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    border-top-left-radius: 2px;
-    font-size: 0.875rem;
-    color: #1e293b;
-    width: fit-content;
-    max-width: 90%;
-    line-height: 1.4;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.chat-control {
-    margin-top: 1.25rem;
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-send-tech {
-    background: #0f172a;
-    color: #fff;
-    width: 2.75rem;
-    height: 2.75rem;
-    border: none;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-send-tech:hover:not(:disabled) {
-    background: #14b8a6;
-}
-
-.btn-send-tech:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.custom-scroll::-webkit-scrollbar {
-    width: 5px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-}
+.chat-wrapper { display: flex; flex-direction: column; height: 420px; }
+.chat-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 0.5rem; }
+.chat-blank { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #94a3b8; font-size: 0.875rem; }
+.chat-blank i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+.message-block { display: flex; flex-direction: column; }
+.sender-id { font-size: 0.65rem; font-weight: 700; color: #64748b; margin-bottom: 0.2rem; margin-left: 0.5rem; text-transform: uppercase; }
+.message-core { background: #ffffff; border: 1px solid #e2e8f0; padding: 0.75rem 1rem; border-radius: 12px; border-top-left-radius: 2px; font-size: 0.875rem; color: #1e293b; width: fit-content; max-width: 90%; line-height: 1.4; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02); }
+.chat-control { margin-top: 1.25rem; display: flex; gap: 0.5rem; }
+.btn-send-tech { background: #0f172a; color: #fff; width: 2.75rem; height: 2.75rem; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.btn-send-tech:hover:not(:disabled) { background: #14b8a6; }
+.btn-send-tech:disabled { opacity: 0.5; cursor: not-allowed; }
+.custom-scroll::-webkit-scrollbar { width: 5px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
 @media (max-width: 1024px) {
     .wo-grid[data-count="3"],
     .wo-grid[data-count="4"],
-    .wo-grid[data-count="more"] {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .wo-grid[data-count="more"] { grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (max-width: 768px) {
-    .wo-board {
-        padding: 1rem;
-    }
-    .wo-grid[data-count] {
-        grid-template-columns: 1fr;
-        max-width: 100%;
-    }
-    .form-row {
-        grid-template-columns: 1fr;
-    }
+    .wo-board { padding: 1rem; }
+    .wo-grid[data-count] { grid-template-columns: 1fr; max-width: 100%; }
+    .form-row { grid-template-columns: 1fr; }
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
-}
-
+.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>

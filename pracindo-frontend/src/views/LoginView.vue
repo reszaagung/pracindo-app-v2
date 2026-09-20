@@ -10,7 +10,6 @@
 <template>
     <div class="login-wrapper">
 
-        <!-- ── kiri: panel ilustrasi (desktop) ─────────────────── -->
         <div class="panel-left">
             <div class="brand-top">
                 <img :src="logoPracindo" alt="Logo Pracindo" class="logo-img" />
@@ -35,11 +34,9 @@
             </div>
         </div>
 
-        <!-- ── kanan: form login ───────────────────────────────── -->
         <div class="panel-right">
             <div class="login-box animate-fade-in">
 
-                <!-- Tampil hanya di Mobile -->
                 <div class="mobile-brand">
                     <img :src="logoPracindo" alt="Logo Pracindo" class="logo-img-mobile" />
                     <span class="brand-text-mobile">Pracindo Jaya Mandiri</span>
@@ -58,7 +55,6 @@
                         <input v-model="form.password" :type="showPassword ? 'text' : 'password'"
                             placeholder="Kata Sandi" autocomplete="current-password" required :disabled="sedangProses"
                             class="form-input pr-icon" />
-                        <!-- Tag button diganti jadi span agar kebal dari CSS global -->
                         <span class="btn-toggle-pass"
                             :title="showPassword ? 'Sembunyikan sandi' : 'Tampilkan sandi'"
                             @click="showPassword = !showPassword">
@@ -66,7 +62,6 @@
                         </span>
                     </div>
 
-                <!-- Pesan Error / Notifikasi Sesi -->
                 <p v-if="pesan" role="alert" class="error-msg">
                     {{ pesan }}
                 </p>
@@ -79,7 +74,6 @@
 
                 <div class="divider"></div>
 
-                <!-- Tautan ke Halaman Pendaftaran -->
                 <p class="register-link-wrap">
                     Belum punya akun? <br>
                     <router-link to="/register" class="register-link">
@@ -135,13 +129,14 @@ const handleLogin = async () => {
         form.password = ''
         return
     }
+    
     const tujuan = route.query.next
     if (bolehKe(tujuan)) {
         router.push(tujuan)
         return
     }
 
-    router.push(rutePertamaSiap(modul.value) ?? { name: 'dashboard' })
+    router.push('/')
 }
 
 const bolehKe = (tujuan) => {

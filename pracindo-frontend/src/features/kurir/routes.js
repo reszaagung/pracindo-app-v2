@@ -1,6 +1,7 @@
 import KurirLayout from './layout/KurirLayout.vue'
 import RequestDelivery from './views/RequestDelivery.vue'
 import TaskOwn from './views/TaskOwn.vue'
+import TaskHistory from './views/TaskHistory.vue'
 import ProfilKurir from './views/ProfilKurir.vue'
 
 export const kurirRoutes = [
@@ -22,6 +23,11 @@ export const kurirRoutes = [
                 path: 'tugas-saya',
                 name: 'KurirTugasSaya',
                 component: TaskOwn
+            },
+            {
+                path: 'riwayat',
+                name: 'KurirRiwayat',
+                component: TaskHistory
             },
             {
                 path: 'profil',

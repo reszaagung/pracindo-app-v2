@@ -3,7 +3,8 @@ import ModulLayout from '@/components/layout/ModulLayout.vue'
 export default [
   {
     path: '/warehouse',
-    meta: { perluLogin: true, modul: 'gudang' },
+    // WAJIB 'warehouse', jangan 'gudang'
+    meta: { perluLogin: true, modul: 'warehouse' }, 
     component: ModulLayout,
     children: [
       {
@@ -15,7 +16,8 @@ export default [
   },
   {
     path: '/warehouse/input',
-    meta: { perluLogin: true, modul: 'warehouse' },
+    // WAJIB 'warehouse', jangan 'gudang'
+    meta: { perluLogin: true, modul: 'warehouse' }, 
     component: () => import('@/features/warehouse/layout/InputEntryLayout.vue'),
     children: [
       {
@@ -56,4 +58,4 @@ export default [
       }
     ]
   }
-] 
+]

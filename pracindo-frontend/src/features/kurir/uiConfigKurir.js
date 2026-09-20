@@ -2,18 +2,22 @@ export const STATUS_WARNA = {
     'MENUNGGU': 'bg-slate-100 text-slate-600 border-slate-200',
     'DISIAPKAN': 'bg-orange-100 text-orange-700 border-orange-200',
     'BERANGKAT': 'bg-blue-100 text-blue-700 border-blue-200',
-    'SAMPAY': 'bg-purple-100 text-purple-700 border-purple-200',
+    'SAMPAI': 'bg-purple-100 text-purple-700 border-purple-200',
+    'DITERIMA': 'bg-emerald-100 text-emerald-700 border-emerald-200',
     'SELESAI': 'bg-emerald-100 text-emerald-700 border-emerald-200',
     'RETUR': 'bg-rose-100 text-rose-700 border-rose-200',
+    'DIRETUR': 'bg-rose-100 text-rose-700 border-rose-200',
 }
 
 export const STATUS_LABEL = {
     'MENUNGGU': 'Menunggu Kurir',
     'DISIAPKAN': 'Sedang Disiapkan',
     'BERANGKAT': 'Dalam Perjalanan',
-    'SAMPAY': 'Tiba di Tujuan',
+    'SAMPAI': 'Tiba di Tujuan',
+    'DITERIMA': 'Bukti Diterima',
     'SELESAI': 'Terkirim Selesai',
-    'RETUR': 'Barang Diretur',
+    'RETUR': 'Retur Dicatat',
+    'DIRETUR': 'Barang Diretur',
 }
 
 export const BOTTOM_NAV_MENU = [
@@ -30,10 +34,11 @@ export const BOTTOM_NAV_MENU = [
     },
     { 
         name: 'Riwayat', 
-        path: '/kurir/history', 
+        path: '/kurir/riwayat', // PERBAIKAN: Disesuaikan dengan router (bukan history)
         iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' 
     },
-    {name: 'Profil',
+    {   
+        name: 'Profil',
         path: '/kurir/profil',
         routeName: 'KurirProfil',
         iconPath: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'

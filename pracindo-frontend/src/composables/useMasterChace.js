@@ -1,21 +1,19 @@
 import { ref } from 'vue'
 import api from '@/utils/api'
-
-
-const cachedSuppliers = ref([])
-const isSuppliersLoaded = ref(false)
+import { CACHE_KEY, denganCache, CacheService } from '@/utils/cacheService' 
 
 export function useMasterCache() {
-    const muatSuppliers = async () => {
-        if (isSuppliersLoaded.value) {
-            return cachedSuppliers.value
-        }
+    const cachedSuppliers = ref([])
 
+    const muatSuppliers = async () => {
         try {
-            const { data } = await api.get('master/suplier/', { params: { ringkas: 1, aktif: true } })
-            cachedSuppliers.value = data.results || data || []
-            isSuppliersLoaded.value = true
-            return cachedSuppliers.value
+            const data = await denganCache(CACHE_KEY.SUPLIER, async () => {
+                const res = await api.get('master/suplier/', { params: { ringkas: 1, aktif: true } })
+                return res.data.results || res.data || []
+            }, 15) 
+
+            cachedSuppliers.value = data
+            return data
         } catch (error) {
             console.error("Gagal memuat suplier:", error)
             return []
@@ -23,13 +21,13 @@ export function useMasterCache() {
     }
 
     const forceRefreshSuppliers = async () => {
-        isSuppliersLoaded.value = false
+        CacheService.remove(CACHE_KEY.SUPLIER)
+        
         return await muatSuppliers()
     }
 
     return {
         cachedSuppliers,
-        isSuppliersLoaded,
         muatSuppliers,
         forceRefreshSuppliers
     }

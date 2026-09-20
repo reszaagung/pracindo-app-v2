@@ -5,10 +5,8 @@
  */
 
 import { useAuth } from '@/composables/useAuth'
-import { rutePertamaSiap } from '@/config/modules'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-
 
 NProgress.configure({
   showSpinner: false,
@@ -26,7 +24,7 @@ export const useGuards = (router) => {
 
     if (to.meta?.publik) {
       if (auth.masuk.value && (to.name === 'login' || to.name === 'register')) {
-        return rutePertamaSiap(auth.modul.value) ?? { name: 'dashboard' }
+        return { name: 'dashboard' } 
       }
       return true
     }

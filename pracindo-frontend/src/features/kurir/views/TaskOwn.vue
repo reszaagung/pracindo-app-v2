@@ -3,20 +3,11 @@
     
     <header class="sticky top-0 z-10 bg-white border-b border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between gap-4">
       <h2 class="text-lg font-bold text-gray-800 whitespace-nowrap m-0">Tugas Saya</h2>
-      
       <button 
         @click="fetchMyDeliveries" 
         class="!w-10 !h-10 !min-w-[40px] !max-w-[40px] !flex-none !flex !items-center !justify-center bg-gray-50 hover:bg-gray-100 active:bg-gray-200 !rounded-full shadow-sm border border-gray-200 !p-0 !m-0 !outline-none"
       >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          class="!w-5 !h-5 !shrink-0 transition-colors" 
-          :class="{'animate-spin text-blue-600': loading, 'text-gray-700': !loading}"
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor" 
-          stroke-width="2"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" class="!w-5 !h-5 !shrink-0 transition-colors" :class="{'animate-spin text-blue-600': loading, 'text-gray-700': !loading}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </button>
@@ -38,7 +29,6 @@
           
           <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
             <h3 class="font-bold text-gray-800 text-sm truncate">{{ delivery.nomor }}</h3>
-            <!-- Badge warna juga sudah dibuat dinamis mengikuti status perhentian -->
             <span :class="getBadgeClass(cekStatusSampai(delivery) ? 'SAMPAI' : delivery.status)" class="px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded whitespace-nowrap ml-2">
               {{ cekStatusSampai(delivery) ? 'SAMPAI' : delivery.status }}
             </span>
@@ -48,21 +38,18 @@
             
             <div v-if="delivery.status === 'DISIAPKAN' || delivery.status === 'SIAP_KIRIM'">
               <p class="text-sm text-gray-600 mb-3">Barang sudah siap dibawa. Silakan mulai perjalanan.</p>
-              <button @click="startDelivery(delivery.id)" class="w-full flex justify-center items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-blue-700 active:bg-blue-800 text-sm">
+              <button @click="startDelivery(delivery.id)" class="w-full flex justify-center items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-blue-700 text-sm">
                 Mulai Perjalanan 🚀
               </button>
             </div>
 
-            <!-- PERBAIKAN: Mengecek status SAMPAI DULU sebelum mengecek BERANGKAT -->
             <div v-else-if="cekStatusSampai(delivery)">
               <p class="text-sm text-gray-600 mb-3 font-medium text-orange-600">Barang sudah sampai! Silakan unggah bukti surat jalan.</p>
-              
               <div class="flex gap-2">
                 <input type="file" :id="`upload-${delivery.id}`" class="hidden" accept="image/*" @change="(e) => handleUpload(e, delivery)" />
                 <label :for="`upload-${delivery.id}`" class="flex-1 flex justify-center items-center gap-2 bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-emerald-700 cursor-pointer text-sm">
                   📸 Upload Bukti
                 </label>
-                
                 <button @click="handleRetur(delivery)" class="flex-1 flex justify-center items-center gap-2 bg-rose-100 text-rose-700 px-4 py-3 rounded-lg font-bold border border-rose-200 text-sm">
                   Retur
                 </button>
@@ -71,7 +58,6 @@
 
             <div v-else-if="delivery.status === 'BERANGKAT'">
               <p class="text-sm text-gray-600 mb-3">Sedang dalam perjalanan menuju tujuan.</p>
-              <!-- Menggunakan fungsi pintar untuk mencari ID perhentian -->
               <button @click="markArrived(delivery.id, dapatkanIdPerhentian(delivery))" class="w-full flex justify-center items-center gap-2 bg-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-purple-700 text-sm">
                 Tandai Sudah Sampai 📍
               </button>
@@ -86,6 +72,43 @@
               </div>
             </div>
 
+            <!-- TOGGLE DETAIL INFORMASI MUATAN & ALAMAT -->
+            <button @click="toggleDetail(delivery.id)" class="mt-4 flex items-center justify-center w-full gap-2 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors py-2 bg-gray-50 rounded-lg border border-gray-100">
+              <span v-if="expandedId === delivery.id">Tutup Detail Rute ▴</span>
+              <span v-else>Lihat Muatan & Alamat Tujuan ▾</span>
+            </button>
+
+            <!-- KONTEN DETAIL -->
+            <div v-if="expandedId === delivery.id" class="mt-4 pt-3 border-t border-gray-100">
+              <div class="relative border-l-2 border-blue-200 ml-2 space-y-4">
+                
+                <div v-for="(stop, index) in delivery.perhentian" :key="stop.id" class="relative pl-5">
+                  <div class="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full border-2 border-white" :class="stop.status === 'SAMPAI' || stop.status === 'DITERIMA' ? 'bg-emerald-500' : 'bg-blue-500'"></div>
+                  
+                  <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                      <span class="font-bold text-gray-800 text-sm leading-tight">{{ index + 1 }}. {{ stop.pelanggan_nama || 'Tujuan ' + (index + 1) }}</span>
+                      <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase" :class="getBadgeClass(stop.status)">
+                        {{ stop.status }}
+                      </span>
+                    </div>
+                    
+                    <div class="space-y-2 text-xs text-gray-600">
+                      <div class="flex items-start gap-2">
+                        <span class="text-gray-400 shrink-0 mt-0.5">📍</span>
+                        <span class="leading-relaxed">{{ stop.alamat || 'Alamat tidak tersedia' }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-gray-400 shrink-0">📦</span>
+                        <span>Dokumen DO: <strong class="text-gray-800">{{ stop.nomor_distribusi || 'N/A' }}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -94,26 +117,29 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useKurir } from '../composables/useKurir'
 
 const { myDeliveries, loading, fetchMyDeliveries, startDelivery, markArrived, uploadProof } = useKurir()
+
+// State untuk mengontrol Accordion Detail
+const expandedId = ref(null)
 
 onMounted(() => {
   fetchMyDeliveries()
 })
 
-// === HELPER PINTAR BARU ===
-// Fungsi untuk mengecek apakah titik perhentian saat ini statusnya SAMPAI
+const toggleDetail = (id) => {
+  expandedId.value = expandedId.value === id ? null : id
+}
+
 const cekStatusSampai = (delivery) => {
   if (delivery.perhentian && Array.isArray(delivery.perhentian)) {
-    // Mengecek apakah ada perhentian di dalam pengiriman ini yang berstatus SAMPAI
     return delivery.perhentian.some(p => p.status === 'SAMPAI')
   }
   return false
 }
 
-// Fungsi untuk mendapatkan ID perhentian yang tepat untuk aksi saat ini
 const dapatkanIdPerhentian = (delivery) => {
   if (delivery.perhentian && Array.isArray(delivery.perhentian) && delivery.perhentian.length > 0) {
     const aktif = delivery.perhentian.find(p => p.status === 'MENUNGGU' || p.status === 'SAMPAI')
@@ -122,7 +148,6 @@ const dapatkanIdPerhentian = (delivery) => {
   }
   return delivery.perhentian_id || delivery.id
 }
-// =========================
 
 const getBadgeClass = (status) => {
   const warna = {
@@ -131,8 +156,10 @@ const getBadgeClass = (status) => {
     'SIAP_KIRIM': 'bg-orange-100 text-orange-700',
     'BERANGKAT': 'bg-blue-100 text-blue-700',
     'SAMPAI': 'bg-purple-100 text-purple-700', 
+    'DITERIMA': 'bg-emerald-100 text-emerald-700',
     'SELESAI': 'bg-emerald-100 text-emerald-700',
-    'RETUR': 'bg-rose-100 text-rose-700'
+    'RETUR': 'bg-rose-100 text-rose-700',
+    'DIRETUR': 'bg-rose-100 text-rose-700'
   }
   return warna[status] || 'bg-gray-100 text-gray-800'
 }
@@ -154,6 +181,7 @@ const handleUpload = async (event, delivery) => {
     alert('Gagal mengunggah bukti: ' + pesanDetail)
   }
 }
+
 const handleRetur = (delivery) => {
   alert(`Buka form retur untuk pengiriman ${delivery.nomor}`)
 }

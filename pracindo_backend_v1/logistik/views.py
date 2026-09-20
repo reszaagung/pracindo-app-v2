@@ -128,17 +128,18 @@ class PengirimanViewSet(viewsets.ModelViewSet):
             return _galat(e)
         return self._balas(kirim.id)
 
-    @action(detail=False, methods=['get'], url_path='tugas-saya')
-    def tugas_saya(self, request):
+    @action(detail=False, methods=['get'], url_path='riwayat')
+    def riwayat(self, request):
         qs = self.get_queryset().filter(
             kurir=request.user,
             status__in=[
-                StatusPengiriman.DISIAPKAN, 
-                StatusPengiriman.BERANGKAT
+                StatusPengiriman.SELESAI, 
+                StatusPengiriman.BATAL
             ],
-        ).order_by('tanggal', 'id')
+        )
         return Response(s.PengirimanDetailSerializer(qs, many=True).data)
 
+        
     @action(detail=True, methods=['post'],
             url_path=r'perhentian/(?P<hid>\d+)/sampai')
     def sampai(self, request, pk=None, hid=None):

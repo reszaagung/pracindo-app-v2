@@ -1,5 +1,3 @@
-import ModulLayout from '@/components/layout/ModulLayout.vue'
-
 export default [
   {
     path: '/accounting/input',
@@ -42,7 +40,8 @@ export default [
   // 2. RUTE INVOICE (Menggunakan Layout Invoice)
   {
     path: '/accounting/invoice',
-    meta: { perluLogin: true, modul: 'akunting' },
+    // PERBAIKAN: modul diubah menjadi 'buku_tagihan'
+    meta: { perluLogin: true, modul: 'buku_tagihan' }, 
     component: () => import('@/features/accounting/layout/InvoiceLayout.vue'),
     children: [
       {

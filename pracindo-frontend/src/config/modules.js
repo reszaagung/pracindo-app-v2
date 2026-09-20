@@ -1,58 +1,17 @@
 import { produksiModul } from '@/features/produksi/uiConfigProduksi'
 import { helperModul } from '@/features/helper/uiConfigHelper'
+// 1. IMPORT KONFIGURASI AKUNTING
+import { akuntingModul, bukuTagihanModul } from '@/features/accounting/uiConfigAccounting'
+// 2. IMPORT KONFIGURASI GUDANG & DISTRIBUSI YANG BARU DIBUAT
+import { gudangModul, distribusiModul } from '@/features/warehouse/uiConfigWarehouse'
 
 export const MODUL = [
-  {
-    id: 'akunting',
-    nama: 'Input Entry',
-    ringkas: 'Purchase order, faktur, dan pembayaran',
-    ikon: 'buku',
-    rute: '/accounting/input',
-    siap: true,
-    menu: [
-      { label: 'Purchase Order', rute: '/accounting/input/po' },
-      { label: 'Pengeluaran', rute: '/accounting/input/expend' },
-    ],
-  },
-  {
-    id: 'buku_tagihan',
-    nama: 'Buku Tagihan',
-    ringkas: 'Manajemen invoice, dokumen, dan catatan pengeluaran',
-    ikon: 'transaksi',
-    rute: '/accounting/invoice',
-    siap: true,
-    menu: [
-      { label: 'Dokumen', rute: '/accounting/invoice/dokumen' },
-    ],
-  },
-  {
-    id: 'warehouse',
-    nama: 'Gudang',
-    ringkas: 'Goods receipt, pencatatan masuk, dan cek selisih',
-    ikon: 'gudang',
-    rute: '/warehouse',
-    siap: true,
-    menu: [
-      { label: 'Goods Receipt', rute: '/warehouse/input/receipt' },
-      { label: 'Daftar Selisih', rute: '/warehouse/input/discrepancy' },
-    ],
-  },
-  {
-    id: 'warehouse_distribusi',
-    nama: 'Distribusi & Kemasan',
-    ringkas: 'Manajemen jadwal pengiriman, armada, dan loading',
-    ikon: 'kirim',
-    rute: '/distribusi',
-    siap: true,
-    menu: [
-      { label: 'Input Packing', rute: '/distribusi/packing' },
-      { label: 'Riwayat Packing', rute: '/distribusi/packing/log' },
-      { label: 'Jadwal Pengiriman', rute: '/distribusi' },
-      { label: 'Rakit Pengiriman', rute: '/distribusi/buat' },
-      { label: 'Loading Muatan', rute: '/distribusi/loading' },
-      { label: 'Status Armada', rute: '/distribusi/armada' },
-    ],
-  },
+  // 3. MASUKKAN VARIABEL YANG DI-IMPORT KE DALAM ARRAY MODUL
+  akuntingModul,
+  bukuTagihanModul,
+  gudangModul,
+  distribusiModul,
+  
   {
     id: 'master',
     nama: 'Master Data',
