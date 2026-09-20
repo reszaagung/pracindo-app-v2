@@ -36,9 +36,9 @@ export const apiKurir = {
         return response.data
     },
     getHistoryDeliveries: async () => {
-        const response = await api.get('/logistik/pengiriman/riwayat/')
+        const response = await api.get('logistik/pengiriman/riwayat/')
         return response.data
-        },
+    },
 
     recordReturn: async (pengirimanId, perhentianId, formData, idemKey = '') => {
         const headers = idemKey ? { 'Idempotency-Key': idemKey } : {}

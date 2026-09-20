@@ -115,7 +115,7 @@
                             Batal
                         </button>
                         <button type="submit" :disabled="sedangProses || !form.kode || !form.nama"
-                            class="px-8 py-3 rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="px-8 py-3 rounded-xl font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
                             <i class="pi" :class="sedangProses ? 'pi-spin pi-spinner' : 'pi-save'"></i>
                             {{ sedangProses ? 'Menyimpan...' : 'Simpan Suplier' }}
                         </button>

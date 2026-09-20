@@ -12,7 +12,6 @@ export const menuInvoice = [
     { id: 'catatan', label: 'Catatan Pengeluaran', ikon: 'pi-wallet', rute: '/accounting/invoice/catatan', activate: true }
 ]
 
-// WAJIB DITAMBAHKAN: Ekspor modul utuh untuk ditangkap oleh global modules.js
 export const akuntingModul = {
     id: 'akunting',
     nama: 'Input Entry',
@@ -20,7 +19,7 @@ export const akuntingModul = {
     ikon: 'buku',
     rute: '/accounting/input',
     siap: true,
-    menu: menuTransaksi // Memanggil variabel menuTransaksi di atas
+    menu: menuTransaksi 
 }
 
 export const bukuTagihanModul = {
@@ -30,5 +29,5 @@ export const bukuTagihanModul = {
     ikon: 'transaksi',
     rute: '/accounting/invoice',
     siap: true,
-    menu: menuInvoice // Memanggil variabel menuInvoice di atas
+    menu: menuInvoice 
 }

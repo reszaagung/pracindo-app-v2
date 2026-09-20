@@ -24,8 +24,9 @@
                     :class="{ 'wo__tag--saya': p.staff === staffId }">{{ p.staff_nama }}</span>
             </div>
 
-            <button v-if="bisaApprove" class="wo__ok" :disabled="sibuk" @click="$emit('approve', wo)">{{ sibuk ?
-                'Menyimpan' : 'Sudah dikerjakan' }}</button>
+            <button v-if="bisaApprove" class="wo__ok" :disabled="sibuk" @click="$emit('approve', wo)">
+                {{ sibuk ? 'Menyimpan' : 'Sudah dikerjakan' }}
+            </button>
         </div>
     </article>
 </template>

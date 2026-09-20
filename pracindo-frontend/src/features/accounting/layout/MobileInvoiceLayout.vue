@@ -1,6 +1,5 @@
 <template>
     <div class="flex h-screen bg-[#F8FAFC] font-sans text-slate-700 overflow-hidden relative">
-        <!-- HEADER MOBILE -->
         <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 flex items-center justify-between px-4 gap-3 border-b border-slate-100">
             <div class="flex items-center gap-3 min-w-0">
                 <span class="font-bold text-slate-800 text-base truncate">Invoice & Doc</span>
@@ -10,7 +9,6 @@
             </button>
         </header>
 
-        <!-- KONTEN UTAMA (Padding khusus agar tidak tertutup nav) -->
         <main class="flex-1 overflow-y-auto p-4 pt-20 pb-24 w-full">
             <div class="mx-auto w-full h-full">
                 <router-view v-slot="{ Component, route }">

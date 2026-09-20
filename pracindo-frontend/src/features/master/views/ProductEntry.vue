@@ -1,80 +1,78 @@
 <!-- ProductEntry.vue -->
 <template>
-    <Dialog visible modal header="Tambah Produk (Bahan Baku)" :style="{ width: '90vw', maxWidth: '600px' }"
-        :closable="false" class="p-fluid" @update:visible="$emit('close')">
+    <Dialog visible modal :style="{ width: '90vw', maxWidth: '600px' }"
+        :closable="false" appendTo="body" class="produk-modal" @update:visible="$emit('close')">
         <template #header>
             <div class="flex items-center justify-between w-full">
-                <h3 class="text-xl font-bold text-slate-800 m-0">Tambah Produk Baru</h3>
-                <button @click="$emit('close')" class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                    <i class="pi pi-times text-lg"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 m-0">Tambah Produk Baru</h3>
+                    <p class="text-xs text-slate-500 m-0 mt-0.5">Daftarkan bahan baku / kemasan ke sistem.</p>
+                </div>
+                <button @click="$emit('close')" aria-label="Tutup"
+                    class="w-8 h-8 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors flex items-center justify-center shrink-0">
+                    <i class="pi pi-times text-sm"></i>
                 </button>
             </div>
         </template>
 
-        <form @submit.prevent="simpanProduk" class="mt-4 flex flex-col gap-4">
+        <form @submit.prevent="simpanProduk" class="flex flex-col gap-4 pt-1">
 
             <div v-if="errorMsg"
-                class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium flex items-start gap-3">
-                <i class="pi pi-exclamation-triangle mt-0.5"></i>
+                class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 font-medium flex items-start gap-2">
+                <i class="pi pi-exclamation-triangle mt-0.5 text-xs"></i>
                 <span>{{ errorMsg }}</span>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-slate-700">Kode Produk <span
-                            class="text-red-500">*</span></label>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-600">Kode Produk <span class="text-red-500">*</span></label>
                     <input v-model="form.kode" type="text" required maxlength="24" placeholder="Contoh: B-P-01"
-                        class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-slate-800 uppercase" />
+                        class="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 uppercase focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition" />
                 </div>
 
-                <!-- Nama Produk -->
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-slate-700">Nama Produk <span
-                            class="text-red-500">*</span></label>
-                    <input v-model="form.nama" type="text" required maxlength="200"
-                        placeholder="Masukkan nama produk..."
-                        class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-slate-800" />
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-600">Nama Produk <span class="text-red-500">*</span></label>
+                    <input v-model="form.nama" type="text" required maxlength="200" placeholder="Masukkan nama produk..."
+                        class="w-full h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition" />
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-slate-700">Jenis Produk <span
-                            class="text-red-500">*</span></label>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-600">Jenis Produk <span class="text-red-500">*</span></label>
                     <Dropdown v-model="form.jenis" :options="opsiJenis" optionLabel="label" optionValue="value"
-                        placeholder="Pilih Jenis" class="w-full" :pt="{
-                            root: { class: 'bg-slate-50 border border-slate-200 rounded-xl h-[38px] flex items-center' }
-                        }" />
+                        appendTo="body" placeholder="Pilih Jenis" class="w-full"
+                        :pt="{ root: { class: 'w-full h-10 bg-white border border-slate-300 rounded-lg flex items-center' }, input: { class: 'text-sm px-3 text-slate-700' } }" />
                 </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs font-bold text-slate-700">Satuan <span class="text-red-500">*</span></label>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-600">Satuan <span class="text-red-500">*</span></label>
                     <Dropdown v-model="form.satuan_id" :options="daftarSatuan" optionLabel="nama" optionValue="id"
-                        appendTo="body" placeholder="Pilih Satuan" :loading="loadingMaster" class="w-full" />
+                        appendTo="body" placeholder="Pilih Satuan" :loading="loadingMaster" class="w-full"
+                        :pt="{ root: { class: 'w-full h-10 bg-white border border-slate-300 rounded-lg flex items-center' }, input: { class: 'text-sm px-3 text-slate-700' } }" />
                 </div>
-            </div>
-            <div class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-slate-700">Katalog Suplier <em
-                        class="font-normal text-slate-400 text-[10px]">(Opsional - Bisa pilih lebih dari
-                        satu)</em></label>
-                <MultiSelect v-model="form.suplier_ids" :options="listSuplier" optionLabel="nama" optionValue="id"
-                    placeholder="Pilih suplier penyedia produk ini..." :loading="loadingMaster" display="chip"
-                    class="w-full" :pt="{
-                        root: { class: 'bg-slate-50 border border-slate-200 rounded-xl min-h-[38px] flex items-center' }
-                    }" />
             </div>
 
-            <div class="flex items-center justify-end border-t border-slate-100 pt-4 mt-2">
-                <div class="flex gap-3">
-                    <button type="button" @click="$emit('close')" :disabled="isSubmitting"
-                        class="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors disabled:opacity-50">
-                        Batal
-                    </button>
-                    <button type="submit" :disabled="isSubmitting || daftarSatuan.length === 0"
-                        class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2">
-                        <i class="pi" :class="isSubmitting ? 'pi-spin pi-spinner' : 'pi-save'"></i>
-                        Simpan
-                    </button>
-                </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-slate-600">
+                    Katalog Suplier
+                    <span class="font-normal text-slate-400">(opsional — bisa pilih lebih dari satu)</span>
+                </label>
+                <MultiSelect v-model="form.suplier_ids" :options="listSuplier" optionLabel="nama" optionValue="id"
+                    appendTo="body" placeholder="Pilih suplier penyedia produk ini..." :loading="loadingMaster"
+                    display="chip" class="w-full"
+                    :pt="{ root: { class: 'w-full min-h-10 bg-white border border-slate-300 rounded-lg flex items-center' } }" />
+            </div>
+
+            <div class="flex items-center justify-end border-t border-slate-100 pt-4 mt-1 gap-2">
+                <button type="button" @click="$emit('close')" :disabled="isSubmitting"
+                    class="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50">
+                    Batal
+                </button>
+                <button type="submit" :disabled="isSubmitting || daftarSatuan.length === 0"
+                    class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-400 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:cursor-not-allowed">
+                    <i class="pi text-xs" :class="isSubmitting ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
+                    Simpan
+                </button>
             </div>
         </form>
     </Dialog>
@@ -126,7 +124,7 @@ const loadDataMaster = async () => {
             const satuanDariServer = resSat.value.data.results || resSat.value.data || []
             if (satuanDariServer.length > 0) {
                 daftarSatuan.value = satuanDariServer.map(s => ({
-                    id: s.id, 
+                    id: s.id,
                     nama: s.nama || s.kode,
                     kode: s.kode
                 }))
@@ -188,3 +186,9 @@ onMounted(() => {
     loadDataMaster()
 })
 </script>
+
+<style>
+.produk-modal.p-dialog { border-radius: 16px; overflow: hidden; }
+.produk-modal .p-dialog-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; }
+.produk-modal .p-dialog-content { padding: 1.5rem; }
+</style>

@@ -43,6 +43,12 @@
                 <span></span><span></span><span></span>
             </button>
 
+            <!-- WAJIB ADA: Di sinilah halaman-halaman modul (Penerimaan, dll) akan di-render -->
+            <div class="konten-utama">
+                <router-view />
+            </div>
+
+            <!-- Panel Mading Operasional di bagian bawah -->
             <section class="mt-16 pt-8 border-t border-slate-200">
                 <WorkOrderPanel />
             </section>
@@ -193,6 +199,12 @@ watch(() => route.fullPath, tutupDiMobile)
 .isi {
     padding: 1.75rem clamp(1rem, 3vw, 2.25rem) 3rem;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.konten-utama {
+    flex: 1;
 }
 
 .buka-side {

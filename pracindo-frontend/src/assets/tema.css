@@ -8,6 +8,14 @@
  * yang disunting, bukan puluhan komponen.
  */
 
+@import "tailwindcss";
+@source "../src/**/*.{vue,js,ts}";
+
+/* assets/tema.css
+ * ================
+ * Impor sekali di main.js:  import '@/assets/tema.css'
+ */
+
 :root {
   /* permukaan */
   --latar: #F7F8FA;

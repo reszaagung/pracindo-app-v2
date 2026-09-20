@@ -31,16 +31,13 @@ export default [
       {
         path: 'pengeluaran/buat',
         name: 'transaksi-pengeluaran',
-        // Disamakan dengan gambar: Expense.vue
         component: () => import('./views/Expense.vue') 
       },
     ]
   },
 
-  // 2. RUTE INVOICE (Menggunakan Layout Invoice)
   {
     path: '/accounting/invoice',
-    // PERBAIKAN: modul diubah menjadi 'buku_tagihan'
     meta: { perluLogin: true, modul: 'buku_tagihan' }, 
     component: () => import('@/features/accounting/layout/InvoiceLayout.vue'),
     children: [
