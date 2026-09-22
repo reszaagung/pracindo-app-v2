@@ -1,8 +1,15 @@
 from django.contrib import admin
 from .models import (
-    Kemasan, MutasiKlaim, Packing, Pembelian, SaldoEntitas,
-    StatusDokumen, SumberPembelian, PoolResource, PoolKemasan,
-    StokBarangJadi, StokItemsPabrik
+    Kemasan,
+    MutasiKlaim,
+    Packing,
+    Pembelian,
+    SaldoEntitas,
+    StatusDokumen,
+    PoolResource,
+    PoolKemasan,
+    StokBarangJadi,
+    StokItemsPabrik,
 )
 
 
@@ -41,8 +48,18 @@ class KemasanAdmin(admin.ModelAdmin):
 
 @admin.register(PoolResource)
 class PoolResourceAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("produk", "qty_kg", "nilai", "harga_rata", "kosong_bernilai", "diubah_pada")
-    search_fields = ("produk__kode", "produk__nama")
+    list_display = (
+        "produk",
+        "qty_kg",
+        "nilai",
+        "harga_rata",
+        "kosong_bernilai",
+        "diubah_pada",
+    )
+    search_fields = (
+        "produk__kode",
+        "produk__nama",
+    )
     list_select_related = ("produk",)
 
     @admin.display(description="Harga / Kg")
@@ -56,8 +73,20 @@ class PoolResourceAdmin(TanpaTulis, admin.ModelAdmin):
 
 @admin.register(PoolKemasan)
 class PoolKemasanAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("produk", "qty_unit", "nilai", "harga_satuan_label", "kosong_bernilai", "diubah_pada")
-    search_fields = ("produk__kode", "produk__nama")
+    list_display = (
+        "produk",
+        "kategori",
+        "qty_unit",
+        "nilai",
+        "harga_satuan_label",
+        "kosong_bernilai",
+        "diubah_pada",
+    )
+    list_filter = ("kategori",)
+    search_fields = (
+        "produk__kode",
+        "produk__nama",
+    )
     list_select_related = ("produk",)
 
     @admin.display(description="Harga / Unit")
@@ -71,10 +100,28 @@ class PoolKemasanAdmin(TanpaTulis, admin.ModelAdmin):
 
 @admin.register(SaldoEntitas)
 class SaldoEntitasAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("entitas", "grup", "qty_setor", "qty_tarik", "total_setor", "total_tarik", "total_rugi", "saldo", "status")
-    list_filter = ("entitas__grup_bahan",)
-    search_fields = ("entitas__kode", "entitas__nama")
-    list_select_related = ("entitas", "entitas__grup_bahan")
+    list_display = (
+        "entitas",
+        "grup",
+        "qty_setor",
+        "qty_tarik",
+        "total_setor",
+        "total_tarik",
+        "total_rugi",
+        "saldo",
+        "status",
+    )
+    list_filter = (
+        "entitas__grup_bahan",
+    )
+    search_fields = (
+        "entitas__kode",
+        "entitas__nama",
+    )
+    list_select_related = (
+        "entitas",
+        "entitas__grup_bahan",
+    )
 
     @admin.display(description="Grup")
     def grup(self, obj):
@@ -89,12 +136,48 @@ class SaldoEntitasAdmin(TanpaTulis, admin.ModelAdmin):
 
 @admin.register(Pembelian)
 class PembelianAdmin(KunciSetelahPosting, admin.ModelAdmin):
-    list_display = ("nomor", "tanggal", "no_po", "entitas", "grup_bahan", "produk", "qty_kg", "harga_per_kg", "nilai", "sumber", "status")
-    list_filter = ("status", "sumber", "tanggal", "grup_bahan", "entitas")
-    search_fields = ("nomor", "no_po", "produk__kode", "entitas__kode")
+    list_display = (
+        "nomor",
+        "tanggal",
+        "no_po",
+        "entitas",
+        "grup_bahan",
+        "produk",
+        "qty_kg",
+        "harga_per_kg",
+        "nilai",
+        "sumber",
+        "status",
+    )
+    list_filter = (
+        "status",
+        "sumber",
+        "tanggal",
+        "grup_bahan",
+        "entitas",
+    )
+    search_fields = (
+        "nomor",
+        "no_po",
+        "produk__kode",
+        "entitas__kode",
+    )
     date_hierarchy = "tanggal"
-    list_select_related = ("entitas", "grup_bahan", "produk")
-    readonly_dasar = ("nomor", "nilai", "status", "sumber", "penerimaan_item", "dibuat_oleh", "dibuat_pada", "posted_at")
+    list_select_related = (
+        "entitas",
+        "grup_bahan",
+        "produk",
+    )
+    readonly_dasar = (
+        "nomor",
+        "nilai",
+        "status",
+        "sumber",
+        "penerimaan_item",
+        "dibuat_oleh",
+        "dibuat_pada",
+        "posted_at",
+    )
 
     def has_add_permission(self, request):
         return True
@@ -105,11 +188,30 @@ class PembelianAdmin(KunciSetelahPosting, admin.ModelAdmin):
 
 @admin.register(Packing)
 class PackingAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ["nomor", "tanggal", "entitas", "batch", "kemasan", "kemasan_dalam"] 
-    list_filter = ["entitas", "tanggal"]
-    search_fields = ("nomor", "batch__nomor")
-    list_select_related = ("entitas", "batch", "kemasan", "kemasan_dalam")
-    
+    list_display = (
+        "nomor",
+        "tanggal",
+        "entitas",
+        "tangki",
+        "kemasan_primer",
+        "kemasan_sekunder",
+    )
+    list_filter = (
+        "entitas",
+        "tanggal",
+        "status",
+    )
+    search_fields = (
+        "nomor",
+        "tangki__kode",
+    )
+    list_select_related = (
+        "entitas",
+        "tangki",
+        "kemasan_primer",
+        "kemasan_sekunder",
+    )
+
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return [f.name for f in obj._meta.fields]
@@ -118,11 +220,33 @@ class PackingAdmin(TanpaTulis, admin.ModelAdmin):
 
 @admin.register(MutasiKlaim)
 class MutasiKlaimAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("waktu", "entitas", "grup_bahan", "tipe", "arah_label", "qty_kg", "nilai", "ref", "keterangan")
-    list_filter = ("tipe", "grup_bahan", "entitas", "waktu")
-    search_fields = ("ref_type", "keterangan", "entitas__kode")
+    list_display = (
+        "waktu",
+        "entitas",
+        "grup_bahan",
+        "tipe",
+        "arah_label",
+        "qty_kg",
+        "nilai",
+        "ref",
+        "keterangan",
+    )
+    list_filter = (
+        "tipe",
+        "grup_bahan",
+        "entitas",
+        "waktu",
+    )
+    search_fields = (
+        "ref_type",
+        "keterangan",
+        "entitas__kode",
+    )
     date_hierarchy = "waktu"
-    list_select_related = ("entitas", "grup_bahan")
+    list_select_related = (
+        "entitas",
+        "grup_bahan",
+    )
 
     @admin.display(description="Arah")
     def arah_label(self, obj):
@@ -135,15 +259,48 @@ class MutasiKlaimAdmin(TanpaTulis, admin.ModelAdmin):
 
 @admin.register(StokBarangJadi)
 class StokBarangJadiAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("entitas", "grup_bahan", "item", "kemasan", "qty_unit", "qty_kg")
-    list_filter = ("entitas", "grup_bahan", "kemasan")
-    search_fields = ("entitas__kode",)
-    list_select_related = ("entitas", "grup_bahan", "item", "kemasan")
+    list_display = (
+        "entitas",
+        "grup_bahan",
+        "item",
+        "kemasan",
+        "qty_unit",
+        "qty_kg",
+    )
+    list_filter = (
+        "entitas",
+        "grup_bahan",
+        "kemasan",
+    )
+    search_fields = (
+        "entitas__kode",
+    )
+    list_select_related = (
+        "entitas",
+        "grup_bahan",
+        "item",
+        "kemasan",
+    )
 
 
 @admin.register(StokItemsPabrik)
 class StokItemsPabrikAdmin(TanpaTulis, admin.ModelAdmin):
-    list_display = ("entitas", "grup_bahan", "item", "qty_kg")
-    list_filter = ("entitas", "grup_bahan")
-    search_fields = ("entitas__kode",)
-    list_select_related = ("entitas", "grup_bahan", "item")
+    list_display = (
+        "entitas",
+        "grup_bahan",
+        "item",
+        "qty_kg",
+    )
+    list_filter = (
+        "entitas",
+        "grup_bahan",
+    )
+    search_fields = (
+        "entitas__kode",
+    )
+    list_select_related = (
+        "entitas",
+        "grup_bahan",
+        "item",
+    )
+
