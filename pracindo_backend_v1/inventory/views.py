@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.response import Response
 
 from core.models import CounterDokumen, Entitas
+from core.serializers import EntitasSerializer as CoreEntitasSerializer
 from master.models import MasterProduk, Produk
 
 from . import serializers as ser
@@ -102,7 +103,7 @@ def entitas_list(request):
         )
 
     return Response(
-        ser.EntitasRingkasSerializer(
+        CoreEntitasSerializer(
             qs,
             many=True,
         ).data

@@ -65,41 +65,28 @@ class TangkiViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def saldo(self, request, pk=None):
-        from .services import saldo_batch
-        from decimal import Decimal
-        
         tangki = self.get_object()
-        batches_in_tank = tangki.batch_set.filter(qty_hasil__gt=0).order_by("-waktu")
-        
-        total_qty = Decimal("0")
-        total_nilai = Decimal("0")
-        batches_data = []
-        
-        for b in batches_in_tank:
-            s = saldo_batch(b)
-            if s.sisa_qty > 0:
-                total_qty += s.sisa_qty
-                total_nilai += s.sisa_nilai
-                batches_data.append({
-                    "id": b.id,
-                    "nomor": b.nomor,
-                    "nama_hasil": b.nama_hasil,
-                    "sisa_qty": str(s.sisa_qty),
-                    "harga_per_kg": str(s.harga_per_kg)
-                })
-        
-        harga_rata = (total_nilai / total_qty) if total_qty > 0 else Decimal("0")
-        harga_unik = set(b["harga_per_kg"] for b in batches_data)
-        harga_beragam = len(harga_unik) > 1
+
+        saldo_kg = Decimal(str(tangki.saldo_kg or 0))
+        saldo_nilai = Decimal(str(tangki.saldo_nilai or 0))
+
+        if saldo_kg > 0:
+            harga_per_kg = (
+                saldo_nilai / saldo_kg
+            ).quantize(Decimal("0.01"))
+        else:
+            harga_per_kg = Decimal("0.00")
 
         return Response({
-            "sisa_qty": str(total_qty),
-            "sisa_nilai": str(total_nilai),
-            "harga_per_kg": str(harga_rata),
-            "harga_beragam": harga_beragam,
-            "batches": batches_data
+            "id": tangki.id,
+            "kode": tangki.kode,
+            "nama": str(tangki),
+            "saldo_kg": saldo_kg,
+            "saldo_nilai": saldo_nilai,
+            "sisa_qty": saldo_kg,
+            "sisa_nilai": saldo_nilai,
+            "harga_per_kg": harga_per_kg,
         })
-
 
 class BatchViewSet(viewsets.ModelViewSet):
     queryset = Batch.objects.select_related("tangki", "dibuat_oleh").order_by("-id")
