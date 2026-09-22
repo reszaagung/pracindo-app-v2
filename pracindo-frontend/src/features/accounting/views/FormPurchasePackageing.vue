@@ -1,6 +1,6 @@
+```vue
 <template>
     <div class="flex flex-col w-full relative">
-        <!-- Header -->
         <div class="mb-6 flex justify-between items-center gap-4 border-b border-slate-100 pb-4">
             <div class="flex items-center gap-3">
                 <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-3 py-1.5 rounded-full tracking-wide uppercase">
@@ -29,146 +29,354 @@
         </div>
 
         <form @submit.prevent="kirim" class="w-full">
+
             <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-slate-100 pb-4 gap-4">
                 <h3 class="text-sm font-bold text-slate-800">Entitas Pembeli</h3>
+
                 <div class="flex flex-wrap items-center bg-slate-50 p-1 rounded-xl border border-slate-200/60">
-                    <button v-for="ent in listEntitas" :key="ent.id" type="button" @click="draf.entitas_id = ent.id"
-                        :class="['px-4 md:px-6 py-2 text-[10px] md:text-xs font-bold rounded-lg transition-all duration-300 flex-1 md:flex-none text-center',
+                    <button
+                        v-for="ent in listEntitas"
+                        :key="ent.id"
+                        type="button"
+                        @click="draf.entitas_id = ent.id"
+                        :class="[
+                            'px-4 md:px-6 py-2 text-[10px] md:text-xs font-bold rounded-lg transition-all duration-300 flex-1 md:flex-none text-center',
                             draf.entitas_id === ent.id
                                 ? 'bg-white text-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-slate-100/50'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50']">
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                        ]"
+                    >
                         {{ ent.kode }}
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-4">
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs md:text-sm font-bold text-slate-700">No. PO (Preview)</label>
-                    <input :value="previewNomor" type="text" readonly
-                        class="px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none text-sm text-slate-500 font-semibold cursor-not-allowed" />
+            <!-- INFO PO -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-6">
+
+                <!-- NO PO -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        No. PO (Preview)
+                    </label>
+
+                    <input
+                        :value="previewNomor"
+                        type="text"
+                        readonly
+                        class="w-full px-1 py-2 bg-transparent border-0 border-b-2 border-slate-200 rounded-none
+                               focus:outline-none focus:ring-0
+                               text-sm text-slate-500 font-semibold cursor-not-allowed"
+                    />
                 </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs md:text-sm font-bold text-slate-700">Tanggal PO</label>
-                    <input v-model="draf.tanggal" type="date" required
-                        class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800" />
+
+                <!-- TANGGAL -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Tanggal PO
+                    </label>
+
+                    <input
+                        v-model="draf.tanggal"
+                        type="date"
+                        required
+                        class="w-full px-1 py-2 bg-transparent border-0 border-b-2 border-slate-200 rounded-none
+                               focus:outline-none focus:ring-0 focus:border-blue-500
+                               text-sm text-slate-800 font-medium transition-colors"
+                    />
                 </div>
-                <div class="flex flex-col gap-2">
-                    <label class="text-xs md:text-sm font-bold text-slate-700">Supplier Tujuan</label>
-                    <select v-model.number="draf.suplier_id" required
-                        class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800 appearance-none">
+
+                <!-- SUPPLIER -->
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Supplier Tujuan
+                    </label>
+
+                    <select
+                        v-model.number="draf.suplier_id"
+                        required
+                        class="w-full px-1 py-2 bg-transparent border-0 border-b-2 border-slate-200 rounded-none
+                               focus:outline-none focus:ring-0 focus:border-blue-500
+                               text-sm text-slate-800 font-medium
+                               appearance-none cursor-pointer transition-colors"
+                    >
                         <option value="" disabled>-- Pilih Supplier --</option>
-                        <option v-for="sup in listSupplier" :key="sup.id" :value="sup.id">
+
+                        <option
+                            v-for="sup in listSupplier"
+                            :key="sup.id"
+                            :value="sup.id"
+                        >
                             {{ sup.nama }}{{ sup.kota ? ` — ${sup.kota}` : '' }}
                         </option>
                     </select>
                 </div>
             </div>
 
+            <!-- DETAIL KEMASAN -->
             <div class="w-full mb-8">
-                <div class="flex justify-between items-center mb-4 pb-2 mt-2">
-                    <h3 class="text-sm font-bold text-slate-800">Detail Kemasan</h3>
-                    <button type="button" @click="tambahItem"
-                        class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
-                        <i class="pi pi-plus"></i> Tambah Item
+
+                <div class="flex justify-between items-center mb-4 pb-2 mt-2 border-b border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800">
+                        Detail Kemasan
+                    </h3>
+
+                    <button
+                        type="button"
+                        @click="tambahItem"
+                        class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
+                    >
+                        <i class="pi pi-plus"></i>
+                        Tambah Item
                     </button>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm min-w-[800px]">
+
                         <thead class="text-slate-500 bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th class="py-3 px-4 font-semibold rounded-tl-xl w-[40%]">Produk (Kemasan)</th>
-                                <th class="py-3 px-4 font-semibold w-[15%] text-right">Qty (Pcs/Unit)</th>
-                                <th class="py-3 px-4 font-semibold w-[20%] text-right">Harga per Unit</th>
-                                <th class="py-3 px-4 font-semibold w-[20%] text-right">Subtotal</th>
-                                <th class="py-3 px-4 font-semibold text-center rounded-tr-xl w-[5%]">Aksi</th>
+
+                                <th class="py-3 px-4 font-semibold rounded-tl-xl w-[35%]">
+                                    Produk (Kemasan)
+                                </th>
+
+                                <th class="py-3 px-4 font-semibold w-[18%] text-right">
+                                    Qty (Pcs/Unit)
+                                </th>
+
+                                <th class="py-3 px-4 font-semibold w-[22%] text-right">
+                                    Harga per Unit
+                                </th>
+
+                                <th class="py-3 px-4 font-semibold w-[20%] text-right">
+                                    Subtotal
+                                </th>
+
+                                <th class="py-3 px-4 font-semibold text-center rounded-tr-xl w-[5%]">
+                                    Aksi
+                                </th>
+
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr v-for="(item, index) in draf.items" :key="index"
-                                class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
 
+                        <tbody>
+                            <tr
+                                v-for="(item, index) in draf.items"
+                                :key="index"
+                                class="bg-white border-b border-slate-100 hover:bg-slate-50/50 transition-colors"
+                            >
+
+                                <!-- PRODUK -->
                                 <td class="py-3 px-4 align-top">
-                                    <Dropdown v-model="item.produk" :options="produkBerdasarkanSuplier" optionLabel="label"
+                                    <Dropdown
+                                        v-model="item.produk"
+                                        :options="produkBerdasarkanSuplier"
+                                        optionLabel="label"
                                         appendTo="body"
-                                        :placeholder="draf.suplier_id ? 'Pilih kemasan...' : 'Pilih supplier dulu'"
-                                        class="w-full" :disabled="!draf.suplier_id" filter :loading="loadingProduk"
+                                        :placeholder="
+                                            draf.suplier_id
+                                                ? 'Pilih kemasan...'
+                                                : 'Pilih supplier dulu'
+                                        "
+                                        class="w-full"
+                                        :disabled="!draf.suplier_id"
+                                        filter
+                                        :loading="loadingProduk"
                                         :pt="{
-                                            root: { class: 'w-full h-[42px] bg-slate-50 border border-slate-200 rounded-lg flex items-center' }
-                                        }">
+                                            root: {
+                                                class: `
+                                                    w-full
+                                                    h-[42px]
+                                                    bg-transparent
+                                                    border-0
+                                                    border-b-2
+                                                    border-slate-200
+                                                    rounded-none
+                                                    shadow-none
+                                                    flex
+                                                    items-center
+                                                    hover:border-blue-400
+                                                    focus-within:border-blue-500
+                                                    transition-colors
+                                                `
+                                            },
+                                            input: {
+                                                class: `
+                                                    text-sm
+                                                    px-1
+                                                    bg-transparent
+                                                    text-slate-800
+                                                    font-medium
+                                                `
+                                            },
+                                            trigger: {
+                                                class: `
+                                                    w-8
+                                                    flex
+                                                    items-center
+                                                    justify-center
+                                                    text-slate-400
+                                                    bg-transparent
+                                                `
+                                            }
+                                        }"
+                                    >
                                     </Dropdown>
                                 </td>
 
+                                <!-- QTY -->
                                 <td class="py-3 px-4 align-top">
-                                    <input v-model.number="item.qty" type="number" min="0" step="1" required
-                                        class="w-full h-[42px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-right focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                        placeholder="0" />
+                                    <input
+                                        v-model.number="item.qty"
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        inputmode="numeric"
+                                        required
+                                        class="w-full h-[42px] px-1 py-2 bg-transparent
+                                               border-0 border-b-2 border-slate-200
+                                               rounded-none
+                                               text-sm text-right font-medium text-slate-800
+                                               focus:outline-none focus:ring-0 focus:border-blue-500
+                                               transition-colors"
+                                        placeholder="0"
+                                    />
                                 </td>
 
+                                <!-- HARGA -->
                                 <td class="py-3 px-4 align-top">
                                     <div class="relative h-[42px]">
-                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
-                                        <input v-model.number="item.harga_per_unit" type="number" min="0" step="1"
-                                            class="w-full h-full pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-right focus:ring-2 focus:ring-blue-500 text-slate-800"
-                                            placeholder="0" />
+
+                                        <span class="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                                            Rp
+                                        </span>
+
+                                        <input
+                                            v-model.number="item.harga_per_unit"
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            inputmode="numeric"
+                                            class="w-full h-full pl-7 pr-1
+                                                   bg-transparent
+                                                   border-0 border-b-2 border-slate-200
+                                                   rounded-none
+                                                   text-sm text-right font-medium text-slate-800
+                                                   focus:outline-none focus:ring-0 focus:border-blue-500
+                                                   transition-colors"
+                                            placeholder="0"
+                                        />
                                     </div>
                                 </td>
 
+                                <!-- SUBTOTAL -->
                                 <td class="py-3 px-4 text-right align-top pt-5">
-                                    <span class="font-black text-slate-800">
-                                        Rp {{ (subtotal(item)).toLocaleString('id-ID') }}
+                                    <span class="font-black text-slate-800 whitespace-nowrap">
+                                        Rp {{ subtotal(item).toLocaleString('id-ID') }}
                                     </span>
                                 </td>
 
+                                <!-- AKSI -->
                                 <td class="py-3 px-4 text-center align-top pt-4">
-                                    <button type="button" @click="hapusItem(index)" :disabled="draf.items.length === 1"
+                                    <button
+                                        type="button"
+                                        @click="hapusItem(index)"
+                                        :disabled="draf.items.length === 1"
                                         class="w-8 h-8 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center justify-center mx-auto"
-                                        title="Hapus Baris">
+                                        title="Hapus Baris"
+                                    >
                                         <i class="pi pi-times"></i>
                                     </button>
                                 </td>
+
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- PPN + TOTAL -->
             <div class="flex flex-col md:flex-row justify-between items-start bg-slate-50 p-4 md:p-6 rounded-2xl border border-slate-100">
+
                 <div class="flex flex-col gap-2 w-full md:w-auto mb-6 md:mb-0">
                     <div class="flex items-center gap-2">
-                        <input type="checkbox" id="pakaiPpn" :true-value="11" :false-value="0" v-model="draf.ppn_persen"
-                            class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer">
-                        <label for="pakaiPpn" class="text-sm font-bold text-slate-700 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            id="pakaiPpn"
+                            :true-value="11"
+                            :false-value="0"
+                            v-model="draf.ppn_persen"
+                            class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                        >
+
+                        <label
+                            for="pakaiPpn"
+                            class="text-sm font-bold text-slate-700 cursor-pointer select-none"
+                        >
                             Kenakan PPN 11% (Suplier PKP)
                         </label>
                     </div>
                 </div>
 
                 <div class="flex flex-col w-full md:w-64 gap-2 border-t md:border-none border-slate-200 pt-4 md:pt-0">
+
                     <div class="flex justify-between items-center text-sm">
-                        <span class="font-semibold text-slate-500">Subtotal</span>
-                        <span class="font-bold text-slate-700">Rp {{ (subtotalSemua).toLocaleString('id-ID') }}</span>
+                        <span class="font-semibold text-slate-500">
+                            Subtotal
+                        </span>
+
+                        <span class="font-bold text-slate-700">
+                            Rp {{ subtotalSemua.toLocaleString('id-ID') }}
+                        </span>
                     </div>
 
-                    <div v-if="draf.ppn_persen > 0" class="flex justify-between items-center text-sm">
-                        <span class="font-semibold text-blue-600">PPN (11%)</span>
-                        <span class="font-bold text-blue-700">Rp {{ (ppnNominal).toLocaleString('id-ID') }}</span>
+                    <div
+                        v-if="draf.ppn_persen > 0"
+                        class="flex justify-between items-center text-sm"
+                    >
+                        <span class="font-semibold text-blue-600">
+                            PPN (11%)
+                        </span>
+
+                        <span class="font-bold text-blue-700">
+                            Rp {{ ppnNominal.toLocaleString('id-ID') }}
+                        </span>
                     </div>
 
                     <div class="flex justify-between items-end mt-2 pt-2 border-t border-slate-200">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Grand Total</span>
-                        <span class="text-2xl font-black text-slate-800">Rp {{ (grandTotal).toLocaleString('id-ID') }}</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Grand Total
+                        </span>
+
+                        <span class="text-2xl font-black text-slate-800">
+                            Rp {{ grandTotal.toLocaleString('id-ID') }}
+                        </span>
                     </div>
 
                     <div class="flex gap-2 mt-4 w-full">
-                        <button type="button" @click="$emit('close')"
-                            class="flex-1 py-3.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-xl transition-all">
+                        <button
+                            type="button"
+                            @click="$emit('close')"
+                            class="flex-1 py-3.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-xl transition-all"
+                        >
                             Batal
                         </button>
-                        <button type="submit" :disabled="sedangProses || periodeDitutup"
-                            class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all flex justify-center items-center gap-2 cursor-pointer disabled:cursor-not-allowed">
-                            <i class="pi" :class="sedangProses ? 'pi-spin pi-spinner' : 'pi-check-circle'"></i>
+
+                        <button
+                            type="submit"
+                            :disabled="sedangProses || periodeDitutup"
+                            class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all flex justify-center items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                            <i
+                                class="pi"
+                                :class="
+                                    sedangProses
+                                        ? 'pi-spin pi-spinner'
+                                        : 'pi-check-circle'
+                                "
+                            ></i>
+
                             Simpan PO
                         </button>
                     </div>
@@ -176,10 +384,21 @@
             </div>
         </form>
 
-        <SupplierForm v-if="showModalSupplier" @close="showModalSupplier = false" @saved="handleSupplierSaved" />
-        <ProductEntry v-if="showModalProduct" @close="showModalProduct = false" @saved="handleProductSaved" />
+        <SupplierForm
+            v-if="showModalSupplier"
+            @close="showModalSupplier = false"
+            @saved="handleSupplierSaved"
+        />
+
+        <ProductEntry
+            v-if="showModalProduct"
+            @close="showModalProduct = false"
+            @saved="handleProductSaved"
+        />
     </div>
 </template>
+
+
 
 <script setup>
 import { reactive, computed, ref, watch, onMounted } from 'vue'

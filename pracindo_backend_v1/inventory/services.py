@@ -53,10 +53,6 @@ class InvariantMelenceng(GalatInventory):
     http = 500
 
 
-# ============================================================
-# UTILITAS
-# ============================================================
-
 def rp(value):
     return Decimal(str(value)).quantize(
         Q_RP,

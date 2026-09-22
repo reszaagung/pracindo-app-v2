@@ -3,9 +3,13 @@
         <div class="packing-container">
             <div class="page-header">
                 <div>
-                    <div class="eyebrow">WAREHOUSE • PACKING</div>
+                    <div class="eyebrow">
+                        WAREHOUSE • PACKING
+                    </div>
 
-                    <h1>Input Packing</h1>
+                    <h1>
+                        Input Packing
+                    </h1>
 
                     <p>
                         Catat proses packing barang jadi dari stok produksi.
@@ -20,25 +24,67 @@
                 >
                     <i
                         class="pi pi-refresh"
-                        :class="{ 'pi-spin': isLoading }"
+                        :class="{
+                            'pi-spin': isLoading
+                        }"
                     ></i>
+
                     Refresh
                 </button>
             </div>
 
-            <div
-                v-if="error"
-                class="alert alert-danger"
-            >
-                <i class="pi pi-exclamation-circle"></i>
-                <div>{{ error }}</div>
-            </div>
+            <!-- SUCCESS ALERT -->
+            <transition name="alert">
+                <div
+                    v-if="successMessage"
+                    class="alert alert-success"
+                    role="alert"
+                >
+                    <div class="success-alert-icon">
+                        <i class="pi pi-check-circle"></i>
+                    </div>
+
+                    <div class="success-alert-content">
+                        <strong>
+                            {{ successMessage }}
+                        </strong>
+
+                        <span v-if="successDetail">
+                            {{ successDetail }}
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="success-alert-close"
+                        aria-label="Tutup notifikasi"
+                        @click="clearSuccess"
+                    >
+                        <i class="pi pi-times"></i>
+                    </button>
+                </div>
+            </transition>
+
+            <!-- ERROR ALERT -->
+            <transition name="alert">
+                <div
+                    v-if="error"
+                    class="alert alert-danger"
+                >
+                    <i class="pi pi-exclamation-circle"></i>
+
+                    <div>
+                        {{ error }}
+                    </div>
+                </div>
+            </transition>
 
             <form
                 class="form-layout"
                 @submit.prevent="submitForm"
             >
                 <div class="form-main">
+                    <!-- INFORMASI PACKING -->
                     <section class="form-card">
                         <div class="section-head">
                             <div class="section-icon">
@@ -46,7 +92,9 @@
                             </div>
 
                             <div>
-                                <h2>Informasi Packing</h2>
+                                <h2>
+                                    Informasi Packing
+                                </h2>
 
                                 <p>
                                     Tentukan entitas dan tangki sumber proses packing.
@@ -55,6 +103,7 @@
                         </div>
 
                         <div class="field-grid">
+                            <!-- GRUP / ENTITAS -->
                             <div class="field">
                                 <label for="grup">
                                     Grup / Entitas
@@ -77,11 +126,16 @@
                                         :key="item.id"
                                         :value="item.id"
                                     >
-                                        {{ getEntityLabel(item) }}
+                                        {{
+                                            getEntityLabel(
+                                                item
+                                            )
+                                        }}
                                     </option>
                                 </select>
                             </div>
 
+                            <!-- TANGKI -->
                             <div class="field">
                                 <label for="tangki">
                                     Tangki Sumber
@@ -109,7 +163,9 @@
                                     >
                                         {{ item.kode }}
 
-                                        <template v-if="item.nama">
+                                        <template
+                                            v-if="item.nama"
+                                        >
                                             — {{ item.nama }}
                                         </template>
                                     </option>
@@ -132,7 +188,11 @@
                                         </span>
 
                                         <strong>
-                                            {{ formatKg(stokTangkiKg) }}
+                                            {{
+                                                formatKg(
+                                                    stokTangkiKg
+                                                )
+                                            }}
                                             Kg
                                         </strong>
                                     </div>
@@ -175,7 +235,9 @@
                                     "
                                     class="field-error"
                                 >
-                                    {{ selectedTangki.saldoError }}
+                                    {{
+                                        selectedTangki.saldoError
+                                    }}
                                 </small>
 
                                 <small
@@ -197,6 +259,7 @@
                             </div>
                         </div>
 
+                        <!-- PRODUK -->
                         <div class="field product-field">
                             <label for="produk">
                                 Nama Barang Jadi
@@ -219,10 +282,14 @@
                                     @focus="handleProdukFocus"
                                     @blur="handleProdukBlur"
                                     @keydown.down.prevent="
-                                        moveProdukSuggestion(1)
+                                        moveProdukSuggestion(
+                                            1
+                                        )
                                     "
                                     @keydown.up.prevent="
-                                        moveProdukSuggestion(-1)
+                                        moveProdukSuggestion(
+                                            -1
+                                        )
                                     "
                                     @keydown.enter.prevent="
                                         selectFocusedProduk
@@ -262,7 +329,9 @@
                                                     index
                                             }"
                                             @mousedown.prevent="
-                                                selectProduk(item)
+                                                selectProduk(
+                                                    item
+                                                )
                                             "
                                             @mouseenter="
                                                 produkFocusedIndex =
@@ -311,6 +380,7 @@
                                 class="field-success"
                             >
                                 <i class="pi pi-check-circle"></i>
+
                                 Barang terpilih:
                                 {{ produkTerpilihLabel }}
                             </small>
@@ -324,6 +394,7 @@
                         </div>
                     </section>
 
+                    <!-- JUMLAH PACKING -->
                     <section class="form-card">
                         <div class="section-head">
                             <div class="section-icon">
@@ -331,7 +402,9 @@
                             </div>
 
                             <div>
-                                <h2>Jumlah Packing</h2>
+                                <h2>
+                                    Jumlah Packing
+                                </h2>
 
                                 <p>
                                     Masukkan ukuran netto dan jumlah unit.
@@ -395,15 +468,22 @@
 
                                 <div class="readonly-control">
                                     <span>
-                                        {{ formatKg(totalKgPacking) }}
+                                        {{
+                                            formatKg(
+                                                totalKgPacking
+                                            )
+                                        }}
                                     </span>
 
-                                    <span>Kg</span>
+                                    <span>
+                                        Kg
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </section>
 
+                    <!-- KEMASAN -->
                     <section class="form-card">
                         <div class="section-head">
                             <div class="section-icon">
@@ -411,7 +491,9 @@
                             </div>
 
                             <div>
-                                <h2>Kemasan</h2>
+                                <h2>
+                                    Kemasan
+                                </h2>
 
                                 <p>
                                     Kemasan primer wajib digunakan. Kemasan sekunder bersifat opsional.
@@ -420,6 +502,7 @@
                         </div>
 
                         <div class="field-grid">
+                            <!-- PRIMER -->
                             <div class="field">
                                 <div class="label-row">
                                     <label for="kemasanPrimer">
@@ -451,9 +534,17 @@
                                         :key="item.id"
                                         :value="item.id"
                                     >
-                                        {{ getKemasanLabel(item) }}
+                                        {{
+                                            getKemasanLabel(
+                                                item
+                                            )
+                                        }}
                                         — Stok
-                                        {{ formatUnit(item.qty_unit) }}
+                                        {{
+                                            formatUnit(
+                                                item.qty_unit
+                                            )
+                                        }}
                                         Unit
                                     </option>
                                 </select>
@@ -469,6 +560,7 @@
                                 </small>
                             </div>
 
+                            <!-- SEKUNDER -->
                             <div class="field">
                                 <div class="label-row">
                                     <label for="kemasanSekunder">
@@ -501,9 +593,17 @@
                                         :key="item.id"
                                         :value="item.id"
                                     >
-                                        {{ getKemasanLabel(item) }}
+                                        {{
+                                            getKemasanLabel(
+                                                item
+                                            )
+                                        }}
                                         — Stok
-                                        {{ formatUnit(item.qty_unit) }}
+                                        {{
+                                            formatUnit(
+                                                item.qty_unit
+                                            )
+                                        }}
                                         Unit
                                     </option>
                                 </select>
@@ -520,6 +620,7 @@
                             </div>
                         </div>
 
+                        <!-- QTY SEKUNDER -->
                         <div
                             v-if="form.kemasan_sekunder"
                             class="field secondary-qty-field"
@@ -556,9 +657,7 @@
                             </small>
 
                             <small
-                                v-if="
-                                    stokSekunderTidakCukup
-                                "
+                                v-if="stokSekunderTidakCukup"
                                 class="field-error"
                             >
                                 Stok Kemasan Sekunder tidak mencukupi kebutuhan.
@@ -566,6 +665,7 @@
                         </div>
                     </section>
 
+                    <!-- ACTION -->
                     <div class="action-row">
                         <button
                             type="button"
@@ -649,6 +749,14 @@ const showProdukSuggestions = ref(false)
 const produkFocusedIndex = ref(-1)
 const produkSearched = ref(false)
 
+/* SUCCESS ALERT */
+const successMessage = ref('')
+const successDetail = ref('')
+
+let successHideTimer = null
+let produkSearchTimer = null
+let produkRequestId = 0
+
 const nettoOptions = [
     30,
     25,
@@ -658,11 +766,10 @@ const nettoOptions = [
     1
 ]
 
-let produkSearchTimer = null
-let produkRequestId = 0
-
 const normalizeList = (response) => {
-    const data = response?.data ?? response
+    const data =
+        response?.data ??
+        response
 
     if (Array.isArray(data)) {
         return data
@@ -688,7 +795,9 @@ const getEntityLabel = (item) => {
         return '-'
     }
 
-    const kode = item.kode ?? ''
+    const kode =
+        item.kode ??
+        ''
 
     const nama =
         item.nama ??
@@ -740,34 +849,46 @@ const getProdukName = (item) => {
 }
 
 const normalizeText = (value) => {
-    return String(value ?? '')
+    return String(
+        value ?? ''
+    )
         .trim()
         .toLowerCase()
-        .replace(/\s+/g, ' ')
+        .replace(
+            /\s+/g,
+            ' '
+        )
 }
 
 const formatKg = (value) => {
-    return new Intl.NumberFormat('id-ID', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 3
-    }).format(
+    return new Intl.NumberFormat(
+        'id-ID',
+        {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 3
+        }
+    ).format(
         Number(value) || 0
     )
 }
 
 const formatUnit = (value) => {
-    return new Intl.NumberFormat('id-ID', {
-        maximumFractionDigits: 0
-    }).format(
+    return new Intl.NumberFormat(
+        'id-ID',
+        {
+            maximumFractionDigits: 0
+        }
+    ).format(
         Number(value) || 0
     )
 }
 
 const totalUnitNumber = computed(() => {
-    const value = Number.parseInt(
-        form.total_unit,
-        10
-    )
+    const value =
+        Number.parseInt(
+            form.total_unit,
+            10
+        )
 
     return Number.isFinite(value)
         ? value
@@ -775,7 +896,8 @@ const totalUnitNumber = computed(() => {
 })
 
 const totalKgPacking = computed(() => {
-    const netto = Number(form.netto)
+    const netto =
+        Number(form.netto)
 
     if (
         !Number.isFinite(netto) ||
@@ -803,7 +925,8 @@ const selectedTangki = computed(() => {
             item =>
                 String(item.id) ===
                 String(form.tangki)
-        ) ?? null
+        ) ??
+        null
     )
 })
 
@@ -815,16 +938,19 @@ const stokTangkiKg = computed(() => {
         return 0
     }
 
-    const directSaldo = Number(
-        tangki?.saldo_kg ??
-        tangki?.saldo?.saldo_kg ??
-        tangki?.saldo?.sisa_qty ??
-        tangki?.saldo?.qty_kg ??
-        0
-    )
+    const directSaldo =
+        Number(
+            tangki?.saldo_kg ??
+            tangki?.saldo?.saldo_kg ??
+            tangki?.saldo?.sisa_qty ??
+            tangki?.saldo?.qty_kg ??
+            0
+        )
 
     if (
-        Number.isFinite(directSaldo)
+        Number.isFinite(
+            directSaldo
+        )
     ) {
         return Math.max(
             directSaldo,
@@ -844,7 +970,8 @@ const stokTidakCukup = computed(() => {
     }
 
     return (
-        totalKgPacking.value > 0 &&
+        totalKgPacking.value >
+            0 &&
         totalKgPacking.value >
             stokTangkiKg.value
     )
@@ -853,7 +980,9 @@ const stokTidakCukup = computed(() => {
 const kemasanTersedia = computed(() => {
     return kemasanOptions.value.filter(
         item =>
-            Number(item?.qty_unit) > 0
+            Number(
+                item?.qty_unit
+            ) > 0
     )
 })
 
@@ -865,73 +994,99 @@ const kemasanPrimerOptions = computed(() => {
                 'PRIMER_SEKUNDER'
             ].includes(
                 String(
-                    item?.kategori ?? ''
+                    item?.kategori ??
+                    ''
                 ).toUpperCase()
             )
         )
         .sort(
             (a, b) =>
-                Number(b?.qty_unit || 0) -
-                Number(a?.qty_unit || 0)
+                Number(
+                    b?.qty_unit ||
+                    0
+                ) -
+                Number(
+                    a?.qty_unit ||
+                    0
+                )
         )
 })
 
-const kemasanSekunderOptions = computed(() => {
-    const kebutuhan =
-        totalKebutuhanKemasanSekunder.value
+const kemasanSekunderOptions =
+    computed(() => {
+        const kebutuhan =
+            totalKebutuhanKemasanSekunder.value
 
-    return kemasanTersedia.value
-        .filter(item =>
-            [
-                'SEKUNDER',
-                'PRIMER_SEKUNDER'
-            ].includes(
-                String(
-                    item?.kategori ?? ''
-                ).toUpperCase()
+        return kemasanTersedia.value
+            .filter(item =>
+                [
+                    'SEKUNDER',
+                    'PRIMER_SEKUNDER'
+                ].includes(
+                    String(
+                        item?.kategori ??
+                        ''
+                    ).toUpperCase()
+                )
             )
-        )
-        .filter(item =>
-            kebutuhan > 0
-                ? Number(
-                      item?.qty_unit || 0
-                  ) >= kebutuhan
-                : true
-        )
-        .sort(
-            (a, b) =>
-                Number(b?.qty_unit || 0) -
-                Number(a?.qty_unit || 0)
-        )
-})
+            .filter(item =>
+                kebutuhan > 0
+                    ? Number(
+                          item?.qty_unit ||
+                              0
+                      ) >= kebutuhan
+                    : true
+            )
+            .sort(
+                (a, b) =>
+                    Number(
+                        b?.qty_unit ||
+                            0
+                    ) -
+                    Number(
+                        a?.qty_unit ||
+                            0
+                    )
+            )
+    })
 
-const kemasanPrimerTerpilih = computed(() => {
-    return (
-        kemasanOptions.value.find(
-            item =>
-                String(item.id) ===
-                String(
-                    form.kemasan_primer
-                )
-        ) ?? null
-    )
-})
+const kemasanPrimerTerpilih =
+    computed(() => {
+        return (
+            kemasanOptions.value.find(
+                item =>
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        form.kemasan_primer
+                    )
+            ) ??
+            null
+        )
+    })
 
-const kemasanSekunderTerpilih = computed(() => {
-    if (!form.kemasan_sekunder) {
-        return null
-    }
+const kemasanSekunderTerpilih =
+    computed(() => {
+        if (
+            !form.kemasan_sekunder
+        ) {
+            return null
+        }
 
-    return (
-        kemasanOptions.value.find(
-            item =>
-                String(item.id) ===
-                String(
-                    form.kemasan_sekunder
-                )
-        ) ?? null
-    )
-})
+        return (
+            kemasanOptions.value.find(
+                item =>
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        form.kemasan_sekunder
+                    )
+            ) ??
+            null
+        )
+    })
 
 const qtyKemasanSekunderNumber =
     computed(() => {
@@ -941,7 +1096,9 @@ const qtyKemasanSekunderNumber =
                 10
             )
 
-        return Number.isFinite(value)
+        return Number.isFinite(
+            value
+        )
             ? value
             : 0
     })
@@ -974,7 +1131,8 @@ const stokSekunderTidakCukup =
         return (
             totalKebutuhanKemasanSekunder.value >
             Number(
-                sekunder.qty_unit || 0
+                sekunder.qty_unit ||
+                    0
             )
         )
     })
@@ -987,21 +1145,29 @@ const produkTerpilih = computed(() => {
     return (
         produkOptions.value.find(
             item =>
-                String(item.id) ===
-                String(form.produk)
-        ) ?? null
+                String(
+                    item.id
+                ) ===
+                String(
+                    form.produk
+                )
+        ) ??
+        null
     )
 })
 
-const produkTerpilihLabel = computed(() => {
-    if (produkTerpilih.value) {
-        return getProdukName(
+const produkTerpilihLabel =
+    computed(() => {
+        if (
             produkTerpilih.value
-        )
-    }
+        ) {
+            return getProdukName(
+                produkTerpilih.value
+            )
+        }
 
-    return produkNama.value.trim()
-})
+        return produkNama.value.trim()
+    })
 
 const submitDisabled = computed(() => {
     return isLoading.value
@@ -1010,58 +1176,75 @@ const submitDisabled = computed(() => {
 const normalizeTotalUnit = () => {
     let value =
         String(
-            form.total_unit ?? ''
-        ).replace(/[^\d]/g, '')
-
-    if (!value) {
-        form.total_unit = ''
-        return
-    }
-
-    value = Number.parseInt(
-        value,
-        10
-    )
-
-    if (
-        !Number.isFinite(value) ||
-        value < 1
-    ) {
-        form.total_unit = ''
-        return
-    }
-
-    form.total_unit = String(value)
-}
-
-const normalizeQtyKemasanSekunder = () => {
-    let value =
-        String(
-            form.qty_kemasan_sekunder ??
+            form.total_unit ??
                 ''
-        ).replace(/[^\d]/g, '')
+        ).replace(
+            /[^\d]/g,
+            ''
+        )
 
     if (!value) {
-        form.qty_kemasan_sekunder = ''
+        form.total_unit = ''
         return
     }
 
-    value = Number.parseInt(
-        value,
-        10
-    )
+    value =
+        Number.parseInt(
+            value,
+            10
+        )
 
     if (
-        !Number.isFinite(value) ||
+        !Number.isFinite(
+            value
+        ) ||
         value < 1
     ) {
-        form.qty_kemasan_sekunder = ''
+        form.total_unit = ''
         return
     }
 
-    form.qty_kemasan_sekunder =
+    form.total_unit =
         String(value)
 }
+
+const normalizeQtyKemasanSekunder =
+    () => {
+        let value =
+            String(
+                form.qty_kemasan_sekunder ??
+                    ''
+            ).replace(
+                /[^\d]/g,
+                ''
+            )
+
+        if (!value) {
+            form.qty_kemasan_sekunder =
+                ''
+            return
+        }
+
+        value =
+            Number.parseInt(
+                value,
+                10
+            )
+
+        if (
+            !Number.isFinite(
+                value
+            ) ||
+            value < 1
+        ) {
+            form.qty_kemasan_sekunder =
+                ''
+            return
+        }
+
+        form.qty_kemasan_sekunder =
+            String(value)
+    }
 
 const searchProduk = async () => {
     const query =
@@ -1069,8 +1252,10 @@ const searchProduk = async () => {
 
     if (!query) {
         produkOptions.value = []
-        produkSearched.value = false
-        produkFocusedIndex.value = -1
+        produkSearched.value =
+            false
+        produkFocusedIndex.value =
+            -1
         showProdukSuggestions.value =
             false
 
@@ -1082,14 +1267,18 @@ const searchProduk = async () => {
 
     produkLoading.value = true
     produkError.value = ''
-    produkSearched.value = false
-    showProdukSuggestions.value = true
+    produkSearched.value =
+        false
+    showProdukSuggestions.value =
+        true
 
     try {
         const response =
-            await warehouseApi.getMasterProduk({
-                search: query
-            })
+            await warehouseApi.getMasterProduk(
+                {
+                    search: query
+                }
+            )
 
         if (
             requestId !==
@@ -1099,10 +1288,15 @@ const searchProduk = async () => {
         }
 
         produkOptions.value =
-            normalizeList(response)
+            normalizeList(
+                response
+            )
 
-        produkFocusedIndex.value = -1
-        produkSearched.value = true
+        produkFocusedIndex.value =
+            -1
+
+        produkSearched.value =
+            true
     } catch (err) {
         if (
             requestId !==
@@ -1112,7 +1306,8 @@ const searchProduk = async () => {
         }
 
         produkOptions.value = []
-        produkSearched.value = true
+        produkSearched.value =
+            true
 
         produkError.value =
             err?.response?.data
@@ -1133,10 +1328,13 @@ const searchProduk = async () => {
 
 const handleProdukInput = () => {
     form.produk = null
-    produkResolved.value = false
+    produkResolved.value =
+        false
     produkError.value = ''
-    produkSearched.value = false
-    produkFocusedIndex.value = -1
+    produkSearched.value =
+        false
+    produkFocusedIndex.value =
+        -1
 
     clearTimeout(
         produkSearchTimer
@@ -1153,18 +1351,19 @@ const handleProdukInput = () => {
         return
     }
 
-    showProdukSuggestions.value = true
+    showProdukSuggestions.value =
+        true
 
-    produkSearchTimer = setTimeout(
-        () => {
+    produkSearchTimer =
+        setTimeout(() => {
             searchProduk()
-        },
-        250
-    )
+        }, 250)
 }
 
 const handleProdukFocus = () => {
-    if (!produkNama.value.trim()) {
+    if (
+        !produkNama.value.trim()
+    ) {
         return
     }
 
@@ -1195,13 +1394,20 @@ const selectProduk = (item) => {
     }
 
     form.produk = item.id
+
     produkNama.value =
         getProdukName(item)
-    produkResolved.value = true
+
+    produkResolved.value =
+        true
+
     produkError.value = ''
+
     showProdukSuggestions.value =
         false
-    produkFocusedIndex.value = -1
+
+    produkFocusedIndex.value =
+        -1
 
     produkOptions.value = [
         item,
@@ -1209,7 +1415,10 @@ const selectProduk = (item) => {
             option =>
                 String(
                     option.id
-                ) !== String(item.id)
+                ) !==
+                String(
+                    item.id
+                )
         )
     ]
 }
@@ -1236,7 +1445,10 @@ const moveProdukSuggestion = (
             total - 1
     }
 
-    if (nextIndex >= total) {
+    if (
+        nextIndex >=
+        total
+    ) {
         nextIndex = 0
     }
 
@@ -1244,59 +1456,72 @@ const moveProdukSuggestion = (
         nextIndex
 }
 
-const selectFocusedProduk = () => {
-    if (!produkOptions.value.length) {
-        return
+const selectFocusedProduk =
+    () => {
+        if (
+            !produkOptions.value.length
+        ) {
+            return
+        }
+
+        if (
+            produkFocusedIndex.value >=
+                0 &&
+            produkFocusedIndex.value <
+                produkOptions.value.length
+        ) {
+            selectProduk(
+                produkOptions.value[
+                    produkFocusedIndex.value
+                ]
+            )
+
+            return
+        }
+
+        const normalizedInput =
+            normalizeText(
+                produkNama.value
+            )
+
+        const exactMatch =
+            produkOptions.value.find(
+                item =>
+                    normalizeText(
+                        item?.nama_item
+                    ) ===
+                        normalizedInput ||
+                    normalizeText(
+                        item?.nama
+                    ) ===
+                        normalizedInput ||
+                    normalizeText(
+                        getProdukName(
+                            item
+                        )
+                    ) ===
+                        normalizedInput ||
+                    normalizeText(
+                        item?.id
+                    ) ===
+                        normalizedInput
+            )
+
+        if (exactMatch) {
+            selectProduk(
+                exactMatch
+            )
+        }
     }
 
-    if (
-        produkFocusedIndex.value >= 0 &&
-        produkFocusedIndex.value <
-            produkOptions.value.length
-    ) {
-        selectProduk(
-            produkOptions.value[
-                produkFocusedIndex.value
-            ]
-        )
+const closeProdukSuggestions =
+    () => {
+        showProdukSuggestions.value =
+            false
 
-        return
+        produkFocusedIndex.value =
+            -1
     }
-
-    const normalizedInput =
-        normalizeText(
-            produkNama.value
-        )
-
-    const exactMatch =
-        produkOptions.value.find(
-            item =>
-                normalizeText(
-                    item?.nama_item
-                ) === normalizedInput ||
-                normalizeText(
-                    item?.nama
-                ) === normalizedInput ||
-                normalizeText(
-                    getProdukName(item)
-                ) === normalizedInput ||
-                normalizeText(
-                    item?.id
-                ) === normalizedInput
-        )
-
-    if (exactMatch) {
-        selectProduk(exactMatch)
-    }
-}
-
-const closeProdukSuggestions = () => {
-    showProdukSuggestions.value =
-        false
-
-    produkFocusedIndex.value =
-        -1
-}
 
 const loadMasterData = async () => {
     clearError()
@@ -1311,7 +1536,9 @@ const loadMasterData = async () => {
         ])
 
         grupOptions.value =
-            normalizeList(grupResponse)
+            normalizeList(
+                grupResponse
+            )
 
         kemasanOptions.value =
             normalizeList(
@@ -1329,6 +1556,7 @@ const loadMasterData = async () => {
 
 const validateForm = async () => {
     clearError()
+
     produkError.value = ''
 
     if (!form.grup) {
@@ -1344,7 +1572,8 @@ const validateForm = async () => {
     }
 
     if (
-        selectedTangki.value?.loadingSaldo
+        selectedTangki.value
+            ?.loadingSaldo
     ) {
         throw new Error(
             'Saldo tangki masih dimuat. Tunggu sampai saldo tersedia.'
@@ -1352,14 +1581,18 @@ const validateForm = async () => {
     }
 
     if (
-        selectedTangki.value?.saldoError
+        selectedTangki.value
+            ?.saldoError
     ) {
         throw new Error(
-            selectedTangki.value.saldoError
+            selectedTangki.value
+                .saldoError
         )
     }
 
-    if (!produkNama.value.trim()) {
+    if (
+        !produkNama.value.trim()
+    ) {
         throw new Error(
             'Nama barang jadi wajib diisi.'
         )
@@ -1381,17 +1614,22 @@ const validateForm = async () => {
     }
 
     if (
-        totalUnitNumber.value <= 0
+        totalUnitNumber.value <=
+        0
     ) {
         throw new Error(
             'Total unit harus lebih dari 0.'
         )
     }
 
-    if (stokTangkiKg.value <= 0) {
+    if (
+        stokTangkiKg.value <=
+        0
+    ) {
         throw new Error(
             `Tangki ${
-                selectedTangki.value?.kode ??
+                selectedTangki.value
+                    ?.kode ??
                 ''
             } tidak memiliki stok.`
         )
@@ -1410,7 +1648,9 @@ const validateForm = async () => {
         )
     }
 
-    if (!form.kemasan_primer) {
+    if (
+        !form.kemasan_primer
+    ) {
         throw new Error(
             'Kemasan Primer wajib dipilih.'
         )
@@ -1426,23 +1666,25 @@ const validateForm = async () => {
 
     if (
         Number(
-            kemasanPrimerTerpilih.value
-                .qty_unit || 0
+            kemasanPrimerTerpilih
+                .value
+                .qty_unit ||
+                0
         ) <
         totalUnitNumber.value
     ) {
         throw new Error(
-            `Stok ${
-                getKemasanLabel(
-                    kemasanPrimerTerpilih.value
-                )
-            } tidak mencukupi kebutuhan ${formatUnit(
+            `Stok ${getKemasanLabel(
+                kemasanPrimerTerpilih.value
+            )} tidak mencukupi kebutuhan ${formatUnit(
                 totalUnitNumber.value
             )} Unit.`
         )
     }
 
-    if (form.kemasan_sekunder) {
+    if (
+        form.kemasan_sekunder
+    ) {
         if (
             qtyKemasanSekunderNumber.value <=
             0
@@ -1464,11 +1706,9 @@ const validateForm = async () => {
             stokSekunderTidakCukup.value
         ) {
             throw new Error(
-                `Stok ${
-                    getKemasanLabel(
-                        kemasanSekunderTerpilih.value
-                    )
-                } tidak mencukupi kebutuhan ${formatUnit(
+                `Stok ${getKemasanLabel(
+                    kemasanSekunderTerpilih.value
+                )} tidak mencukupi kebutuhan ${formatUnit(
                     totalKebutuhanKemasanSekunder.value
                 )} Unit.`
             )
@@ -1476,7 +1716,8 @@ const validateForm = async () => {
     }
 
     if (
-        totalKgPacking.value <= 0
+        totalKgPacking.value <=
+        0
     ) {
         throw new Error(
             'Total berat packing harus lebih dari 0 Kg.'
@@ -1484,30 +1725,91 @@ const validateForm = async () => {
     }
 }
 
-
 const submitForm = async () => {
     try {
+        clearError()
+
+        clearTimeout(
+            successHideTimer
+        )
+
+        successMessage.value = ''
+        successDetail.value = ''
+
         await validateForm()
 
         const payload = {
-    qty_kg: totalKgPacking.value,
-    total_unit: totalUnitNumber.value,
-    entitas: form.grup,
-    tangki: form.tangki,
-    produk: form.produk,
-    kemasan_primer: form.kemasan_primer,
-    kemasan_sekunder: form.kemasan_sekunder || null,
-    qty_kemasan_sekunder: form.kemasan_sekunder
-        ? qtyKemasanSekunderNumber.value
-        : 0
-}
+            qty_kg:
+                totalKgPacking.value,
 
-        await createPacking(
-            payload
-        )
+            total_unit:
+                totalUnitNumber.value,
 
-        resetForm()
+            entitas:
+                form.grup,
 
+            tangki:
+                form.tangki,
+
+            produk:
+                form.produk,
+
+            kemasan_primer:
+                form.kemasan_primer,
+
+            kemasan_sekunder:
+                form.kemasan_sekunder ||
+                null,
+
+            qty_kemasan_sekunder:
+                form.kemasan_sekunder
+                    ? qtyKemasanSekunderNumber.value
+                    : 0
+        }
+
+        const result =
+            await createPacking(
+                payload
+            )
+
+        const nomor =
+            result?.packing?.nomor ??
+            result?.nomor ??
+            result?.data?.packing
+                ?.nomor ??
+            result?.data?.nomor ??
+            null
+
+        /*
+         * SUCCESS
+         */
+        successMessage.value =
+            'Packing berhasil disimpan.'
+
+        successDetail.value =
+            nomor
+                ? `Nomor dokumen: ${nomor}`
+                : 'Data packing berhasil disimpan ke sistem.'
+
+        /*
+         * RESET FORM,
+         * SUCCESS ALERT TETAP ADA
+         */
+        resetForm({
+            preserveSuccess: true
+        })
+
+        /*
+         * AUTO HIDE 2 DETIK
+         */
+        successHideTimer =
+            setTimeout(() => {
+                clearSuccess()
+            }, 2000)
+
+        /*
+         * REFRESH SALDO TANGKI
+         */
         await fetchTangkisWithSaldo()
     } catch (err) {
         console.error(
@@ -1525,35 +1827,59 @@ const submitForm = async () => {
             err?.message ??
             'Gagal menyimpan packing.'
 
-        error.value = message
+        error.value =
+            message
     }
 }
 
-const resetForm = () => {
+const clearSuccess = () => {
+    clearTimeout(
+        successHideTimer
+    )
+
+    successMessage.value =
+        ''
+
+    successDetail.value =
+        ''
+}
+
+const resetForm = ({
+    preserveSuccess = false
+} = {}) => {
     clearTimeout(
         produkSearchTimer
     )
 
     produkRequestId++
 
+    if (!preserveSuccess) {
+        clearSuccess()
+    }
+
     form.grup = ''
     form.tangki = ''
     form.produk = null
     form.kemasan_primer = ''
     form.kemasan_sekunder = ''
-    form.qty_kemasan_sekunder = ''
+    form.qty_kemasan_sekunder =
+        ''
     form.netto = null
     form.total_unit = ''
 
     produkNama.value = ''
     produkOptions.value = []
-    produkLoading.value = false
+    produkLoading.value =
+        false
     produkError.value = ''
-    produkResolved.value = false
-    produkSearched.value = false
+    produkResolved.value =
+        false
+    produkSearched.value =
+        false
     showProdukSuggestions.value =
         false
-    produkFocusedIndex.value = -1
+    produkFocusedIndex.value =
+        -1
 
     clearError()
 }
@@ -1574,11 +1900,13 @@ watch(
         if (
             primer &&
             Number(
-                primer.qty_unit || 0
+                primer.qty_unit ||
+                    0
             ) <
                 totalUnitNumber.value
         ) {
-            form.kemasan_primer = ''
+            form.kemasan_primer =
+                ''
         }
 
         const sekunder =
@@ -1588,10 +1916,13 @@ watch(
             sekunder &&
             totalKebutuhanKemasanSekunder.value >
                 Number(
-                    sekunder.qty_unit || 0
+                    sekunder.qty_unit ||
+                        0
                 )
         ) {
-            form.kemasan_sekunder = ''
+            form.kemasan_sekunder =
+                ''
+
             form.qty_kemasan_sekunder =
                 ''
         }
@@ -1599,7 +1930,8 @@ watch(
 )
 
 watch(
-    () => form.kemasan_sekunder,
+    () =>
+        form.kemasan_sekunder,
     (value) => {
         if (!value) {
             form.qty_kemasan_sekunder =
@@ -1608,11 +1940,17 @@ watch(
     }
 )
 
-onMounted(loadMasterData)
+onMounted(
+    loadMasterData
+)
 
 onBeforeUnmount(() => {
     clearTimeout(
         produkSearchTimer
+    )
+
+    clearTimeout(
+        successHideTimer
     )
 
     produkRequestId++
@@ -1646,7 +1984,10 @@ onBeforeUnmount(() => {
 }
 
 .packing-container {
-    width: min(1180px, 100%);
+    width: min(
+        1180px,
+        100%
+    );
     margin: 0 auto;
 }
 
@@ -1709,7 +2050,9 @@ onBeforeUnmount(() => {
 .refresh-btn:hover:not(:disabled) {
     border-color: #c7d0dc;
     background: #f8fafc;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    box-shadow:
+        0 4px 12px
+        rgba(15, 23, 42, 0.05);
 }
 
 .refresh-btn:active:not(:disabled) {
@@ -1739,6 +2082,83 @@ onBeforeUnmount(() => {
     color: #b91c1c;
 }
 
+.alert-success {
+    align-items: center;
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+    box-shadow:
+        0 4px 14px
+        rgba(22, 101, 52, 0.06);
+}
+
+.success-alert-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 9px;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 15px;
+}
+
+.success-alert-content {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.success-alert-content strong {
+    color: #166534;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.success-alert-content span {
+    color: #4d7c5a;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.success-alert-close {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #65a374;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.success-alert-close:hover {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.alert-enter-active,
+.alert-leave-active {
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.alert-enter-from,
+.alert-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
 .form-layout {
     width: 100%;
 }
@@ -1754,10 +2174,18 @@ onBeforeUnmount(() => {
     padding: 22px;
     border: 1px solid #e4e9f0;
     border-radius: 17px;
-    background: rgba(255, 255, 255, 0.98);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.98
+        );
     box-shadow:
-        0 4px 16px rgba(15, 23, 42, 0.035),
-        0 1px 2px rgba(15, 23, 42, 0.02);
+        0 4px 16px
+        rgba(15, 23, 42, 0.035),
+        0 1px 2px
+        rgba(15, 23, 42, 0.02);
 }
 
 .section-head {
@@ -1798,12 +2226,20 @@ onBeforeUnmount(() => {
 
 .field-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
     gap: 16px;
 }
 
 .field-grid-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
 }
 
 .field {
@@ -1911,7 +2347,9 @@ onBeforeUnmount(() => {
 
 .input-control:focus {
     border-color: #7aa7ff;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    box-shadow:
+        0 0 0 3px
+        rgba(37, 99, 235, 0.08);
 }
 
 .input-control:disabled {
@@ -1922,7 +2360,9 @@ onBeforeUnmount(() => {
 
 .input-control.invalid {
     border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.06);
+    box-shadow:
+        0 0 0 3px
+        rgba(239, 68, 68, 0.06);
 }
 
 .readonly-control {
@@ -2029,8 +2469,10 @@ onBeforeUnmount(() => {
     border-radius: 12px;
     background: #ffffff;
     box-shadow:
-        0 18px 38px rgba(15, 23, 42, 0.11),
-        0 4px 10px rgba(15, 23, 42, 0.04);
+        0 18px 38px
+        rgba(15, 23, 42, 0.11),
+        0 4px 10px
+        rgba(15, 23, 42, 0.04);
     scrollbar-width: thin;
 }
 
@@ -2055,7 +2497,8 @@ onBeforeUnmount(() => {
     text-align: left;
     font-family: inherit;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition:
+        background 0.15s ease;
 }
 
 .suggestion-item:last-child {
@@ -2123,7 +2566,11 @@ onBeforeUnmount(() => {
 .suggestion-item:hover .suggestion-arrow,
 .suggestion-item.active .suggestion-arrow {
     color: #2563eb;
-    transform: translate(1px, -1px);
+    transform:
+        translate(
+            1px,
+            -1px
+        );
 }
 
 .suggestion-state {
@@ -2227,13 +2674,17 @@ onBeforeUnmount(() => {
     border-color: #2563eb;
     background: #2563eb;
     color: #ffffff;
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.17);
+    box-shadow:
+        0 8px 18px
+        rgba(37, 99, 235, 0.17);
 }
 
 .btn-primary:hover:not(:disabled) {
     border-color: #1d4ed8;
     background: #1d4ed8;
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.21);
+    box-shadow:
+        0 10px 22px
+        rgba(37, 99, 235, 0.21);
 }
 
 input[type='number']::-webkit-inner-spin-button,

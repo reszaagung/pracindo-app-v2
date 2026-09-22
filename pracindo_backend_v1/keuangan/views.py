@@ -1,50 +1,230 @@
-from rest_framework import viewsets, status
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
-from django.db.models import Sum
+from rest_framework.views import APIView
+
 from core.models import Entitas
-from .models import PengeluaranKas, RekeningBank
-from .serializers import PengeluaranKasSerializer
-from .services import catat_pengeluaran
+from staff_user.models import Role
+from staff_user.permissions import PunyaRole
+
+from .models import PengeluaranKas
+from .monitoring import (
+    HARI_PERINGATAN_DEFAULT,
+    monitoring_summary,
+    ringkasan_tagihan_supplier,
+    saldo_kas,
+)
+from .serializers import (
+    InputPengeluaranSerializer,
+    PengeluaranKasSerializer,
+)
+
+
+def get_entitas(request):
+    kode = request.query_params.get("entitas")
+
+    if not kode:
+        return None
+
+    return get_object_or_404(
+        Entitas,
+        kode=kode,
+    )
+
+
+# =========================================================
+# MONITORING AKUNTING
+# HANYA ROLE AKUNTING
+# =========================================================
+
+class MonitoringAkuntingPermission(PunyaRole):
+    roles = (Role.AKUNTING,)
+    message = 'Hanya staf Akunting yang boleh mengakses Monitoring Akunting.'
+
+
+class MonitoringKeuanganAPIView(APIView):
+    permission_classes = [MonitoringAkuntingPermission]
+
+    def get(self, request):
+        entitas = get_entitas(request)
+
+        data = monitoring_summary(
+            entitas_id=entitas.id if entitas else None,
+            hari_peringatan=HARI_PERINGATAN_DEFAULT,
+        )
+
+        return Response(data)
+
+
+class MonitoringTagihanAPIView(APIView):
+    permission_classes = [MonitoringAkuntingPermission]
+
+    def get(self, request):
+        entitas = get_entitas(request)
+
+        hari_peringatan = request.query_params.get(
+            "hari_peringatan",
+            HARI_PERINGATAN_DEFAULT,
+        )
+
+        try:
+            hari_peringatan = int(hari_peringatan)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "detail": "hari_peringatan harus berupa angka."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if hari_peringatan < 0:
+            return Response(
+                {
+                    "detail": "hari_peringatan tidak boleh negatif."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ringkasan, data = ringkasan_tagihan_supplier(
+            entitas_id=entitas.id if entitas else None,
+            hari_peringatan=hari_peringatan,
+        )
+
+        return Response(
+            {
+                "peringatan_hari": hari_peringatan,
+                "ringkasan": ringkasan,
+                "data": data,
+            }
+        )
+
+
+class MonitoringKasAPIView(APIView):
+    permission_classes = [MonitoringAkuntingPermission]
+
+    def get(self, request):
+        entitas = get_entitas(request)
+
+        data = saldo_kas(
+            entitas_id=entitas.id if entitas else None,
+        )
+
+        return Response(data)
+
+
+# =========================================================
+# PENGELUARAN
+# =========================================================
 
 class PengeluaranViewSet(viewsets.ModelViewSet):
-    queryset = PengeluaranKas.objects.all().select_related('entitas', 'mutasi').order_by('-id')
+    queryset = (
+        PengeluaranKas.objects
+        .select_related("entitas", "mutasi")
+        .order_by("-id")
+    )
+
     serializer_class = PengeluaranKasSerializer
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        entitas_kode = self.request.query_params.get('entitas')
+
+        entitas_kode = self.request.query_params.get("entitas")
+
         if entitas_kode:
-            qs = qs.filter(entitas__kode=entitas_kode)
+            qs = qs.filter(
+                entitas__kode=entitas_kode
+            )
+
         return qs
 
     def create(self, request, *args, **kwargs):
-        try:
-            entitas_obj = Entitas.objects.get(kode=request.data.get('entitas'))
-            
-            pengeluaran = catat_pengeluaran(
-                entitas_id=entitas_obj.id,
-                kategori=request.data.get('kategori'),
-                keterangan=request.data.get('nama_pengeluaran'),
-                pemohon=request.data.get('pemohon'),
-                nominal=request.data.get('nominal'),
-                user=request.user,
-                bukti_nota=request.FILES.get('bukti_nota')
+        serializer = InputPengeluaranSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        entitas = get_object_or_404(
+            Entitas,
+            kode=serializer.validated_data["entitas"],
+        )
+
+        with transaction.atomic():
+            pengeluaran = PengeluaranKas.objects.create(
+                entitas=entitas,
+                kategori=serializer.validated_data["kategori"],
+                keterangan=serializer.validated_data["keterangan"],
+                pemohon=serializer.validated_data["pemohon"],
+                nominal=serializer.validated_data["nominal"],
+                bukti_nota=serializer.validated_data.get(
+                    "bukti_nota"
+                ),
             )
-            return Response({'success': True, 'id': pengeluaran.id}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            pesan = e.message if hasattr(e, 'message') else str(e)
-            return Response({'detail': pesan}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'], url_path='dashboard-summary')
+        return Response(
+            PengeluaranKasSerializer(
+                pengeluaran,
+                context={"request": request},
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def update(self, request, *args, **kwargs):
+        return Response(
+            {
+                "detail": (
+                    "Pengeluaran yang sudah dicatat "
+                    "tidak dapat diubah."
+                )
+            },
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        return Response(
+            {
+                "detail": (
+                    "Pengeluaran yang sudah dicatat "
+                    "tidak dapat diubah."
+                )
+            },
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {
+                "detail": (
+                    "Pengeluaran yang sudah dicatat "
+                    "tidak dapat dihapus."
+                )
+            },
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="dashboard-summary",
+    )
     def dashboard_summary(self, request):
-        entitas_kode = request.query_params.get('entitas', 'PT')
-        rek = RekeningBank.objects.filter(entitas__kode=entitas_kode, jenis='KAS_KECIL').first()
-        saldo_kas = rek.saldo if rek else 0
-        total_out = self.get_queryset().aggregate(tot=Sum('nominal'))['tot'] or 0
+        entitas = get_entitas(request)
 
-        return Response({
-            'saldo_kas': saldo_kas,
-            'total_pengeluaran': total_out,
-            'total_pemasukan': 0
-        })
+        summary = monitoring_summary(
+            entitas_id=entitas.id if entitas else None,
+            hari_peringatan=HARI_PERINGATAN_DEFAULT,
+        )
+
+        return Response(
+            {
+                "tanggal": summary["tanggal"],
+                "saldo_kas": summary["kas"]["saldo_kas"],
+                "rekening": summary["kas"]["rekening"],
+                "tagihan": summary["tagihan"]["ringkasan"],
+            }
+        )

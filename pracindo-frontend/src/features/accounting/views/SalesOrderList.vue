@@ -1,7 +1,6 @@
 <template>
     <div class="flex flex-col w-full animate-fade-in relative">
         
-        <!-- HEADER (Judul & Tombol Aksi) -->
         <div class="mb-5 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
             <div class="w-full md:w-auto">
                 <p class="text-[11px] md:text-xs text-slate-400 mb-1.5 md:mb-1">
@@ -14,7 +13,6 @@
                 </div>
             </div>
             
-            <!-- Perbaikan Tombol Mobile: Gunakan flex-1 & whitespace-nowrap -->
             <div class="flex items-center gap-2 w-full md:w-auto">
                 <button type="button" @click="fetchSO" :disabled="isLoading" 
                     class="p-3 md:p-2.5 border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center aspect-square md:aspect-auto shadow-sm">
@@ -27,19 +25,15 @@
             </div>
         </div>
 
-        <!-- MAIN CARD WRAPPER (Membungkus Search, Tab, Tabel, dan Footer jadi satu kesatuan) -->
         <div class="bg-white border border-slate-200 rounded-[20px] md:rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col w-full">
             
-            <!-- TOOLBAR (Search & Tabs) -->
             <div class="p-4 md:p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50">
-                <!-- Search Input -->
                 <div class="relative w-full md:w-80 lg:w-96">
                     <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input v-model="pencarian" type="text" placeholder="Cari No. SO atau Pelanggan..." 
                         class="w-full pl-10 pr-4 py-3 md:py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors shadow-sm text-slate-700 font-medium">
                 </div>
                 
-                <!-- Filter Tabs (Bisa di-swipe di Mobile) -->
                 <div class="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
                     <button v-for="tab in tabs" :key="tab.value" @click="filterStatus = tab.value"
                         class="px-5 py-2.5 md:py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all border"
@@ -51,7 +45,6 @@
                 </div>
             </div>
 
-            <!-- TABLE WRAPPER (Aman dari overflow di Mobile) -->
             <div class="w-full overflow-x-auto bg-white">
                 <table class="w-full text-left text-sm whitespace-nowrap min-w-[800px]">
                     <thead class="bg-slate-50/80 border-b border-slate-100 text-slate-500">
@@ -67,7 +60,6 @@
 
                     <tbody class="divide-y divide-slate-100">
                         
-                        <!-- State Loading -->
                         <tr v-if="isLoading">
                             <td colspan="6" class="py-16 text-center">
                                 <i class="pi pi-spinner pi-spin text-3xl text-blue-500 mb-3"></i>
@@ -75,7 +67,6 @@
                             </td>
                         </tr>
 
-                        <!-- State Data Kosong -->
                         <tr v-else-if="filteredSO.length === 0">
                             <td colspan="6" class="py-20 text-center bg-slate-50/30">
                                 <div class="w-16 h-16 bg-white border border-slate-100 shadow-sm text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -86,7 +77,6 @@
                             </td>
                         </tr>
 
-                        <!-- Loop Data Asli -->
                         <template v-else>
                             <tr v-for="so in filteredSO" :key="so.id" class="hover:bg-slate-50/80 transition-colors group">
                                 <td class="py-4 px-5">
@@ -122,13 +112,11 @@
                 </table>
             </div>
 
-            <!-- FOOTER INFO -->
             <div class="p-5 border-t border-slate-100 flex items-center justify-between text-xs font-medium text-slate-500 bg-slate-50/80">
                 <span>Menampilkan <b class="text-slate-700">{{ filteredSO.length }}</b> dari <b class="text-slate-700">{{ daftarSO.length }}</b> dokumen</span>
             </div>
         </div>
 
-        <!-- MODAL / DIALOG BIKIN SO -->
         <Dialog v-model:visible="tampilModalSO" modal header="Buat Sales Order Baru" :style="{ width: '90vw', maxWidth: '1100px' }" 
             :pt="{ root: { class: 'border-0 shadow-2xl rounded-2xl overflow-hidden' }, header: { class: 'bg-slate-50 border-b border-slate-100 p-5' }, title: { class: 'text-lg font-black text-slate-800' }, content: { class: 'p-0' } }">
             <LazyFormSO v-if="tampilModalSO" @close="tampilModalSO = false" @saved="soBerhasilDisimpan" />

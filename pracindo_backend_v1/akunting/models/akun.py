@@ -24,7 +24,6 @@ class TipeAkun(models.TextChoices):
     BEBAN      = 'BEBAN',      'Beban'
 
 
-# Akun bersaldo normal debit bertambah di sisi debit.
 SALDO_NORMAL_DEBIT = frozenset({TipeAkun.ASET, TipeAkun.BEBAN})
 
 
@@ -50,7 +49,6 @@ class Akun(TimeStampedModel):
         related_name='anak',
     )
 
-    # Akun header hanya untuk pengelompokan laporan. Jurnal ditolak.
     boleh_diposting = models.BooleanField(default=True)
     aktif = models.BooleanField(default=True)
 

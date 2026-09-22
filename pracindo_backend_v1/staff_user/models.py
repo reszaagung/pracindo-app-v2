@@ -34,9 +34,6 @@ from django.utils import timezone
 from core.models import TimeStampedModel
 
 
-# =========================================================
-# ROLE
-# =========================================================
 
 class Role(models.TextChoices):
     SUPERVISOR = 'SUPERVISOR', 'Supervisor'
@@ -133,7 +130,6 @@ class Profil(AbstractUser):
         'core.Entitas', null=True, blank=True,
         on_delete=models.PROTECT, related_name='pengguna_default',
     )
-    # KOSONG = boleh semua entitas. Isi hanya kalau perlu dibatasi.
     entitas_diizinkan = models.ManyToManyField(
         'core.Entitas', blank=True, related_name='pengguna_diizinkan',
     )
@@ -143,7 +139,6 @@ class Profil(AbstractUser):
     tanggal_masuk  = models.DateField(null=True, blank=True)
     tanggal_keluar = models.DateField(null=True, blank=True)
 
-    # ---- jejak persetujuan ----
     disetujui_oleh = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.PROTECT,
         related_name='akun_disetujui', editable=False,
@@ -222,7 +217,6 @@ class Profil(AbstractUser):
             return Entitas.objects.filter(aktif=True)
         return self.entitas_diizinkan.filter(aktif=True)
 
-    # ---------- perilaku ----------
 
     def clean(self):
         if self.atasan_id == self.pk and self.pk:
