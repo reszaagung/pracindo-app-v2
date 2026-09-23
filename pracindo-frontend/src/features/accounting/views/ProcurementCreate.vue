@@ -857,6 +857,7 @@
             </template>
 
             <ProductEntry
+                :suplier-id="draf.suplier_id"
                 @close="showModalProduct = false"
                 @saved="handleProductSaved"
             />

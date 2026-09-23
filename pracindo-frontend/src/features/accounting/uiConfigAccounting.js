@@ -50,6 +50,16 @@ export const menuInvoice = [
     },
 ]
 
+export const menuMonitoring = [
+    {
+        id: 'monitoring',
+        label: 'Monitoring Akunting',
+        ikon: 'pi-chart-bar',
+        rute: '/accounting/monitoring',
+        activate: true,
+    },
+]
+
 export const akuntingModul = {
     id: 'akunting',
     nama: 'Input Entry',
@@ -68,4 +78,14 @@ export const bukuTagihanModul = {
     rute: '/accounting/invoice',
     siap: true,
     menu: menuInvoice,
+}
+
+export const monitoringAkuntingModul = {
+    id: 'monitoring_akunting',
+    nama: 'Monitoring',
+    ringkas: 'Pantau posisi kas, tagihan, transaksi, dan kondisi akunting',
+    ikon: 'chart',
+    rute: '/accounting/monitoring',
+    siap: true,
+    menu: menuMonitoring,
 }

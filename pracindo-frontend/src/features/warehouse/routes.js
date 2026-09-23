@@ -1,4 +1,4 @@
-import ModulLayout from '@/components/layout/ModulLayout.vue'
+import ModulLayout from '@/features/warehouse/layout/WarehouseModuleLayout.vue'
 
 export default [
   {

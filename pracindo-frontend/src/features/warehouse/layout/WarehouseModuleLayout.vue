@@ -53,7 +53,7 @@ import { useRoute } from 'vue-router'
 import { cariModul } from '@/config/modules'
 import { useAuth } from '@/composables/useAuth'
 import { useLayout } from '@/composables/useLayout'
-import BaseIcon from '@/components/ui/BaseIcon.vue'
+import BaseIcon from '@/utils/BaseIcon.vue'
 // Import komponen spesifik dihapus agar layout menjadi reusable sepenuhnya
 
 const route = useRoute()

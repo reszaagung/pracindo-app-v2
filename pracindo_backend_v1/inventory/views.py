@@ -77,10 +77,6 @@ def _int_atau_none(nilai):
         return None
 
 
-# ============================================================
-# ENTITAS
-# ============================================================
-
 @api_view(["GET"])
 @permission_classes([AksesInventory])
 def entitas_list(request):
@@ -859,9 +855,111 @@ def mutasi_rekap(request):
     )
 
 
-# ============================================================
-# INVARIANT
-# ============================================================
+@api_view(["GET"])
+@permission_classes([AksesInventory])
+def posisi_klaim(request):
+    from decimal import Decimal
+
+    grup_id = request.query_params.get("grup")
+
+    if not grup_id:
+        return Response([])
+
+    try:
+        grup_id = int(grup_id)
+    except (TypeError, ValueError):
+        return Response([])
+
+    rows = (
+        MutasiKlaim.objects
+        .filter(grup_bahan_id=grup_id)
+        .values(
+            "entitas_id",
+            "entitas__kode",
+            "arah",
+            "qty_kg",
+            "nilai",
+        )
+        .order_by("entitas__kode", "entitas_id")
+    )
+
+    hasil = {}
+
+    for row in rows:
+        entitas_id = row["entitas_id"]
+
+        if entitas_id not in hasil:
+            hasil[entitas_id] = {
+                "entitas": row["entitas__kode"],
+                "setor": Decimal("0"),
+                "ambil": Decimal("0"),
+                "bersih": Decimal("0"),
+                "qty_setor": Decimal("0"),
+                "qty_ambil": Decimal("0"),
+                "qty_bersih": Decimal("0"),
+            }
+
+        item = hasil[entitas_id]
+        qty = row["qty_kg"] or Decimal("0")
+        nilai = row["nilai"] or Decimal("0")
+
+        if row["arah"] == 1:
+            item["setor"] += nilai
+            item["qty_setor"] += qty
+        elif row["arah"] == -1:
+            item["ambil"] += nilai
+            item["qty_ambil"] += qty
+
+        item["bersih"] = item["setor"] - item["ambil"]
+        item["qty_bersih"] = item["qty_setor"] - item["qty_ambil"]
+
+    return Response([
+        {
+            "entitas": item["entitas"],
+            "setor": str(item["setor"]),
+            "ambil": str(item["ambil"]),
+            "bersih": str(item["bersih"]),
+            "qty_setor": str(item["qty_setor"]),
+            "qty_ambil": str(item["qty_ambil"]),
+            "qty_bersih": str(item["qty_bersih"]),
+            "berhutang": item["bersih"] < 0,
+        }
+        for item in hasil.values()
+    ])
+
+
+@api_view(["GET"])
+@permission_classes([AksesInventory])
+def saldo_entitas_list(request):
+    saldo = (
+        SaldoEntitas.objects
+        .select_related("entitas")
+        .order_by("entitas__kode")
+    )
+
+    hasil = []
+
+    for item in saldo:
+        hasil.append({
+            "entitas_id": item.entitas_id,
+            "entitas": item.entitas.kode,
+            "total_setor": str(item.total_setor),
+            "total_tarik": str(item.total_tarik),
+            "total_rugi": str(item.total_rugi),
+            "qty_setor": str(item.qty_setor),
+            "qty_tarik": str(item.qty_tarik),
+            "saldo": str(item.saldo),
+            "terakhir_diperbarui": item.diperbarui_pada.isoformat()
+            if hasattr(item, "diperbarui_pada") and item.diperbarui_pada
+            else None,
+        })
+
+    return Response({
+        "results": hasil,
+        "total": len(hasil),
+    })
+
+
 
 @api_view(["GET"])
 @permission_classes([AksesInventory])
@@ -869,11 +967,6 @@ def pemeriksaan_invarian(request):
     return Response(
         services.jalankan_pemeriksaan_invarian()
     )
-
-
-# ============================================================
-# BARANG JADI
-# ============================================================
 
 @api_view(["GET"])
 @permission_classes([AksesInventory])
@@ -887,11 +980,6 @@ def barang_jadi(request):
             )
         )
     )
-
-
-# ============================================================
-# STOK
-# ============================================================
 
 @api_view(["GET"])
 @permission_classes([AksesInventory])
@@ -909,10 +997,6 @@ def stok_list(request):
         )
     )
 
-    # --------------------------------------------------------
-    # RAW MATERIAL
-    # --------------------------------------------------------
-
     if lapis == "POOL":
         data = (
             services.get_pool_resource_all()
@@ -925,10 +1009,6 @@ def stok_list(request):
                 "total_nilai_pool"
             ],
         })
-
-    # --------------------------------------------------------
-    # KEMASAN
-    # --------------------------------------------------------
 
     if lapis == "KEMASAN":
         qs = (

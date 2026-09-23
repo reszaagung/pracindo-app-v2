@@ -53,7 +53,7 @@ import { useRouter } from 'vue-router'
 
 import { useAuth } from '@/composables/useAuth'
 import { MODUL as MODUL_KATALOG, modulDariBackend } from '@/config/modules'
-import ModuleCard from '@/components/ModuleCard.vue'
+import ModuleCard from '@/composables/components/ModuleCard.vue'
 
 import WorkOrderPanel from '@/features/work-order/views/WorkOrderBoard.vue'
 

@@ -1,733 +1,1257 @@
 <template>
-    <form
-        class="flex w-full flex-col"
-        @submit.prevent="simpan"
+    <Dialog
+        :visible="true"
+        modal
+        dismissableMask
+        :draggable="false"
+        :closable="false"
+        :showHeader="false"
+        :breakpoints="{ '960px': '92vw', '640px': '96vw' }"
+        class="produk-modal"
+        @update:visible="emit('close')"
     >
-        <div
-            class="border-b border-slate-100 bg-gradient-to-r from-white via-white to-slate-50/70 px-5 py-5 md:px-6"
-        >
-            <div class="flex items-start gap-3">
-                <div
-                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 ring-1 ring-blue-100"
-                >
-                    <i class="pi pi-box text-lg"></i>
+        <div class="produk-shell">
+            <div class="produk-header">
+                <div class="header-main">
+                    <div class="header-icon">
+                        <i class="pi pi-box"></i>
+                    </div>
+
+                    <div class="header-content">
+                        <div class="eyebrow">MASTER DATA</div>
+                        <h2>Tambah Produk</h2>
+                        <p>
+                            Daftarkan produk baru ke master data dan hubungkan
+                            supplier yang sesuai.
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-base font-black text-slate-900 md:text-lg">
-                            Produk Baru
-                        </h2>
+                <button
+                    type="button"
+                    class="close-button"
+                    aria-label="Tutup"
+                    @click="emit('close')"
+                >
+                    <i class="pi pi-times"></i>
+                </button>
+            </div>
 
-                        <span
-                            class="rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-blue-700"
-                        >
-                            Master Produk
+            <div v-if="props.suplierId && suplierTerpilih" class="supplier-context">
+                <div class="supplier-context-icon">
+                    <i class="pi pi-building"></i>
+                </div>
+
+                <div class="supplier-context-content">
+                    <span class="context-label">SUPPLIER TRANSAKSI</span>
+                    <strong>{{ suplierTerpilih.nama }}</strong>
+                    <span v-if="suplierTerpilih.kode" class="context-code">
+                        {{ suplierTerpilih.kode }}
+                    </span>
+                </div>
+
+                <div class="supplier-context-badge">
+                    <i class="pi pi-link"></i>
+                    Terikat
+                </div>
+            </div>
+
+            <form class="produk-form" @submit.prevent="simpanProduk">
+                <div v-if="errorMsg" class="error-panel">
+                    <div class="error-icon">
+                        <i class="pi pi-exclamation-triangle"></i>
+                    </div>
+
+                    <div class="error-content">
+                        <strong>Produk belum dapat disimpan</strong>
+                        <span>{{ errorMsg }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="error-close"
+                        @click="errorMsg = ''"
+                    >
+                        <i class="pi pi-times"></i>
+                    </button>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-heading">
+                        <div>
+                            <h3>Informasi Produk</h3>
+                            <p>Lengkapi identitas utama produk.</p>
+                        </div>
+
+                        <span class="required-note">
+                            <span>*</span> Wajib diisi
                         </span>
                     </div>
 
-                    <p class="mt-1 text-xs leading-5 text-slate-500">
-                        Tambahkan produk baru beserta jenis dan satuan dasarnya.
-                    </p>
-                </div>
-            </div>
-        </div>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="kode_produk">
+                                Kode Produk
+                                <span>*</span>
+                            </label>
 
-        <Transition name="slide">
-            <div
-                v-if="errorMessage"
-                class="mx-5 mt-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 md:mx-6"
-            >
-                <div
-                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 shadow-sm"
-                >
-                    <i class="pi pi-exclamation-triangle text-xs"></i>
-                </div>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">SKU</span>
 
-                <div class="min-w-0">
-                    <div class="text-xs font-black text-rose-800">
-                        Produk belum dapat disimpan
-                    </div>
-
-                    <div class="mt-0.5 text-[11px] leading-5 text-rose-600">
-                        {{ errorMessage }}
-                    </div>
-                </div>
-            </div>
-        </Transition>
-
-        <div class="space-y-6 p-5 md:p-6">
-            <section>
-                <div class="mb-4 flex items-center gap-3">
-                    <div class="h-8 w-1 rounded-full bg-blue-500"></div>
-
-                    <div>
-                        <h3 class="text-sm font-black text-slate-800">
-                            Informasi Produk
-                        </h3>
-
-                        <p class="mt-0.5 text-[11px] text-slate-400">
-                            Identitas utama produk yang akan digunakan di transaksi.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="md:col-span-2">
-                        <label
-                            for="produk-nama"
-                            class="mb-1.5 block text-xs font-bold text-slate-600"
-                        >
-                            Nama Produk
-                            <span class="ml-1 text-rose-500">*</span>
-                        </label>
-
-                        <div class="relative">
-                            <i
-                                class="pi pi-box absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
-                            ></i>
-
-                            <input
-                                id="produk-nama"
-                                v-model="form.nama"
-                                type="text"
-                                maxlength="200"
-                                autocomplete="off"
-                                placeholder="Contoh: Resin A, PAIL 20KG, Bahan Baku X"
-                                class="form-input pl-10"
-                                :class="{
-                                    'border-rose-300 focus:border-rose-400 focus:ring-rose-500/10':
-                                        touched.nama && !form.nama.trim(),
-                                }"
-                                @blur="touched.nama = true"
-                            />
-                        </div>
-
-                        <p
-                            v-if="touched.nama && !form.nama.trim()"
-                            class="mt-1.5 text-[10px] font-medium text-rose-500"
-                        >
-                            Nama produk wajib diisi.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label
-                            for="produk-kode"
-                            class="mb-1.5 block text-xs font-bold text-slate-600"
-                        >
-                            Kode Produk
-                        </label>
-
-                        <div class="relative">
-                            <i
-                                class="pi pi-hashtag absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
-                            ></i>
-
-                            <input
-                                id="produk-kode"
-                                v-model="form.kode"
-                                type="text"
-                                maxlength="50"
-                                autocomplete="off"
-                                placeholder="Otomatis bila dikosongkan"
-                                class="form-input pl-10 pr-20"
-                            />
-
-                            <span
-                                class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400"
-                            >
-                                Optional
-                            </span>
-                        </div>
-
-                        <p class="mt-1.5 text-[10px] text-slate-400">
-                            Kode dibuat otomatis berdasarkan jenis produk jika dikosongkan.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label
-                            for="produk-jenis"
-                            class="mb-1.5 block text-xs font-bold text-slate-600"
-                        >
-                            Jenis Produk
-                            <span class="ml-1 text-rose-500">*</span>
-                        </label>
-
-                        <div class="relative">
-                            <i
-                                class="pi pi-tag absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
-                            ></i>
-
-                            <select
-                                id="produk-jenis"
-                                v-model="form.jenis"
-                                :disabled="saving"
-                                class="form-input cursor-pointer appearance-none pl-10 pr-10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                            >
-                                <option value="BAHAN_BAKU">
-                                    Bahan Baku
-                                </option>
-
-                                <option value="KEMASAN">
-                                    Kemasan
-                                </option>
-                            </select>
-
-                            <i
-                                class="pi pi-chevron-down pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"
-                            ></i>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            for="produk-satuan"
-                            class="mb-1.5 block text-xs font-bold text-slate-600"
-                        >
-                            Satuan Dasar
-                            <span class="ml-1 text-rose-500">*</span>
-                        </label>
-
-                        <div class="relative">
-                            <i
-                                class="pi pi-sliders-h absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
-                            ></i>
-
-                            <select
-                                id="produk-satuan"
-                                v-model="form.satuan"
-                                :disabled="saving || loadingSatuan"
-                                class="form-input cursor-pointer appearance-none pl-10 pr-10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-                            >
-                                <option
-                                    :value="null"
-                                    disabled
-                                >
-                                    {{
-                                        loadingSatuan
-                                            ? 'Memuat satuan...'
-                                            : 'Pilih satuan'
-                                    }}
-                                </option>
-
-                                <option
-                                    v-for="satuan in listSatuan"
-                                    :key="satuan.id"
-                                    :value="satuan.id"
-                                >
-                                    {{ satuan.nama || satuan.kode }}
-                                    <template
-                                        v-if="
-                                            satuan.nama &&
-                                            satuan.kode
-                                        "
-                                    >
-                                        ({{ satuan.kode }})
-                                    </template>
-                                </option>
-                            </select>
-
-                            <i
-                                class="pi pi-chevron-down pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"
-                            ></i>
-                        </div>
-
-                        <p
-                            v-if="form.jenis === 'KEMASAN'"
-                            class="mt-1.5 text-[10px] text-slate-400"
-                        >
-                            Kemasan umumnya menggunakan PCS, UNIT, atau PACK.
-                        </p>
-
-                        <p
-                            v-else
-                            class="mt-1.5 text-[10px] text-slate-400"
-                        >
-                            Bahan baku umumnya menggunakan KG.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label class="mb-1.5 block text-xs font-bold text-slate-600">
-                            Preview Produk
-                        </label>
-
-                        <div
-                            class="flex min-h-[46px] items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5"
-                        >
-                            <div class="flex min-w-0 items-center gap-3">
-                                <div
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                                    :class="
-                                        form.jenis === 'KEMASAN'
-                                            ? 'bg-amber-50 text-amber-600'
-                                            : 'bg-blue-50 text-blue-600'
-                                    "
-                                >
-                                    <i
-                                        :class="
-                                            form.jenis === 'KEMASAN'
-                                                ? 'pi pi-inbox'
-                                                : 'pi pi-box'
-                                        "
-                                        class="text-xs"
-                                    ></i>
-                                </div>
-
-                                <div class="min-w-0">
-                                    <div
-                                        class="truncate text-xs font-bold text-slate-700"
-                                    >
-                                        {{
-                                            form.nama.trim() ||
-                                            'Nama produk'
-                                        }}
-                                    </div>
-
-                                    <div
-                                        class="mt-0.5 text-[10px] text-slate-400"
-                                    >
-                                        {{
-                                            selectedSatuanLabel ||
-                                            'Satuan belum dipilih'
-                                        }}
-                                    </div>
-                                </div>
+                                <InputText
+                                    id="kode_produk"
+                                    v-model="form.kode"
+                                    class="w-full"
+                                    placeholder="Contoh: RM-001"
+                                    autocomplete="off"
+                                    maxlength="50"
+                                    :disabled="isSubmitting"
+                                    @input="form.kode = form.kode.toUpperCase()"
+                                />
                             </div>
 
-                            <span
-                                class="shrink-0 rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-wide"
-                                :class="
-                                    form.jenis === 'KEMASAN'
-                                        ? 'bg-amber-50 text-amber-700'
-                                        : 'bg-blue-50 text-blue-700'
-                                "
-                            >
-                                {{ form.jenis.replace('_', ' ') }}
-                            </span>
+                            <small>
+                                Gunakan kode unik agar produk mudah dicari.
+                            </small>
+                        </div>
+
+                        <div class="field">
+                            <label for="nama_produk">
+                                Nama Produk
+                                <span>*</span>
+                            </label>
+
+                            <InputText
+                                id="nama_produk"
+                                v-model="form.nama"
+                                class="w-full"
+                                placeholder="Contoh: Tepung Terigu Premium"
+                                autocomplete="off"
+                                maxlength="150"
+                                :disabled="isSubmitting"
+                            />
+
+                            <small>
+                                Gunakan nama yang konsisten dengan katalog.
+                            </small>
+                        </div>
+
+                        <div class="field">
+                            <label for="jenis_produk">
+                                Jenis Produk
+                                <span>*</span>
+                            </label>
+
+                            <Dropdown
+                                id="jenis_produk"
+                                v-model="form.jenis"
+                                :options="opsiJenis"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                                placeholder="Pilih jenis produk"
+                                :disabled="isSubmitting"
+                            />
+
+                            <small>
+                                Tentukan klasifikasi utama produk.
+                            </small>
+                        </div>
+
+                        <div class="field">
+                            <label for="satuan_produk">
+                                Satuan
+                                <span>*</span>
+                            </label>
+
+                            <Dropdown
+                                id="satuan_produk"
+                                v-model="form.satuan_id"
+                                :options="daftarSatuan"
+                                optionLabel="nama"
+                                optionValue="id"
+                                class="w-full"
+                                placeholder="Pilih satuan"
+                                filter
+                                :loading="loadingMaster"
+                                :disabled="isSubmitting || loadingMaster"
+                            />
+
+                            <small>
+                                Satuan yang digunakan dalam transaksi.
+                            </small>
                         </div>
                     </div>
                 </div>
-            </section>
+
+                <div class="section-divider">
+                    <span></span>
+                    <i class="pi pi-link"></i>
+                    <span></span>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-heading">
+                        <div>
+                            <h3>Katalog Supplier</h3>
+                            <p>
+                                Hubungkan produk dengan supplier yang dapat
+                                memasoknya.
+                            </p>
+                        </div>
+
+                        <span
+                            v-if="props.suplierId"
+                            class="supplier-required-badge"
+                        >
+                            Supplier transaksi wajib
+                        </span>
+                    </div>
+
+                    <div class="supplier-selection">
+                        <div class="supplier-selection-header">
+                            <div class="supplier-selection-icon">
+                                <i class="pi pi-users"></i>
+                            </div>
+
+                            <div>
+                                <strong>Supplier terkait produk</strong>
+                                <span>
+                                    Produk dapat digunakan untuk lebih dari
+                                    satu supplier.
+                                </span>
+                            </div>
+                        </div>
+
+                        <MultiSelect
+                            v-model="form.suplier_ids"
+                            :options="listSuplier"
+                            optionLabel="nama"
+                            optionValue="id"
+                            class="w-full supplier-select"
+                            placeholder="Pilih supplier"
+                            display="chip"
+                            filter
+                            :loading="loadingMaster"
+                            :disabled="isSubmitting || loadingMaster"
+                            :maxSelectedLabels="3"
+                        >
+                            <template #option="{ option }">
+                                <div class="supplier-option">
+                                    <div class="supplier-option-icon">
+                                        <i class="pi pi-building"></i>
+                                    </div>
+
+                                    <div class="supplier-option-content">
+                                        <strong>{{ option.nama }}</strong>
+
+                                        <span v-if="option.kode">
+                                            {{ option.kode }}
+                                        </span>
+                                    </div>
+
+                                    <i
+                                        v-if="props.suplierId && String(option.id) === String(props.suplierId)"
+                                        class="pi pi-link supplier-option-linked"
+                                    ></i>
+                                </div>
+                            </template>
+
+                            <template #chip="{ value }">
+                                <div class="supplier-chip">
+                                    <i class="pi pi-building"></i>
+                                    <span>
+                                        {{
+                                            listSuplier.find(
+                                                supplier =>
+                                                    String(supplier.id) === String(value)
+                                            )?.nama || value
+                                        }}
+                                    </span>
+                                </div>
+                            </template>
+                        </MultiSelect>
+
+                        <div class="selection-status">
+                            <div class="status-item">
+                                <i class="pi pi-check-circle"></i>
+                                <span>
+                                    {{ form.suplier_ids.length }}
+                                    supplier terpilih
+                                </span>
+                            </div>
+
+                            <div
+                                v-if="props.suplierId"
+                                class="status-item status-item-primary"
+                            >
+                                <i class="pi pi-link"></i>
+                                <span>Supplier transaksi otomatis terhubung</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section compact-section">
+                    <div class="active-card">
+                        <div class="active-card-icon">
+                            <i class="pi pi-check-circle"></i>
+                        </div>
+
+                        <div class="active-card-content">
+                            <strong>Status Produk</strong>
+                            <span>
+                                Produk aktif dan dapat digunakan dalam
+                                transaksi.
+                            </span>
+                        </div>
+
+                        <label class="switch">
+                            <input
+                                v-model="form.aktif"
+                                type="checkbox"
+                                :disabled="isSubmitting"
+                            />
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="loadingMaster" class="loading-panel">
+                    <div class="loading-spinner"></div>
+                    <span>Menyiapkan master data...</span>
+                </div>
+
+                <div class="produk-footer">
+                    <div class="footer-info">
+                        <i class="pi pi-shield"></i>
+                        <span>
+                            Data akan tersimpan ke master produk.
+                        </span>
+                    </div>
+
+                    <div class="footer-actions">
+                        <Button
+                            type="button"
+                            label="Batal"
+                            severity="secondary"
+                            text
+                            :disabled="isSubmitting"
+                            @click="emit('close')"
+                        />
+
+                        <Button
+                            type="submit"
+                            :label="isSubmitting ? 'Menyimpan...' : 'Simpan Produk'"
+                            icon="pi pi-check"
+                            :loading="isSubmitting"
+                            :disabled="!formValid || loadingMaster"
+                            class="save-button"
+                        />
+                    </div>
+                </div>
+            </form>
         </div>
-
-        <div
-            class="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6"
-        >
-            <div
-                class="flex items-center gap-2 text-[10px] text-slate-400"
-            >
-                <i class="pi pi-info-circle"></i>
-
-                <span>
-                    Field bertanda
-                    <strong class="text-rose-500">*</strong>
-                    wajib diisi.
-                </span>
-            </div>
-
-            <div
-                class="flex w-full items-center gap-2 sm:w-auto"
-            >
-                <button
-                    type="button"
-                    @click="$emit('close')"
-                    :disabled="saving || loadingSatuan"
-                    class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                >
-                    Batal
-                </button>
-
-                <button
-                    type="submit"
-                    :disabled="
-                        saving ||
-                        loadingSatuan ||
-                        !formValid
-                    "
-                    class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
-                >
-                    <i
-                        :class="
-                            saving
-                                ? 'pi pi-spin pi-spinner'
-                                : 'pi pi-check'
-                        "
-                    ></i>
-
-                    {{
-                        saving
-                            ? 'Menyimpan...'
-                            : 'Simpan Produk'
-                    }}
-                </button>
-            </div>
-        </div>
-    </form>
+    </Dialog>
 </template>
 
 <script setup>
-import {
-    computed,
-    onMounted,
-    reactive,
-    ref,
-    watch
-} from 'vue'
-
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import MultiSelect from 'primevue/multiselect'
 import api from '@/utils/api'
-import { bacaError } from '@/utils/error'
 import { useProduct } from '@/features/master/composables/useProduct'
-import { generateKode } from '@/utils/generate_id'
 
 const props = defineProps({
-    modelValue: {
-        type: Object,
+    suplierId: {
+        type: [Number, String],
         default: null
-    },
-
-    loading: {
-        type: Boolean,
-        default: false
     }
 })
 
-const emit = defineEmits([
-    'update:modelValue',
-    'save',
-    'saved',
-    'close'
-])
+const emit = defineEmits(['close', 'saved'])
 
-const {
-    addProduk,
-    isSaving
-} = useProduct()
+const { addProduk } = useProduct()
+
+const isSubmitting = ref(false)
+const loadingMaster = ref(false)
+const errorMsg = ref('')
+const daftarSatuan = ref([])
+const listSuplier = ref([])
+
+const opsiJenis = [
+    { label: 'Bahan Baku', value: 'BAHAN_BAKU' },
+    { label: 'Barang Jadi', value: 'BARANG_JADI' },
+    { label: 'Kemasan', value: 'KEMASAN' },
+    { label: 'Lain-lain', value: 'LAIN' }
+]
 
 const form = reactive({
-    id: null,
     kode: '',
     nama: '',
     jenis: 'BAHAN_BAKU',
-    satuan: null
+    satuan_id: null,
+    suplier_ids: [],
+    aktif: true
 })
 
-const listSatuan = ref([])
-const loadingSatuan = ref(false)
-const errorMessage = ref('')
+const suplierTerpilih = computed(() => {
+    if (!props.suplierId) return null
 
-const touched = reactive({
-    nama: false,
-    satuan: false
-})
-
-const saving = computed(
-    () =>
-        Boolean(
-            props.loading ||
-                isSaving.value
-        )
-)
-
-const applyModel = (
-    value
-) => {
-    Object.assign(
-        form,
-        {
-            id: null,
-            kode: '',
-            nama: '',
-            jenis: 'BAHAN_BAKU',
-            satuan: null
-        },
-        value || {}
+    return (
+        listSuplier.value.find(
+            supplier => String(supplier.id) === String(props.suplierId)
+        ) || null
     )
+})
+
+const supplierWajib = computed(() => Boolean(props.suplierId))
+
+const formValid = computed(() => {
+    const informasiValid =
+        form.kode.trim().length > 0 &&
+        form.nama.trim().length > 0 &&
+        Boolean(form.jenis) &&
+        Boolean(form.satuan_id)
+
+    if (!informasiValid) {
+        return false
+    }
+
+    if (supplierWajib.value && form.suplier_ids.length === 0) {
+        return false
+    }
+
+    return true
+})
+
+const sinkronkanSuplierDefault = () => {
+    if (!props.suplierId) {
+        return
+    }
+
+    const sudahTerpilih = form.suplier_ids.some(
+        id => String(id) === String(props.suplierId)
+    )
+
+    if (!sudahTerpilih) {
+        form.suplier_ids.unshift(props.suplierId)
+    }
 }
 
-applyModel(
-    props.modelValue
-)
-
-watch(
-    () => props.modelValue,
-    (value) => {
-        applyModel(value)
-        errorMessage.value = ''
-        touched.nama = false
-        touched.satuan = false
-    },
-    {
-        deep: true
-    }
-)
-
-const loadSatuan = async () => {
-    loadingSatuan.value = true
-    errorMessage.value = ''
+const loadDataMaster = async () => {
+    loadingMaster.value = true
+    errorMsg.value = ''
 
     try {
-        const { data } =
-            await api.get(
-                'master/satuan/',
-                {
-                    params: {
-                        aktif: true
-                    }
+        const [satuanResponse, supplierResponse] = await Promise.all([
+            api.get('master/satuan/', {
+                params: {
+                    aktif: true
                 }
-            )
+            }),
+            api.get('master/suplier/', {
+                params: {
+                    ringkas: 1,
+                    aktif: true
+                }
+            })
+        ])
 
-        listSatuan.value =
-            data?.results ||
-            data ||
+        daftarSatuan.value =
+            satuanResponse.data?.results ||
+            satuanResponse.data ||
             []
 
-        if (
-            !form.satuan &&
-            listSatuan.value.length
-        ) {
-            const preferred =
-                form.jenis ===
-                'KEMASAN'
-                    ? listSatuan.value.find(
-                          (satuan) =>
-                              [
-                                  'pcs',
-                                  'unit',
-                                  'pack'
-                              ].includes(
-                                  String(
-                                      satuan?.kode ||
-                                          ''
-                                  ).toLowerCase()
-                              )
-                      )
-                    : listSatuan.value.find(
-                          (satuan) =>
-                              String(
-                                  satuan?.kode ||
-                                      ''
-                              ).toLowerCase() ===
-                              'kg'
-                      )
+        listSuplier.value =
+            supplierResponse.data?.results ||
+            supplierResponse.data ||
+            []
 
-            form.satuan =
-                preferred?.id ||
-                listSatuan.value[0]
-                    ?.id ||
-                null
+        const satuanKg = daftarSatuan.value.find(
+            satuan =>
+                String(satuan.kode || '').toLowerCase() === 'kg' ||
+                String(satuan.nama || '').toLowerCase() === 'kilogram'
+        )
+
+        if (!form.satuan_id && satuanKg) {
+            form.satuan_id = satuanKg.id
         }
+
+        sinkronkanSuplierDefault()
     } catch (err) {
-        errorMessage.value =
-            bacaError(
-                err,
-                'Gagal memuat data satuan.'
-            )
+        console.error('Gagal memuat master data produk:', err)
+
+        errorMsg.value =
+            err.response?.data?.detail ||
+            err.response?.data?.message ||
+            'Master data produk gagal dimuat. Silakan coba kembali.'
     } finally {
-        loadingSatuan.value = false
+        loadingMaster.value = false
     }
 }
+
+const simpanProduk = async () => {
+    if (!formValid.value || isSubmitting.value) {
+        return
+    }
+
+    isSubmitting.value = true
+    errorMsg.value = ''
+
+    try {
+        const payload = {
+            kode: form.kode.trim().toUpperCase(),
+            nama: form.nama.trim(),
+            jenis: form.jenis,
+            satuan: form.satuan_id,
+            suplier: form.suplier_ids,
+            aktif: form.aktif
+        }
+
+        const result = await addProduk(payload)
+
+        if (result.success) {
+            emit('saved', result.data)
+            return
+        }
+
+        errorMsg.value =
+            result.message ||
+            'Gagal menyimpan produk. Silakan periksa kembali data yang diisi.'
+    } catch (err) {
+        console.error('Gagal menyimpan produk:', err)
+
+        errorMsg.value =
+            err.response?.data?.detail ||
+            err.response?.data?.message ||
+            'Terjadi kesalahan saat menyimpan produk.'
+    } finally {
+        isSubmitting.value = false
+    }
+}
+
+watch(
+    () => props.suplierId,
+    () => {
+        sinkronkanSuplierDefault()
+    }
+)
 
 onMounted(() => {
-    loadSatuan()
+    loadDataMaster()
 })
-
-const selectedSatuan =
-    computed(() =>
-        listSatuan.value.find(
-            (satuan) =>
-                String(
-                    satuan.id
-                ) ===
-                String(
-                    form.satuan
-                )
-        )
-    )
-
-const selectedSatuanLabel =
-    computed(() => {
-        if (
-            !selectedSatuan.value
-        ) {
-            return ''
-        }
-
-        if (
-            selectedSatuan.value.nama &&
-            selectedSatuan.value.kode
-        ) {
-            return `${selectedSatuan.value.nama} (${selectedSatuan.value.kode})`
-        }
-
-        return (
-            selectedSatuan.value.nama ||
-            selectedSatuan.value.kode ||
-            ''
-        )
-    })
-
-const formValid =
-    computed(() => {
-        return (
-            form.nama.trim()
-                .length > 0 &&
-            !!form.jenis &&
-            !!form.satuan
-        )
-    })
-
-const normalisasiKode = (
-    jenis
-) =>
-    jenis === 'KEMASAN'
-        ? generateKode('PK')
-        : generateKode('RM')
-
-const simpan = async () => {
-    touched.nama = true
-    touched.satuan = true
-    errorMessage.value = ''
-
-    if (
-        !form.nama.trim()
-    ) {
-        errorMessage.value =
-            'Nama produk wajib diisi.'
-        return
-    }
-
-    if (!form.jenis) {
-        errorMessage.value =
-            'Jenis produk wajib dipilih.'
-        return
-    }
-
-    if (!form.satuan) {
-        errorMessage.value =
-            'Satuan dasar wajib dipilih.'
-        return
-    }
-
-    if (saving.value) {
-        return
-    }
-
-    const payload = {
-        kode:
-            form.kode.trim() ||
-            normalisasiKode(
-                form.jenis
-            ),
-        nama:
-            form.nama.trim(),
-        jenis:
-            form.jenis,
-        satuan:
-            form.satuan
-    }
-
-    const hasil =
-        await addProduk(
-            payload
-        )
-
-    if (
-        !hasil?.success
-    ) {
-        errorMessage.value =
-            hasil?.message ||
-            'Gagal menyimpan produk.'
-
-        return
-    }
-
-    const produkBaru =
-        hasil?.data || null
-
-    emit(
-        'update:modelValue',
-        produkBaru
-    )
-
-    emit(
-        'save',
-        produkBaru
-    )
-
-    emit(
-        'saved',
-        produkBaru
-    )
-}
 </script>
 
 <style scoped>
-.form-input {
+
+.produk-shell {
     width: 100%;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
+    overflow: hidden;
+    border-radius: 20px;
     background: #ffffff;
-    padding: 0.7rem 0.875rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #334155;
-    outline: none;
-    transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background-color 0.2s ease;
 }
 
-.form-input::placeholder {
+.produk-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 26px 28px 24px;
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 38%),
+        linear-gradient(135deg, #f8fbff 0%, #ffffff 65%);
+    border-bottom: 1px solid #e9eef5;
+}
+
+.header-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #ffffff;
+    font-size: 1.15rem;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+}
+
+.header-content .eyebrow {
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.header-content h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.header-content p {
+    max-width: 620px;
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 0.86rem;
+    line-height: 1.55;
+}
+
+.close-button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    border: 0;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.close-button:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(4deg);
+}
+
+.supplier-context {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 20px 28px 0;
+    padding: 14px 16px;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eff6ff, #f8fbff);
+}
+
+.supplier-context-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    border-radius: 11px;
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.supplier-context-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.context-label {
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+}
+
+.supplier-context-content strong {
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.context-code {
+    color: #64748b;
+    font-size: 0.74rem;
+    margin-top: 1px;
+}
+
+.supplier-context-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    flex: 0 0 auto;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #2563eb;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.produk-form {
+    padding: 26px 28px 28px;
+}
+
+.error-panel {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 13px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 13px;
+    background: #fff7f7;
+    color: #991b1b;
+}
+
+.error-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    border-radius: 9px;
+    background: #fee2e2;
+}
+
+.error-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.error-content strong {
+    font-size: 0.8rem;
+}
+
+.error-content span {
+    color: #b91c1c;
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.error-close {
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    color: #991b1b;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.compact-section {
+    margin-top: 18px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-heading h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+
+.section-heading p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 0.79rem;
+    line-height: 1.5;
+}
+
+.required-note {
+    color: #94a3b8;
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.required-note span {
+    color: #ef4444;
+}
+
+.supplier-required-badge {
+    padding: 5px 9px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.field label {
+    color: #334155;
+    font-size: 0.79rem;
+    font-weight: 700;
+}
+
+.field label span {
+    color: #ef4444;
+}
+
+.field small {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.input-with-prefix {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 11px;
+    border: 1px solid #dbe3ed;
+    border-right: 0;
+    border-radius: 9px 0 0 9px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.69rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.input-with-prefix :deep(.p-inputtext) {
+    border-radius: 0 9px 9px 0;
+}
+
+.field :deep(.p-inputtext),
+.field :deep(.p-dropdown),
+.field :deep(.p-multiselect) {
+    min-height: 42px;
+    border-radius: 9px;
+    border-color: #dbe3ed;
+    box-shadow: none;
+}
+
+.field :deep(.p-inputtext:enabled:focus),
+.field :deep(.p-dropdown:not(.p-disabled).p-focus),
+.field :deep(.p-multiselect:not(.p-disabled).p-focus) {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 25px 0;
+    color: #cbd5e1;
+}
+
+.section-divider span {
+    height: 1px;
+    flex: 1;
+    background: #e2e8f0;
+}
+
+.section-divider i {
+    font-size: 0.72rem;
     color: #94a3b8;
 }
 
-.form-input:hover {
-    border-color: #cbd5e1;
+.supplier-selection {
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fbfdff;
 }
 
-.form-input:focus {
-    border-color: #3b82f6;
-    box-shadow:
-        0 0 0 4px
-        rgb(59 130 246 / 0.08);
+.supplier-selection-header {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 13px;
 }
 
-.form-input:disabled {
+.supplier-selection-icon {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    border-radius: 9px;
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.supplier-selection-header strong {
+    display: block;
+    color: #1e293b;
+    font-size: 0.8rem;
+    font-weight: 750;
+}
+
+.supplier-selection-header span {
+    display: block;
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.supplier-select :deep(.p-multiselect-label) {
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+
+.supplier-select :deep(.p-multiselect-token) {
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.supplier-option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    padding: 2px 0;
+}
+
+.supplier-option-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.supplier-option-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.supplier-option-content strong {
+    overflow: hidden;
+    color: #334155;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.supplier-option-content span {
+    color: #94a3b8;
+    font-size: 0.66rem;
+}
+
+.supplier-option-linked {
+    margin-left: auto;
+    color: #2563eb;
+    font-size: 0.78rem;
+}
+
+.supplier-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.supplier-chip i {
+    font-size: 0.68rem;
+}
+
+.selection-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 11px;
+}
+
+.status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 0.68rem;
+}
+
+.status-item i {
+    color: #10b981;
+    font-size: 0.72rem;
+}
+
+.status-item-primary {
+    color: #2563eb;
+}
+
+.status-item-primary i {
+    color: #2563eb;
+}
+
+.active-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
     background: #f8fafc;
 }
 
-.slide-enter-active,
-.slide-leave-active {
-    transition:
-        opacity 0.2s ease,
-        transform 0.2s ease;
+.active-card-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #16a34a;
 }
 
-.slide-enter-from,
-.slide-leave-to {
+.active-card-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.active-card-content strong {
+    color: #334155;
+    font-size: 0.8rem;
+}
+
+.active-card-content span {
+    color: #94a3b8;
+    font-size: 0.69rem;
+}
+
+.switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    margin-left: auto;
+    flex: 0 0 46px;
+    cursor: pointer;
+}
+
+.switch input {
+    position: absolute;
     opacity: 0;
-    transform: translateY(-5px);
+    pointer-events: none;
 }
 
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
+.switch-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: 0.2s ease;
 }
 
-@media (
-    prefers-reduced-motion: reduce
-) {
-    *,
-    *::before,
-    *::after {
-        transition: none !important;
-        animation: none !important;
+.switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 3px;
+    left: 3px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.18);
+    transition: 0.2s ease;
+}
+
+.switch input:checked + .switch-slider {
+    background: #10b981;
+}
+
+.switch input:checked + .switch-slider::before {
+    transform: translateX(20px);
+}
+
+.loading-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 18px;
+    padding: 11px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.loading-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.produk-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.footer-info {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.footer-info i {
+    color: #64748b;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.save-button {
+    min-width: 155px;
+}
+
+:deep(.produk-modal.p-dialog) {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow:
+        0 24px 64px rgba(15, 23, 42, 0.14),
+        0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+:deep(.produk-modal .p-dialog-content) {
+    padding: 0;
+    border-radius: 20px;
+}
+
+:deep(.p-button) {
+    border-radius: 9px;
+}
+
+:deep(.p-button.p-button-text.p-button-secondary) {
+    color: #64748b;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
+
+@media (max-width: 700px) {
+    .produk-header {
+        padding: 21px 18px 19px;
+    }
+
+    .produk-form {
+        padding: 20px 18px 20px;
+    }
+
+    .supplier-context {
+        margin: 16px 18px 0;
+    }
+
+    .field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading {
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .supplier-context-badge {
+        display: none;
+    }
+
+    .produk-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .footer-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content h2 {
+        font-size: 1.2rem;
+    }
+
+    .header-content p {
+        font-size: 0.78rem;
+    }
+
+    .header-icon {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .supplier-context {
+        align-items: flex-start;
+    }
+
+    .footer-actions {
+        width: 100%;
+    }
+
+    .footer-actions :deep(.p-button) {
+        flex: 1;
+    }
+}
+
 </style>

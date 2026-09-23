@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import BaseIcon from '@/components/ui/BaseIcon.vue'
+import BaseIcon from '@/utils/BaseIcon.vue'
 
 defineProps({
     modul: { type: Object, required: true },

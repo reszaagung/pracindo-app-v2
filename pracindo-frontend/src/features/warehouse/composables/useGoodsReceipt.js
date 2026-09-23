@@ -8,12 +8,19 @@ const isValidId = (id) => {
     }
 
     const value = String(id).trim()
+
     return value !== '' && value !== 'undefined' && value !== 'null'
 }
 
 const normalizeList = (data) => {
-    if (Array.isArray(data)) return data
-    if (Array.isArray(data?.results)) return data.results
+    if (Array.isArray(data)) {
+        return data
+    }
+
+    if (Array.isArray(data?.results)) {
+        return data.results
+    }
+
     return []
 }
 
@@ -48,10 +55,17 @@ export function useGoodsReceipt() {
         mulaiRequest()
 
         try {
-            const response = await warehouseApi.getPOSiapTerima(params)
+            const response = await warehouseApi.getPOSiapTerima({
+                ...params,
+                kategori: 'bahan_baku',
+            })
+
             daftarPOSiapTerima.value = normalizeList(response?.data)
         } catch (err) {
-            setError(err, 'Gagal memuat PO siap terima.')
+            setError(
+                err,
+                'Gagal memuat PO bahan baku siap terima.'
+            )
         } finally {
             selesaiRequest()
         }
@@ -61,10 +75,17 @@ export function useGoodsReceipt() {
         mulaiRequest()
 
         try {
-            const response = await warehouseApi.getPenerimaan(params)
+            const response = await warehouseApi.getPenerimaan({
+                ...params,
+                kategori: 'bahan_baku',
+            })
+
             daftarPenerimaan.value = normalizeList(response?.data)
         } catch (err) {
-            setError(err, 'Gagal memuat daftar penerimaan.')
+            setError(
+                err,
+                'Gagal memuat daftar penerimaan bahan baku.'
+            )
         } finally {
             selesaiRequest()
         }
@@ -72,11 +93,6 @@ export function useGoodsReceipt() {
 
     const muatRingkasan = async (id) => {
         if (!isValidId(id)) {
-            console.warn(
-                '[useGoodsReceipt] muatRingkasan dibatalkan: ID tidak valid.',
-                id
-            )
-
             ringkasan.value = null
 
             return {
@@ -90,6 +106,7 @@ export function useGoodsReceipt() {
 
         try {
             const response = await warehouseApi.getRingkasanPenerimaan(id)
+
             ringkasan.value = response?.data ?? null
 
             return {
@@ -97,7 +114,10 @@ export function useGoodsReceipt() {
                 data: ringkasan.value,
             }
         } catch (err) {
-            setError(err, 'Gagal memuat ringkasan penerimaan.')
+            setError(
+                err,
+                'Gagal memuat ringkasan penerimaan bahan baku.'
+            )
 
             return {
                 success: false,
@@ -110,18 +130,35 @@ export function useGoodsReceipt() {
     }
 
     const simpanPenerimaan = async (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            const message = 'Data penerimaan tidak valid.'
+            galat.value = message
+
+            return {
+                success: false,
+                data: null,
+                message,
+            }
+        }
+
         mulaiRequest()
         bersihkanError()
 
         try {
-            const response = await warehouseApi.simpanPenerimaan(payload)
+            const response = await warehouseApi.simpanPenerimaan({
+                ...payload,
+                kategori: 'bahan_baku',
+            })
 
             return {
                 success: true,
                 data: response?.data ?? null,
             }
         } catch (err) {
-            setError(err, 'Gagal menyimpan penerimaan.')
+            setError(
+                err,
+                'Gagal menyimpan penerimaan bahan baku.'
+            )
 
             return {
                 success: false,
@@ -133,13 +170,19 @@ export function useGoodsReceipt() {
         }
     }
 
-    const muatSemua = async (paramsPenerimaan = {}) => {
+    const muatSemua = async (params = {}) => {
         bersihkanError()
 
-        await Promise.all([
-            muatPenerimaan(paramsPenerimaan),
-            muatPOSiapTerima(),
+        const [po, penerimaan] = await Promise.all([
+            muatPOSiapTerima(params),
+            muatPenerimaan(params),
         ])
+
+        return {
+            success: true,
+            po,
+            penerimaan,
+        }
     }
 
     const reset = () => {
@@ -159,9 +202,9 @@ export function useGoodsReceipt() {
         galat,
         muatPOSiapTerima,
         muatPenerimaan,
-        muatSemua,
         muatRingkasan,
         simpanPenerimaan,
+        muatSemua,
         reset,
         bersihkanError,
     }

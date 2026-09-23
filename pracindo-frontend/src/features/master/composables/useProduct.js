@@ -1,203 +1,158 @@
-import { computed, ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '@/utils/api'
-import { bacaError } from '@/utils/error'
 
 export function useProduct() {
     const dataProduk = ref([])
     const isLoading = ref(false)
-    const isSaving = ref(false)
-    const isDeleting = ref(false)
-
-    const error = ref('')
+    const error = ref(null)
     const searchQuery = ref('')
 
     const fetchProduk = async (params = {}) => {
         isLoading.value = true
-        error.value = ''
+        error.value = null
 
         try {
-            const response = await api.get(
-                'master/produk/',
-                { params }
-            )
+            const response = await api.get('master/produk/', { params })
+            dataProduk.value = response.data?.results || response.data || []
 
-            const data = response?.data
-
-            dataProduk.value =
-                data?.results ||
-                data ||
-                []
+            return {
+                success: true,
+                data: dataProduk.value
+            }
         } catch (err) {
-            console.error(
-                'Gagal memuat data master produk:',
-                err
-            )
+            console.error('Gagal memuat data master produk:', err)
 
-            dataProduk.value = []
+            const responseData = err.response?.data
 
-            error.value = bacaError(
-                err,
-                'Gagal memuat data master produk.'
-            )
+            error.value =
+                responseData?.detail ||
+                responseData?.message ||
+                'Gagal memuat data dari database.'
+
+            return {
+                success: false,
+                message: error.value
+            }
         } finally {
             isLoading.value = false
         }
     }
 
     const addProduk = async (payload) => {
-        isSaving.value = true
-        error.value = ''
+        isLoading.value = true
+        error.value = null
 
         try {
-            const response = await api.post(
-                'master/produk/',
-                payload
-            )
+            const response = await api.post('master/produk/', payload)
 
             await fetchProduk()
 
             return {
                 success: true,
-                data: response?.data || null,
+                data: response.data
             }
         } catch (err) {
-            console.error(
-                'Gagal menyimpan produk:',
-                err
-            )
+            console.error('Detail Penolakan Django:', err.response?.data)
 
-            console.error(
-                'Response Django:',
-                err?.response?.data
-            )
+            const responseData = err.response?.data
+            let errorMessage = 'Gagal menyimpan data ke server.'
 
-            const message =
-                bacaError(
-                    err,
-                    'Gagal menyimpan data produk.'
-                )
+            if (responseData) {
+                if (
+                    typeof responseData === 'object' &&
+                    !responseData.detail &&
+                    !responseData.message
+                ) {
+                    const messages = []
 
-            error.value = message
+                    Object.entries(responseData).forEach(([key, value]) => {
+                        const text = Array.isArray(value)
+                            ? value.join(', ')
+                            : String(value)
+
+                        messages.push(`${key.toUpperCase()}: ${text}`)
+                    })
+
+                    if (messages.length) {
+                        errorMessage = messages.join(' | ')
+                    }
+                } else {
+                    errorMessage =
+                        responseData.detail ||
+                        responseData.message ||
+                        errorMessage
+                }
+            }
+
+            error.value = errorMessage
 
             return {
                 success: false,
-                message,
-                data:
-                    err?.response?.data ||
-                    null,
+                message: errorMessage,
+                data: responseData
             }
         } finally {
-            isSaving.value = false
+            isLoading.value = false
         }
     }
 
-    const deleteProduk = async (idProduk) => {
-        if (!idProduk) {
-            const message =
-                'ID produk tidak ditemukan.'
-
-            error.value = message
-
-            return {
-                success: false,
-                message,
-            }
-        }
-
-        isDeleting.value = true
-        error.value = ''
+    const deleteProduk = async (id_produk) => {
+        isLoading.value = true
+        error.value = null
 
         try {
-            await api.delete(
-                `master/produk/${idProduk}/`
-            )
-
+            await api.delete(`master/produk/${id_produk}/`)
             await fetchProduk()
 
             return {
-                success: true,
+                success: true
             }
         } catch (err) {
-            console.error(
-                'Gagal menghapus produk:',
-                err
-            )
+            console.error('Gagal menghapus produk:', err)
 
-            const message =
-                bacaError(
-                    err,
-                    'Gagal menghapus data produk.'
-                )
+            const responseData = err.response?.data
+            const errorMessage =
+                responseData?.detail ||
+                responseData?.message ||
+                'Gagal menghapus data dari server.'
 
-            error.value = message
+            error.value = errorMessage
 
             return {
                 success: false,
-                message,
-                data:
-                    err?.response?.data ||
-                    null,
+                message: errorMessage
             }
         } finally {
-            isDeleting.value = false
+            isLoading.value = false
         }
     }
 
     const filteredProduk = computed(() => {
-        const keyword =
-            searchQuery.value
-                .trim()
-                .toLowerCase()
+        const query = searchQuery.value.trim().toLowerCase()
 
-        if (!keyword) {
+        if (!query) {
             return dataProduk.value
         }
 
-        return dataProduk.value.filter(
-            (produk) => {
-                const nama =
-                    String(
-                        produk?.nama || ''
-                    ).toLowerCase()
+        return dataProduk.value.filter((prod) => {
+            const nama = String(prod?.nama || '').toLowerCase()
+            const kode = String(prod?.kode || '').toLowerCase()
 
-                const kode =
-                    String(
-                        produk?.kode || ''
-                    ).toLowerCase()
-
-                const jenis =
-                    String(
-                        produk?.jenis || ''
-                    ).toLowerCase()
-
-                const satuan =
-                    String(
-                        produk?.satuan_kode || ''
-                    ).toLowerCase()
-
-                return (
-                    nama.includes(keyword) ||
-                    kode.includes(keyword) ||
-                    jenis.includes(keyword) ||
-                    satuan.includes(keyword)
-                )
-            }
-        )
+            return (
+                nama.includes(query) ||
+                kode.includes(query)
+            )
+        })
     })
 
     return {
         dataProduk,
         filteredProduk,
         searchQuery,
-
         isLoading,
-        isSaving,
-        isDeleting,
-
         error,
-
         fetchProduk,
         addProduk,
-        deleteProduk,
+        deleteProduk
     }
 }

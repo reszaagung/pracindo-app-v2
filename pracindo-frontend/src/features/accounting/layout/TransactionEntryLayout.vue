@@ -32,7 +32,7 @@
                 class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-md hover:bg-slate-800 active:scale-95 transition-all shrink-0"
                 aria-label="Kembali ke dashboard"
             >
-                <i class="pi pi-arrow-left text-white text-sm"></i>
+                <i class="pi pi-home text-white text-sm"></i>
             </button>
         </header>
 
