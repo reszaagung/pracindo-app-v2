@@ -1,59 +1,102 @@
-import api from '@/utils/api' 
+import api from '@/utils/api'
 
 export const apiDistribusi = {
     getArmada: async () => {
-        const response = await api.get('logistik/kendaraan/') 
+        const response = await api.get('logistik/kendaraan/')
         return response.data
     },
-    // 👇 FUNGSI INI YANG BIKIN BISA NYIMPAN ARMADA BARU 👇
+
     tambahArmada: async (payload) => {
-        const response = await api.post('logistik/kendaraan/', payload)
+        const response = await api.post(
+            'logistik/kendaraan/',
+            payload
+        )
+
         return response.data
     },
 
     getKurir: async () => {
         try {
-            const response = await api.get('logistik/kurir/') 
+            const response = await api.get('logistik/kurir/')
             return response.data
-        } catch (error) {
+        } catch {
             return []
         }
     },
+
     getDistribusiTersedia: async (entitasId = '') => {
-        const response = await api.get('logistik/distribusi-tersedia/', { 
-            params: { entitas: entitasId } 
-        })
+        const response = await api.get(
+            'logistik/distribusi-tersedia/',
+            {
+                params: {
+                    entitas: entitasId
+                }
+            }
+        )
+
         return response.data
     },
+
     getSemuaPengiriman: async (params = {}) => {
-        const response = await api.get('logistik/pengiriman/', { params })
+        const response = await api.get(
+            'logistik/pengiriman/',
+            {
+                params
+            }
+        )
+
         return response.data
     },
 
     rakitPengiriman: async (payload) => {
-        const response = await api.post('logistik/pengiriman/', payload)
+        const response = await api.post(
+            'logistik/pengiriman/',
+            payload
+        )
+
         return response.data
     },
 
     createDistribusi: async (payload) => {
-        const response = await api.post('warehouse/distribusi/', payload)
+        const response = await api.post(
+            'warehouse/distribusi/',
+            payload
+        )
+
         return response.data
     },
 
     getStokPabrik: async (params = {}) => {
         try {
-            const response = await api.get('inventory/barang-jadi/', { params })
+            const response = await api.get(
+                'inventory/barang-jadi/',
+                {
+                    params
+                }
+            )
+
             return response.data
-        } catch (error) {
-            return { rincian: [], results: [] }
+        } catch {
+            return {
+                rincian: [],
+                results: []
+            }
         }
     },
+
     getKolamTugas: async () => {
-        const response = await api.get('logistik/pengiriman/kolam-tugas/')
+        const response = await api.get(
+            'logistik/pengiriman/kolam-tugas/'
+        )
+
         return response.data
     },
+
     klaimTugas: async (pengirimanId) => {
-        const response = await api.post(`logistik/pengiriman/${pengirimanId}/klaim/`)
+        const response = await api.post(
+            `logistik/pengiriman/${pengirimanId}/klaim/`
+        )
+
         return response.data
     }
 }

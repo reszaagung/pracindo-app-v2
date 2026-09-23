@@ -129,7 +129,7 @@ export const MODUL = [
         id: 'dashboard',
         nama: 'Dashboard',
         ringkas: 'Halaman ini sendiri',
-        ikon: 'panah',
+        ikon: 'home',
         rute: '/',
         siap: false,
         catatan: 'Kamu sudah di sini',

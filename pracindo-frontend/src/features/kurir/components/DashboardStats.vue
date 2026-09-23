@@ -51,7 +51,9 @@
                     </div>
 
                     <div class="min-w-0">
-                        <p class="truncate text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                        <p
+                            class="truncate text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400"
+                        >
                             Selesai
                         </p>
 
@@ -114,7 +116,9 @@
                     </div>
 
                     <div class="min-w-0">
-                        <p class="flex items-center gap-1.5 truncate text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                        <p
+                            class="flex items-center gap-1.5 truncate text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400"
+                        >
                             Aktif
 
                             <span

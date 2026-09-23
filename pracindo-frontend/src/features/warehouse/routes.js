@@ -3,7 +3,6 @@ import ModulLayout from '@/features/warehouse/layout/WarehouseModuleLayout.vue'
 export default [
   {
     path: '/warehouse',
-    // WAJIB 'warehouse', jangan 'gudang'
     meta: { perluLogin: true, modul: 'warehouse' }, 
     component: ModulLayout,
     children: [
@@ -16,7 +15,6 @@ export default [
   },
   {
     path: '/warehouse/input',
-    // WAJIB 'warehouse', jangan 'gudang'
     meta: { perluLogin: true, modul: 'warehouse' }, 
     component: () => import('@/features/warehouse/layout/InputEntryLayout.vue'),
     children: [
