@@ -1,43 +1,111 @@
-const accountingRoutes = [
+export default [
     {
-        path: '/accounting/input/po',
-        name: 'accounting-purchase-order',
+        path: '/accounting/input',
+        meta: {
+            perluLogin: true,
+            modul: 'akunting',
+        },
         component: () =>
             import(
-                './views/PurchaseOrderList.vue'
+                '@/features/accounting/layout/TransactionEntryLayout.vue'
             ),
-        meta: {
-            title: 'Purchase Order',
-            module: 'accounting',
-        },
+        children: [
+            {
+                path: '',
+                redirect: '/accounting/input/po',
+            },
+
+            {
+                path: 'po',
+                name: 'transaksi-po-list',
+                component: () =>
+                    import('./views/PurchaseOrderList.vue'),
+            },
+
+            {
+                path: 'po/buat',
+                name: 'transaksi-po-buat',
+                component: () =>
+                    import('./views/ProcurementCreate.vue'),
+            },
+
+            {
+                path: 'so',
+                name: 'transaksi-so-list',
+                component: () =>
+                    import('./views/SalesOrderList.vue'),
+            },
+
+            {
+                path: 'so/buat',
+                name: 'transaksi-so-buat',
+                component: () =>
+                    import('./views/SalesOrderCreate.vue'),
+            },
+
+            {
+                path: 'pengeluaran/buat',
+                name: 'transaksi-pengeluaran',
+                component: () =>
+                    import('./views/Expense.vue'),
+            },
+        ],
     },
 
     {
-        path: '/accounting/input/po/create',
-        name: 'accounting-purchase-order-create',
+        path: '/accounting/invoice',
+        meta: {
+            perluLogin: true,
+            modul: 'buku_tagihan',
+        },
         component: () =>
             import(
-                './views/ProcurementCreate.vue'
+                '@/features/accounting/layout/InvoiceLayout.vue'
             ),
-        meta: {
-            title: 'Buat Purchase Order',
-            module: 'accounting',
-        },
+        children: [
+            {
+                path: '',
+                redirect: '/accounting/invoice/dokumen',
+            },
+
+            {
+                path: 'dokumen',
+                name: 'accounting-invoice-dokumen',
+                component: () =>
+                    import('./views/DocumentAuditView.vue'),
+            },
+
+            {
+                path: 'tagihan',
+                name: 'accounting-invoice-tagihan',
+                component: () =>
+                    import('./views/InvoiceList.vue'),
+            },
+
+            {
+                path: 'tagihan/create',
+                name: 'accounting-invoice-buat',
+                component: () =>
+                    import('./views/InvoiceCreate.vue'),
+            },
+
+            {
+                path: 'catatan',
+                name: 'accounting-invoice-catatan',
+                component: () =>
+                    import('./views/Expense.vue'),
+            },
+        ],
     },
 
+
     {
-        path: '/accounting/input/po/:id',
-        name: 'accounting-purchase-order-detail',
-        component: () =>
-            import(
-                './views/PurchaseOrderDetail.vue'
-            ),
-        props: true,
+        path: '/accounting/monitoring',
         meta: {
-            title: 'Detail Purchase Order',
-            module: 'accounting',
+            perluLogin: true,
+            modul: 'akunting',
         },
+        component: () =>
+            import('./views/Monitoring.vue'),
     },
 ]
-
-export default accountingRoutes
