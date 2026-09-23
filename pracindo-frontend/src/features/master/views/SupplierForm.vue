@@ -1,250 +1,931 @@
-<!--
-  src/features/master/views/SupplierForm.vue
-  ==========================================
-  Form input Master Suplier (tambah & ubah), dipakai sebagai komponen anak
-  overlay oleh Supplier.vue. Komponen ini TIDAK memuat daftar — induk yang
-  bertanggung jawab me-refresh tabel lewat event `saved`.
-
-  prop `suplier`: null = tambah, objek baris = ubah.
--->
 <template>
-    <div
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-6 animate-fade-in">
-
+    <form
+        class="flex w-full flex-col"
+        @submit.prevent="submitForm"
+    >
         <div
-            class="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden animate-fade-in-up">
-
-            <button type="button" @click="emit('close')" :disabled="sedangProses"
-                class="absolute top-6 right-6 w-10 h-10 bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-600 rounded-full flex items-center justify-center transition-colors z-10 disabled:opacity-50">
-                <i class="pi pi-times"></i>
-            </button>
-
-            <div class="p-8 overflow-y-auto custom-scrollbar">
-                <h2 class="text-3xl font-extrabold text-slate-800 mb-2">
-                    {{ ubah ? 'Ubah Data Suplier' : 'Tambah Suplier Baru' }}
-                </h2>
-                <p class="text-slate-500 mb-8">
-                    {{ ubah
-                        ? `Memperbarui data ${suplier.kode} — ${suplier.nama}.`
-                        : 'Mendaftarkan data vendor atau suplier baru ke dalam sistem.' }}
-                </p>
-
-                <div v-if="pesanError"
-                    class="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm whitespace-pre-line">
-                    {{ pesanError }}
+            class="border-b border-slate-100 bg-gradient-to-r from-white via-white to-slate-50/70 px-5 py-5 md:px-6"
+        >
+            <div class="flex items-start gap-3">
+                <div
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100"
+                >
+                    <i class="pi pi-truck text-lg"></i>
                 </div>
 
-                <form class="form-suplier flex flex-col gap-6" @submit.prevent="simpan">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label>Kode Suplier <span class="text-red-500">*</span></label>
-                            <InputText v-model="form.kode" :readonly="ubah" :invalid="!!errorField.kode"
-                                placeholder="SUP-001" class="w-full uppercase" :class="ubah ? 'bg-slate-100!' : ''" />
-                            <small v-if="ubah" class="text-slate-400">Dikunci — kode dipakai PO lama.</small>
-                            <small v-if="errorField.kode" class="text-red-600">{{ errorField.kode }}</small>
-                        </div>
-                        <div>
-                            <label>Nama Perusahaan <span class="text-red-500">*</span></label>
-                            <InputText v-model="form.nama" :invalid="!!errorField.nama"
-                                placeholder="PT Sumber Makmur Jaya" class="w-full" />
-                            <small v-if="errorField.nama" class="text-red-600">{{ errorField.nama }}</small>
-                        </div>
+                <div>
+                    <div
+                        class="flex flex-wrap items-center gap-2"
+                    >
+                        <h2
+                            class="text-base font-black text-slate-900 md:text-lg"
+                        >
+                            {{
+                                mode === 'edit'
+                                    ? 'Edit Supplier'
+                                    : 'Supplier Baru'
+                            }}
+                        </h2>
+
+                        <span
+                            class="rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700"
+                        >
+                            Master Data
+                        </span>
                     </div>
 
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <label class="mb-0!">NPWP</label>
-                            <!-- pkp read-only: properti turunan npwp di backend, bukan input -->
-                            <Tag :value="pkpLabel" :severity="adaNpwp ? 'success' : 'secondary'" />
-                        </div>
-                        <InputMask v-model="form.npwp" mask="99.999.999.9-999.999" placeholder="__.___.___._-___.___"
-                            :invalid="!!errorField.npwp" class="w-full" />
-                        <small class="text-slate-400">Kosongkan kalau suplier non-PKP.</small>
-                        <small v-if="errorField.npwp" class="text-red-600">{{ errorField.npwp }}</small>
-                    </div>
-
-                    <div>
-                        <label>Alamat</label>
-                        <Textarea v-model="form.alamat" rows="3" :invalid="!!errorField.alamat"
-                            placeholder="Jalan, kota, kode pos..." class="w-full resize-none" />
-                        <small v-if="errorField.alamat" class="text-red-600">{{ errorField.alamat }}</small>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label>Nama Kontak / PIC</label>
-                            <InputText v-model="form.kontak_nama" :invalid="!!errorField.kontak_nama" class="w-full" />
-                            <small v-if="errorField.kontak_nama" class="text-red-600">{{ errorField.kontak_nama
-                                }}</small>
-                        </div>
-                        <div>
-                            <label>No. HP Kontak</label>
-                            <InputText v-model="form.kontak_hp" :invalid="!!errorField.kontak_hp" class="w-full" />
-                            <small v-if="errorField.kontak_hp" class="text-red-600">{{ errorField.kontak_hp }}</small>
-                        </div>
-                        <div>
-                            <label>Email</label>
-                            <InputText v-model="form.email" type="email" :invalid="!!errorField.email"
-                                placeholder="info@vendor.com" class="w-full" />
-                            <small v-if="errorField.email" class="text-red-600">{{ errorField.email }}</small>
-                        </div>
-                        <div>
-                            <label>Termin Default (Hari)</label>
-                            <InputNumber v-model="form.termin_hari_default" :min="0" :useGrouping="false"
-                                :invalid="!!errorField.termin_hari_default" class="w-full" inputClass="w-full" />
-                            <small class="text-slate-400">0 = tunai.</small>
-                            <small v-if="errorField.termin_hari_default" class="text-red-600">
-                                {{ errorField.termin_hari_default }}
-                            </small>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="flex items-center gap-3">
-                            <ToggleSwitch v-model="form.aktif" inputId="suplier-aktif" />
-                            <label for="suplier-aktif" class="mb-0!">{{ form.aktif ? 'Aktif' : 'Nonaktif' }}</label>
-                        </div>
-                        <small v-if="!form.aktif" class="text-amber-600">
-                            Suplier nonaktif tidak bisa dipakai membuat PO baru. PO yang sudah ada tetap jalan.
-                        </small>
-                    </div>
-
-                    <div class="flex justify-end items-center gap-4 mt-2 pt-6 border-t border-slate-100">
-                        <button type="button" @click="emit('close')" :disabled="sedangProses"
-                            class="px-6 py-3 font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50">
-                            Batal
-                        </button>
-                        <button type="submit" :disabled="sedangProses || !form.kode || !form.nama"
-                            class="px-8 py-3 rounded-xl font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="pi" :class="sedangProses ? 'pi-spin pi-spinner' : 'pi-save'"></i>
-                            {{ sedangProses ? 'Menyimpan...' : 'Simpan Suplier' }}
-                        </button>
-                    </div>
-                </form>
+                    <p
+                        class="mt-1 text-xs leading-5 text-slate-500"
+                    >
+                        {{
+                            mode === 'edit'
+                                ? 'Perbarui informasi supplier yang terdaftar.'
+                                : 'Tambahkan supplier baru ke master data perusahaan.'
+                        }}
+                    </p>
+                </div>
             </div>
         </div>
-    </div>
+
+        <Transition name="slide">
+            <div
+                v-if="errorMessage"
+                class="mx-5 mt-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 md:mx-6"
+            >
+                <div
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 shadow-sm"
+                >
+                    <i
+                        class="pi pi-exclamation-triangle text-xs"
+                    ></i>
+                </div>
+
+                <div class="min-w-0">
+                    <div
+                        class="text-xs font-black text-rose-800"
+                    >
+                        Data belum dapat disimpan
+                    </div>
+
+                    <div
+                        class="mt-0.5 text-[11px] leading-5 text-rose-600"
+                    >
+                        {{ errorMessage }}
+                    </div>
+                </div>
+            </div>
+        </Transition>
+
+        <div class="space-y-6 p-5 md:p-6">
+            <section>
+                <div
+                    class="mb-4 flex items-center gap-3"
+                >
+                    <div
+                        class="h-8 w-1 rounded-full bg-emerald-500"
+                    ></div>
+
+                    <div>
+                        <h3
+                            class="text-sm font-black text-slate-800"
+                        >
+                            Informasi Supplier
+                        </h3>
+
+                        <p
+                            class="mt-0.5 text-[11px] text-slate-400"
+                        >
+                            Identitas utama supplier.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                >
+                    <div>
+                        <label
+                            for="supplier-kode"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Kode Supplier
+                            <span
+                                class="ml-1 text-[10px] font-medium text-slate-400"
+                            >
+                                Opsional
+                            </span>
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-hashtag absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-kode"
+                                v-model="form.kode"
+                                type="text"
+                                maxlength="30"
+                                autocomplete="off"
+                                placeholder="Contoh: SUP-001"
+                                class="form-input pl-10"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            for="supplier-nama"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Nama Supplier
+                            <span
+                                class="ml-1 text-rose-500"
+                            >
+                                *
+                            </span>
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-building absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-nama"
+                                v-model="form.nama"
+                                type="text"
+                                maxlength="200"
+                                autocomplete="organization"
+                                placeholder="Masukkan nama supplier"
+                                class="form-input pl-10"
+                                :class="{
+                                    'border-rose-300 focus:border-rose-400 focus:ring-rose-500/10':
+                                        touched.nama &&
+                                        !form.nama.trim(),
+                                }"
+                                @blur="
+                                    touched.nama = true
+                                "
+                            />
+                        </div>
+
+                        <p
+                            v-if="
+                                touched.nama &&
+                                !form.nama.trim()
+                            "
+                            class="mt-1.5 text-[10px] font-medium text-rose-500"
+                        >
+                            Nama supplier wajib
+                            diisi.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            for="supplier-termin"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Termin Pembayaran
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-calendar absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-termin"
+                                v-model.number="
+                                    form.termin_hari_default
+                                "
+                                type="number"
+                                min="0"
+                                max="3650"
+                                step="1"
+                                inputmode="numeric"
+                                placeholder="0"
+                                class="form-input pl-10 pr-16"
+                            />
+
+                            <span
+                                class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400"
+                            >
+                                hari
+                            </span>
+                        </div>
+
+                        <p
+                            class="mt-1.5 text-[10px] text-slate-400"
+                        >
+                            Contoh: 30 untuk
+                            pembayaran 30 hari.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Status Supplier
+                        </label>
+
+                        <button
+                            type="button"
+                            :disabled="saving"
+                            @click="
+                                form.aktif =
+                                    !form.aktif
+                            "
+                            class="flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60"
+                            :class="
+                                form.aktif
+                                    ? 'border-emerald-200 bg-emerald-50/70'
+                                    : 'border-slate-200 bg-slate-50'
+                            "
+                        >
+                            <div
+                                class="flex items-center gap-3"
+                            >
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg"
+                                    :class="
+                                        form.aktif
+                                            ? 'bg-emerald-100 text-emerald-600'
+                                            : 'bg-slate-200 text-slate-400'
+                                    "
+                                >
+                                    <i
+                                        :class="
+                                            form.aktif
+                                                ? 'pi pi-check-circle'
+                                                : 'pi pi-ban'
+                                        "
+                                        class="text-xs"
+                                    ></i>
+                                </div>
+
+                                <div>
+                                    <div
+                                        class="text-xs font-bold"
+                                        :class="
+                                            form.aktif
+                                                ? 'text-emerald-700'
+                                                : 'text-slate-600'
+                                        "
+                                    >
+                                        {{
+                                            form.aktif
+                                                ? 'Supplier Aktif'
+                                                : 'Supplier Nonaktif'
+                                        }}
+                                    </div>
+
+                                    <div
+                                        class="mt-0.5 text-[10px] text-slate-400"
+                                    >
+                                        {{
+                                            form.aktif
+                                                ? 'Supplier dapat dipilih pada transaksi.'
+                                                : 'Supplier tidak ditampilkan pada transaksi aktif.'
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span
+                                class="relative h-6 w-11 rounded-full transition-colors"
+                                :class="
+                                    form.aktif
+                                        ? 'bg-emerald-500'
+                                        : 'bg-slate-300'
+                                "
+                            >
+                                <span
+                                    class="absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform"
+                                    :class="
+                                        form.aktif
+                                            ? 'translate-x-6'
+                                            : 'translate-x-1'
+                                    "
+                                ></span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div
+                    class="mb-4 flex items-center gap-3"
+                >
+                    <div
+                        class="h-8 w-1 rounded-full bg-blue-500"
+                    ></div>
+
+                    <div>
+                        <h3
+                            class="text-sm font-black text-slate-800"
+                        >
+                            Informasi Kontak
+                        </h3>
+
+                        <p
+                            class="mt-0.5 text-[11px] text-slate-400"
+                        >
+                            Informasi kontak supplier
+                            untuk kebutuhan operasional.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                >
+                    <div>
+                        <label
+                            for="supplier-telepon"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Nomor Telepon
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-telepon"
+                                v-model="form.telepon"
+                                type="tel"
+                                maxlength="50"
+                                autocomplete="tel"
+                                placeholder="08xxxxxxxxxx"
+                                class="form-input pl-10"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            for="supplier-email"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Email
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-email"
+                                v-model="form.email"
+                                type="email"
+                                maxlength="150"
+                                autocomplete="email"
+                                placeholder="supplier@email.com"
+                                class="form-input pl-10"
+                                :class="{
+                                    'border-rose-300 focus:border-rose-400 focus:ring-rose-500/10':
+                                        touched.email &&
+                                        form.email &&
+                                        !emailValid,
+                                }"
+                                @blur="
+                                    touched.email = true
+                                "
+                            />
+                        </div>
+
+                        <p
+                            v-if="
+                                touched.email &&
+                                form.email &&
+                                !emailValid
+                            "
+                            class="mt-1.5 text-[10px] font-medium text-rose-500"
+                        >
+                            Format email belum
+                            valid.
+                        </p>
+                    </div>
+
+                    <div
+                        class="md:col-span-2"
+                    >
+                        <label
+                            for="supplier-npwp"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            NPWP
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-id-card absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-npwp"
+                                v-model="form.npwp"
+                                type="text"
+                                maxlength="32"
+                                autocomplete="off"
+                                placeholder="Nomor NPWP supplier"
+                                class="form-input pl-10"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div
+                    class="mb-4 flex items-center gap-3"
+                >
+                    <div
+                        class="h-8 w-1 rounded-full bg-violet-500"
+                    ></div>
+
+                    <div>
+                        <h3
+                            class="text-sm font-black text-slate-800"
+                        >
+                            Alamat
+                        </h3>
+
+                        <p
+                            class="mt-0.5 text-[11px] text-slate-400"
+                        >
+                            Lokasi dan alamat supplier.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    class="grid grid-cols-1 gap-4 md:grid-cols-3"
+                >
+                    <div
+                        class="md:col-span-2"
+                    >
+                        <label
+                            for="supplier-alamat"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Alamat
+                        </label>
+
+                        <textarea
+                            id="supplier-alamat"
+                            v-model="form.alamat"
+                            rows="3"
+                            maxlength="500"
+                            placeholder="Alamat lengkap supplier..."
+                            class="form-input resize-none"
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label
+                            for="supplier-kota"
+                            class="mb-1.5 block text-xs font-bold text-slate-600"
+                        >
+                            Kota
+                        </label>
+
+                        <div class="relative">
+                            <i
+                                class="pi pi-map-marker absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"
+                            ></i>
+
+                            <input
+                                id="supplier-kota"
+                                v-model="form.kota"
+                                type="text"
+                                maxlength="100"
+                                autocomplete="address-level2"
+                                placeholder="Contoh: Jakarta"
+                                class="form-input pl-10"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <div
+                    class="mb-4 flex items-center gap-3"
+                >
+                    <div
+                        class="h-8 w-1 rounded-full bg-amber-500"
+                    ></div>
+
+                    <div>
+                        <h3
+                            class="text-sm font-black text-slate-800"
+                        >
+                            Catatan
+                        </h3>
+
+                        <p
+                            class="mt-0.5 text-[11px] text-slate-400"
+                        >
+                            Informasi tambahan yang relevan.
+                        </p>
+                    </div>
+                </div>
+
+                <textarea
+                    v-model="form.catatan"
+                    rows="3"
+                    maxlength="500"
+                    placeholder="Catatan supplier..."
+                    class="form-input resize-none"
+                ></textarea>
+            </section>
+        </div>
+
+        <div
+            class="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6"
+        >
+            <div
+                class="flex items-center gap-2 text-[10px] text-slate-400"
+            >
+                <i
+                    class="pi pi-info-circle"
+                ></i>
+
+                <span>
+                    Field bertanda
+                    <strong class="text-rose-500">*</strong>
+                    wajib diisi.
+                </span>
+            </div>
+
+            <div
+                class="flex w-full items-center gap-2 sm:w-auto"
+            >
+                <button
+                    type="button"
+                    @click="$emit('close')"
+                    :disabled="saving"
+                    class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="submit"
+                    :disabled="
+                        saving ||
+                        !formValid
+                    "
+                    class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                >
+                    <i
+                        :class="
+                            saving
+                                ? 'pi pi-spin pi-spinner'
+                                : 'pi pi-check'
+                        "
+                    ></i>
+
+                    {{
+                        saving
+                            ? 'Menyimpan...'
+                            : mode === 'edit'
+                                ? 'Simpan Perubahan'
+                                : 'Simpan Supplier'
+                    }}
+                </button>
+            </div>
+        </div>
+    </form>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import InputText from 'primevue/inputtext'
-import InputMask from 'primevue/inputmask'
-import InputNumber from 'primevue/inputnumber'
-import Textarea from 'primevue/textarea'
-import ToggleSwitch from 'primevue/toggleswitch'
-import Tag from 'primevue/tag'
+import {
+    computed,
+    reactive,
+    ref,
+    watch
+} from 'vue'
 
-import { useSupplier } from '../composables/useSupplier'
+import { useSupplier } from '@/features/master/composables/useSupplier'
 
 const props = defineProps({
-    suplier: { type: Object, default: null } // null = mode tambah
-})
-const emit = defineEmits(['close', 'saved'])
+    modelValue: {
+        type: Object,
+        default: null
+    },
 
-// pesanError/errorField di sini terpisah dari milik Supplier.vue — memang
-// disengaja, lihat catatan di induk.
-const { sedangProses, pesanError, errorField, simpanSuplier } = useSupplier()
+    mode: {
+        type: String,
+        default: 'create'
+    },
 
-const ubah = computed(() => !!props.suplier?.id)
-
-// Disalin per field, bukan spread: `pkp` (read-only, turunan npwp) dan `id`
-// tidak boleh ikut terkirim, dan baris di tabel induk tidak ikut termutasi.
-// Induk merender dengan v-if, jadi komponen selalu mount ulang — tidak perlu
-// watch props.
-const form = ref({
-    kode: props.suplier?.kode ?? '',
-    nama: props.suplier?.nama ?? '',
-    npwp: props.suplier?.npwp ?? '',
-    alamat: props.suplier?.alamat ?? '',
-    kontak_nama: props.suplier?.kontak_nama ?? '',
-    kontak_hp: props.suplier?.kontak_hp ?? '',
-    email: props.suplier?.email ?? '',
-    termin_hari_default: props.suplier?.termin_hari_default ?? 0,
-    aktif: props.suplier?.aktif ?? true
+    loading: {
+        type: Boolean,
+        default: false
+    }
 })
 
-const adaNpwp = computed(() => /\d/.test(form.value.npwp || ''))
-const pkpLabel = computed(() => (adaNpwp.value ? 'PKP' : 'Non-PKP'))
+const emit = defineEmits([
+    'update:modelValue',
+    'save',
+    'saved',
+    'close'
+])
 
-const payload = () => {
-    const isi = { ...form.value }
-    isi.nama = isi.nama.trim()
-    // InputNumber mengosongkan jadi null; backend tidak menerima null.
-    isi.termin_hari_default = isi.termin_hari_default ?? 0
-    if (ubah.value) delete isi.kode // kunci bisnis, tidak boleh berubah
-    else isi.kode = isi.kode.trim().toUpperCase()
-    return isi
+const {
+    simpanSuplier,
+    sedangSimpan
+} = useSupplier()
+
+const defaultForm = () => ({
+    id: null,
+    kode: '',
+    nama: '',
+    termin_hari_default: 0,
+    aktif: true,
+    telepon: '',
+    email: '',
+    npwp: '',
+    alamat: '',
+    kota: '',
+    catatan: ''
+})
+
+const form = reactive(
+    defaultForm()
+)
+
+const touched = reactive({
+    nama: false,
+    email: false
+})
+
+const errorMessage =
+    ref('')
+
+const saving = computed(
+    () =>
+        Boolean(
+            props.loading ||
+                sedangSimpan.value
+        )
+)
+
+const applyModel = (
+    value
+) => {
+    Object.assign(
+        form,
+        defaultForm(),
+        value || {}
+    )
 }
 
-const simpan = async () => {
-    const { success } = await simpanSuplier(payload(), props.suplier?.id ?? null)
-    // Gagal: pesanError + errorField sudah diisi composable, form tetap terbuka.
-    if (success) emit('saved')
+applyModel(
+    props.modelValue
+)
+
+watch(
+    () => props.modelValue,
+    (value) => {
+        applyModel(value)
+        errorMessage.value = ''
+        touched.nama = false
+        touched.email = false
+    },
+    {
+        deep: true
+    }
+)
+
+const emailValid =
+    computed(() => {
+        if (!form.email) {
+            return true
+        }
+
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            form.email.trim()
+        )
+    })
+
+const formValid =
+    computed(() => {
+        return (
+            form.nama.trim()
+                .length > 0 &&
+            emailValid.value &&
+            Number(
+                form.termin_hari_default
+            ) >= 0
+        )
+    })
+
+const buatPayload = () => {
+    const payload = {
+        kode: form.kode.trim(),
+        nama: form.nama.trim(),
+        termin_hari_default:
+            Number(
+                form.termin_hari_default ||
+                    0
+            ),
+        aktif: Boolean(
+            form.aktif
+        ),
+        telepon:
+            form.telepon.trim(),
+        email:
+            form.email.trim(),
+        npwp:
+            form.npwp.trim(),
+        alamat:
+            form.alamat.trim(),
+        kota:
+            form.kota.trim(),
+        catatan:
+            form.catatan.trim()
+    }
+
+    return payload
+}
+
+const submitForm = async () => {
+    touched.nama = true
+    touched.email = true
+    errorMessage.value = ''
+
+    if (
+        !form.nama.trim()
+    ) {
+        errorMessage.value =
+            'Nama supplier wajib diisi.'
+        return
+    }
+
+    if (
+        !emailValid.value
+    ) {
+        errorMessage.value =
+            'Format email supplier belum valid.'
+        return
+    }
+
+    if (
+        Number(
+            form.termin_hari_default
+        ) < 0
+    ) {
+        errorMessage.value =
+            'Termin pembayaran tidak boleh negatif.'
+        return
+    }
+
+    if (saving.value) {
+        return
+    }
+
+    const payload =
+        buatPayload()
+
+    const id =
+        props.mode ===
+            'edit' &&
+        form.id
+            ? form.id
+            : null
+
+    const hasil =
+        await simpanSuplier(
+            payload,
+            id
+        )
+
+    if (
+        !hasil?.success
+    ) {
+        const fieldErrors =
+            hasil?.errorField ||
+            {}
+
+        const firstFieldError =
+            Object.values(
+                fieldErrors
+            )
+                .flat()
+                .find(
+                    (value) =>
+                        value
+                )
+
+        errorMessage.value =
+            firstFieldError ||
+            hasil?.message ||
+            'Gagal menyimpan supplier.'
+
+        return
+    }
+
+    const data =
+        hasil?.data ||
+        {
+            ...form,
+            ...payload,
+            id:
+                id ||
+                null
+        }
+
+    emit(
+        'update:modelValue',
+        data
+    )
+
+    emit(
+        'save',
+        data
+    )
+
+    emit(
+        'saved',
+        data
+    )
 }
 </script>
 
 <style scoped>
-/* Label & pesan bantu form — dipakai berulang, ditaruh di sini supaya markup
-   tidak dipenuhi kelas yang sama sepuluh kali. */
-.form-suplier label {
-    display: block;
-    margin-bottom: .5rem;
-    font-size: .875rem;
-    font-weight: 700;
+.form-input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    padding: 0.7rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: #334155;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
 }
 
-.form-suplier small {
-    display: block;
-    margin-top: .35rem;
-    font-size: .75rem;
+.form-input::placeholder {
+    color: #94a3b8;
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+.form-input:hover {
+    border-color: #cbd5e1;
 }
 
-.animate-fade-in-up {
-    animation: fadeInUp 0.4s ease-out forwards;
+.form-input:focus {
+    border-color: #10b981;
+    box-shadow:
+        0 0 0 4px
+        rgb(16 185 129 / 0.08);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+textarea.form-input {
+    line-height: 1.6;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+}
+
+@media (
+    prefers-reduced-motion: reduce
+) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
     }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
 }
 </style>

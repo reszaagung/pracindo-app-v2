@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import api from '@/utils/api'
 import { bacaError } from '@/utils/error'
 import { generateKode } from '@/utils/generate_id'
@@ -19,10 +19,6 @@ export function usePurchaseOrder() {
 
     const periodeDitutup = ref(false)
 
-    // ==========================================
-    // LOAD DAFTAR PO
-    // ==========================================
-
     const muatDaftarPO = async () => {
         isLoadingDaftar.value = true
 
@@ -32,7 +28,7 @@ export function usePurchaseOrder() {
             )
 
             daftarPO.value =
-                data.results ||
+                data?.results ||
                 data ||
                 []
         } catch (err) {
@@ -40,14 +36,12 @@ export function usePurchaseOrder() {
                 'Gagal memuat daftar PO:',
                 err
             )
+
+            daftarPO.value = []
         } finally {
             isLoadingDaftar.value = false
         }
     }
-
-    // ==========================================
-    // FILTER / SEARCH
-    // ==========================================
 
     const tampil = computed(() => {
         const q = cari.value
@@ -66,40 +60,45 @@ export function usePurchaseOrder() {
                 }
 
                 return (
-                    (po.status || '')
-                        .toLowerCase() ===
+                    String(
+                        po?.status || ''
+                    ).toLowerCase() ===
                     statusFilter
                 )
             })
-            .filter(
-                (po) =>
-                    !q ||
-                    (
-                        po.no_po ||
-                        po.nomor ||
+            .filter((po) => {
+                if (!q) {
+                    return true
+                }
+
+                const nomor =
+                    String(
+                        po?.no_po ||
+                        po?.nomor ||
                         ''
-                    )
-                        .toLowerCase()
-                        .includes(q) ||
-                    (
-                        po.suplier_nama ||
+                    ).toLowerCase()
+
+                const supplier =
+                    String(
+                        po?.suplier_nama ||
                         ''
-                    )
-                        .toLowerCase()
-                        .includes(q)
-            )
-            .sort((a, b) => {
+                    ).toLowerCase()
+
                 return (
-                    b.tanggal || ''
-                ).localeCompare(
-                    a.tanggal || ''
+                    nomor.includes(q) ||
+                    supplier.includes(q)
                 )
             })
+            .sort((a, b) =>
+                String(
+                    b?.tanggal || ''
+                ).localeCompare(
+                    String(
+                        a?.tanggal || ''
+                    )
+                )
+            )
     })
-
-    // ==========================================
-    // SUMMARY
-    // ==========================================
 
     const belumDiterima = computed(() =>
         daftarPO.value.filter((po) =>
@@ -107,14 +106,14 @@ export function usePurchaseOrder() {
                 'TERKIRIM',
                 'DISETUJUI',
                 'SEBAGIAN'
-            ].includes(po.status)
+            ].includes(po?.status)
         )
     )
 
     const draftCount = computed(() =>
         daftarPO.value.filter(
             (po) =>
-                po.status === 'DRAFT'
+                po?.status === 'DRAFT'
         ).length
     )
 
@@ -123,9 +122,23 @@ export function usePurchaseOrder() {
 
         return daftarPO.value
             .filter((po) => {
-                const d = new Date(
-                    po.tanggal
-                )
+                const tanggal =
+                    po?.tanggal
+
+                if (!tanggal) {
+                    return false
+                }
+
+                const d =
+                    new Date(tanggal)
+
+                if (
+                    Number.isNaN(
+                        d.getTime()
+                    )
+                ) {
+                    return false
+                }
 
                 return (
                     d.getMonth() ===
@@ -135,18 +148,14 @@ export function usePurchaseOrder() {
                 )
             })
             .reduce(
-                (s, po) =>
-                    s +
+                (total, po) =>
+                    total +
                     Number(
-                        po.total_nilai ?? 0
+                        po?.total_nilai ?? 0
                     ),
                 0
             )
     })
-
-    // ==========================================
-    // MASTER DATA
-    // ==========================================
 
     const muatDataMaster = async () => {
         sedangProses.value = true
@@ -171,27 +180,42 @@ export function usePurchaseOrder() {
                 )
             ])
 
-            const pd =
-                resPortal.data
+            const portal =
+                resPortal?.data
 
             listEntitas.value =
-                pd?.entitas ||
-                pd?.data?.entitas ||
-                pd?.results ||
-                pd?.data ||
-                (Array.isArray(pd)
-                    ? pd
-                    : [])
+                portal?.entitas ||
+                portal?.data?.entitas ||
+                portal?.results ||
+                portal?.data ||
+                (
+                    Array.isArray(
+                        portal
+                    )
+                        ? portal
+                        : []
+                )
+
+            const supplier =
+                resSupplier?.data
 
             listSupplier.value =
-                resSupplier.data?.results ||
-                resSupplier.data ||
-                []
+                supplier?.results ||
+                (
+                    Array.isArray(
+                        supplier
+                    )
+                        ? supplier
+                        : []
+                )
         } catch (err) {
             console.error(
                 'Gagal memuat master:',
                 err
             )
+
+            listEntitas.value = []
+            listSupplier.value = []
 
             pesanError.value =
                 bacaError(
@@ -202,10 +226,6 @@ export function usePurchaseOrder() {
             sedangProses.value = false
         }
     }
-
-    // ==========================================
-    // PREVIEW NOMOR
-    // ==========================================
 
     const muatPreviewNomor = async (
         entitasId,
@@ -237,17 +257,18 @@ export function usePurchaseOrder() {
                 )
 
             previewNomor.value =
-                data.nomor ||
+                data?.nomor ||
                 'TIDAK TERSEDIA'
-        } catch {
+        } catch (err) {
+            console.error(
+                'Gagal memuat preview nomor PO:',
+                err
+            )
+
             previewNomor.value =
                 'GAGAL MEMUAT NOMOR'
         }
     }
-
-    // ==========================================
-    // CEK PERIODE
-    // ==========================================
 
     const cekStatusPeriode = async (
         entitasId,
@@ -277,13 +298,13 @@ export function usePurchaseOrder() {
                 )
 
             periodeDitutup.value =
-                !data.terbuka
+                !data?.terbuka
 
             if (
                 periodeDitutup.value
             ) {
                 pesanError.value =
-                    data.pesan ||
+                    data?.pesan ||
                     'Periode akuntansi untuk entitas & tanggal ini sudah ditutup.'
             }
         } catch (err) {
@@ -297,16 +318,12 @@ export function usePurchaseOrder() {
         }
     }
 
-    // ==========================================
-    // BUAT PRODUK BARU
-    // ==========================================
-
     const buatProdukBaru = async (
         nama,
         jenis = 'BAHAN_BAKU'
     ) => {
         const namaProduk =
-            nama.trim()
+            String(nama || '').trim()
 
         if (!namaProduk) {
             throw new Error(
@@ -328,7 +345,7 @@ export function usePurchaseOrder() {
                 )
 
             listSatuan.value =
-                data.results ||
+                data?.results ||
                 data ||
                 []
         }
@@ -340,28 +357,34 @@ export function usePurchaseOrder() {
         ) {
             satuanDefault =
                 listSatuan.value.find(
-                    (s) =>
+                    (satuan) =>
                         [
                             'pcs',
                             'unit',
                             'pack'
                         ].includes(
-                            s.kode?.toLowerCase()
+                            String(
+                                satuan?.kode ||
+                                ''
+                            ).toLowerCase()
                         )
                 ) ||
                 listSatuan.value[0]
         } else {
             satuanDefault =
                 listSatuan.value.find(
-                    (s) =>
-                        s.kode?.toLowerCase() ===
+                    (satuan) =>
+                        String(
+                            satuan?.kode ||
+                            ''
+                        ).toLowerCase() ===
                         'kg'
                 ) ||
                 listSatuan.value[0]
         }
 
         if (
-            !satuanDefault
+            !satuanDefault?.id
         ) {
             throw new Error(
                 'Belum ada data satuan pada master.'
@@ -374,9 +397,7 @@ export function usePurchaseOrder() {
                 : 'RM'
 
         const kode =
-            generateKode(
-                prefix
-            )
+            generateKode(prefix)
 
         try {
             const { data } =
@@ -392,12 +413,12 @@ export function usePurchaseOrder() {
                 )
 
             return {
-                id: data.id,
-                kode: data.kode,
-                nama: data.nama,
+                id: data?.id,
+                kode: data?.kode,
+                nama: data?.nama,
                 satuan_kode:
-                    data.satuan_kode,
-                jenis: data.jenis
+                    data?.satuan_kode,
+                jenis: data?.jenis
             }
         } catch (err) {
             throw new Error(
@@ -405,14 +426,12 @@ export function usePurchaseOrder() {
                     err,
                     'Gagal membuat produk baru.'
                 ),
-                { cause: err }
+                {
+                    cause: err
+                }
             )
         }
     }
-
-    // ==========================================
-    // SIMPAN PO
-    // ==========================================
 
     const simpanPO = async (
         form,
@@ -434,34 +453,37 @@ export function usePurchaseOrder() {
 
         try {
             const payloadItems =
-                form.items
+                (
+                    Array.isArray(
+                        form?.items
+                    )
+                        ? form.items
+                        : []
+                )
                     .filter(
-                        (i) =>
-                            i.produk_id &&
+                        (item) =>
+                            item?.produk_id &&
                             parseFloat(
-                                i.qty_pesan
+                                item?.qty_pesan
                             ) > 0
                     )
-                    .map((i) => ({
+                    .map((item) => ({
                         produk_id:
-                            i.produk_id,
-
+                            item.produk_id,
                         qty_pesan:
                             String(
-                                i.qty_pesan
+                                item.qty_pesan
                             ),
-
                         harga_per_kg:
                             String(
-                                i.harga_per_kg ??
-                                i.harga_per_unit ??
+                                item?.harga_per_kg ??
+                                item?.harga_per_unit ??
                                 0
                             ),
-
                         satuan:
-                            i.satuan ||
+                            item?.satuan ||
                             (
-                                form.kategori_po ===
+                                form?.kategori_po ===
                                 'KEMASAN'
                                     ? 'pcs'
                                     : 'kg'
@@ -483,44 +505,44 @@ export function usePurchaseOrder() {
 
             const payload = {
                 entitas_id:
-                    form.entitas_id,
+                    form?.entitas_id,
 
                 suplier_id:
-                    form.suplier_id,
+                    form?.suplier_id,
 
                 tanggal:
-                    form.tanggal,
+                    form?.tanggal,
 
                 tanggal_kirim_diminta:
-                    form.tanggal_kirim_diminta ||
+                    form?.tanggal_kirim_diminta ||
                     null,
 
                 catatan:
-                    form.catatan,
+                    form?.catatan,
 
                 pakai_ppn:
-                    form.pakai_ppn,
+                    form?.pakai_ppn,
 
                 ppn_persen:
-                    form.ppn_persen ||
+                    form?.ppn_persen ||
                     11.00,
 
                 kategori_po:
-                    form.kategori_po ||
+                    form?.kategori_po ||
                     'BAHAN_BAKU',
 
                 items:
                     payloadItems
             }
 
-            const res =
+            const response =
                 await api.post(
                     'akunting/purchase-order/',
                     payload
                 )
 
             const idPO =
-                res.data.id
+                response?.data?.id
 
             if (
                 isKirim &&
@@ -535,9 +557,16 @@ export function usePurchaseOrder() {
 
             return {
                 success: true,
-                data: res.data
+                data:
+                    response?.data ||
+                    null
             }
         } catch (err) {
+            console.error(
+                'Gagal menyimpan PO:',
+                err
+            )
+
             pesanError.value =
                 bacaError(
                     err,
@@ -547,28 +576,31 @@ export function usePurchaseOrder() {
             return {
                 success: false,
                 message:
-                    pesanError.value
+                    pesanError.value,
+                data:
+                    err?.response?.data ||
+                    null
             }
         } finally {
             sedangProses.value = false
         }
     }
 
-    // ==========================================
-    // AJUKAN PO
-    // ==========================================
-
     const ajukanPO = async (
         po_id
     ) => {
-        console.group(
-            '📤 AJUKAN PO'
-        )
-
-        console.log(
-            'PO ID:',
-            po_id
-        )
+        if (
+            po_id === null ||
+            po_id === undefined ||
+            po_id === ''
+        ) {
+            return {
+                success: false,
+                message:
+                    'ID Purchase Order tidak ditemukan.',
+                data: null
+            }
+        }
 
         sedangProses.value = true
         pesanError.value = ''
@@ -579,11 +611,6 @@ export function usePurchaseOrder() {
                     `akunting/purchase-order/${po_id}/ajukan/`
                 )
 
-            console.log(
-                'Response ajukan:',
-                response
-            )
-
             await muatDaftarPO()
 
             return {
@@ -592,7 +619,8 @@ export function usePurchaseOrder() {
                     response?.data?.message ||
                     'Purchase Order berhasil diajukan.',
                 data:
-                    response?.data
+                    response?.data ||
+                    null
             }
         } catch (err) {
             console.error(
@@ -616,51 +644,17 @@ export function usePurchaseOrder() {
             }
         } finally {
             sedangProses.value = false
-
-            console.groupEnd()
         }
     }
-
-    // ==========================================
-    // APPROVAL
-    // ==========================================
 
     const approvalPO = async (
         po_id
     ) => {
-        console.group(
-            '🚀 COMPOSABLE approvalPO'
-        )
-
-        console.log(
-            '1. approvalPO dipanggil'
-        )
-
-        console.log(
-            '2. po_id:',
-            po_id
-        )
-
-        const endpoint =
-            `akunting/purchase-order/${po_id}/setujui/`
-
-        console.log(
-            '3. endpoint:',
-            endpoint
-        )
-
-        // Validasi ID
         if (
             po_id === null ||
             po_id === undefined ||
             po_id === ''
         ) {
-            console.error(
-                '❌ po_id kosong'
-            )
-
-            console.groupEnd()
-
             return {
                 success: false,
                 message:
@@ -673,43 +667,13 @@ export function usePurchaseOrder() {
         pesanError.value = ''
 
         try {
-            console.log(
-                '4. Mengirim POST approval...'
-            )
-
             const response =
                 await api.post(
-                    endpoint
+                    `akunting/purchase-order/${po_id}/setujui/`
                 )
-
-            console.log(
-                '5. Response API:',
-                response
-            )
-
-            console.log(
-                '6. Response data:',
-                response?.data
-            )
 
             const data =
                 response?.data
-
-            /*
-             * Backend mungkin mengembalikan:
-             *
-             * {
-             *   success: true,
-             *   message: "..."
-             * }
-             *
-             * atau hanya object PO.
-             *
-             * Yang penting:
-             * HTTP request sukses = approval berhasil,
-             * kecuali backend secara eksplisit
-             * mengembalikan success: false.
-             */
 
             if (
                 data?.success === false
@@ -718,11 +682,6 @@ export function usePurchaseOrder() {
                     data?.message ||
                     data?.detail ||
                     'Approval Purchase Order gagal.'
-
-                console.error(
-                    '❌ Backend mengembalikan success=false:',
-                    message
-                )
 
                 pesanError.value =
                     message
@@ -734,58 +693,21 @@ export function usePurchaseOrder() {
                 }
             }
 
-            console.log(
-                '7. POST approval berhasil'
-            )
-
-            /*
-             * Reload daftar PO setelah
-             * approval berhasil.
-             */
-            console.log(
-                '8. Memuat ulang daftar PO...'
-            )
-
             await muatDaftarPO()
-
-            console.log(
-                '9. Daftar PO berhasil dimuat ulang'
-            )
-
-            const message =
-                data?.message ||
-                data?.detail ||
-                'Purchase Order berhasil di-Approval.'
-
-            console.log(
-                '✅ Approval sukses:',
-                message
-            )
 
             return {
                 success: true,
-                message,
-                data
+                message:
+                    data?.message ||
+                    data?.detail ||
+                    'Purchase Order berhasil di-Approval.',
+                data:
+                    data || null
             }
         } catch (err) {
             console.error(
-                '🔥 ERROR approvalPO:',
+                'Gagal melakukan Approval PO:',
                 err
-            )
-
-            console.error(
-                '🔥 status:',
-                err?.response?.status
-            )
-
-            console.error(
-                '🔥 response.data:',
-                err?.response?.data
-            )
-
-            console.error(
-                '🔥 error.message:',
-                err?.message
             )
 
             const message =
@@ -810,41 +732,25 @@ export function usePurchaseOrder() {
             }
         } finally {
             sedangProses.value = false
-
-            console.log(
-                '10. approvalPO selesai'
-            )
-
-            console.log(
-                'sedangProses:',
-                sedangProses.value
-            )
-
-            console.groupEnd()
         }
     }
-
-    // ==========================================
-    // DECLINE
-    // ==========================================
 
     const declinePO = async (
         po_id,
         alasan
     ) => {
-        console.group(
-            '🔴 DECLINE PO'
-        )
-
-        console.log(
-            'PO ID:',
-            po_id
-        )
-
-        console.log(
-            'Alasan:',
-            alasan
-        )
+        if (
+            po_id === null ||
+            po_id === undefined ||
+            po_id === ''
+        ) {
+            return {
+                success: false,
+                message:
+                    'ID Purchase Order tidak ditemukan.',
+                data: null
+            }
+        }
 
         sedangProses.value = true
         pesanError.value = ''
@@ -858,11 +764,6 @@ export function usePurchaseOrder() {
                     }
                 )
 
-            console.log(
-                'Response decline:',
-                response
-            )
-
             await muatDaftarPO()
 
             return {
@@ -872,17 +773,13 @@ export function usePurchaseOrder() {
                     response?.data?.detail ||
                     'Purchase Order berhasil di-Decline.',
                 data:
-                    response?.data
+                    response?.data ||
+                    null
             }
         } catch (err) {
             console.error(
                 'Gagal melakukan Decline PO:',
                 err
-            )
-
-            console.error(
-                'Response error:',
-                err?.response?.data
             )
 
             pesanError.value =
@@ -901,22 +798,17 @@ export function usePurchaseOrder() {
             }
         } finally {
             sedangProses.value = false
-
-            console.groupEnd()
         }
     }
 
-    const postPO = async (po_id) => {
-        sedangProses.value = true
-        pesanError.value = ''
-
+    const postPO = async (
+        po_id
+    ) => {
         if (
             po_id === null ||
             po_id === undefined ||
             po_id === ''
         ) {
-            sedangProses.value = false
-
             return {
                 success: false,
                 message:
@@ -924,6 +816,9 @@ export function usePurchaseOrder() {
                 data: null
             }
         }
+
+        sedangProses.value = true
+        pesanError.value = ''
 
         try {
             const response =
@@ -960,7 +855,8 @@ export function usePurchaseOrder() {
                     data?.message ||
                     data?.detail ||
                     'Purchase Order berhasil di-Post ke supplier.',
-                data
+                data:
+                    data || null
             }
         } catch (err) {
             console.error(
@@ -996,19 +892,18 @@ export function usePurchaseOrder() {
         po_id,
         alasan
     ) => {
-        console.group(
-            '⚫ BATALKAN PO'
-        )
-
-        console.log(
-            'PO ID:',
-            po_id
-        )
-
-        console.log(
-            'Alasan:',
-            alasan
-        )
+        if (
+            po_id === null ||
+            po_id === undefined ||
+            po_id === ''
+        ) {
+            return {
+                success: false,
+                message:
+                    'ID Purchase Order tidak ditemukan.',
+                data: null
+            }
+        }
 
         sedangProses.value = true
         pesanError.value = ''
@@ -1022,11 +917,6 @@ export function usePurchaseOrder() {
                     }
                 )
 
-            console.log(
-                'Response batalkan:',
-                response
-            )
-
             await muatDaftarPO()
 
             return {
@@ -1036,17 +926,13 @@ export function usePurchaseOrder() {
                     response?.data?.detail ||
                     'Purchase Order berhasil dibatalkan.',
                 data:
-                    response?.data
+                    response?.data ||
+                    null
             }
         } catch (err) {
             console.error(
                 'Gagal membatalkan PO:',
                 err
-            )
-
-            console.error(
-                'Response error:',
-                err?.response?.data
             )
 
             pesanError.value =
@@ -1065,8 +951,6 @@ export function usePurchaseOrder() {
             }
         } finally {
             sedangProses.value = false
-
-            console.groupEnd()
         }
     }
 

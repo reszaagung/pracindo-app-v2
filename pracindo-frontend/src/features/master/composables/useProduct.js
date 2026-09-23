@@ -1,104 +1,203 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import api from '@/utils/api'
+import { bacaError } from '@/utils/error'
 
 export function useProduct() {
     const dataProduk = ref([])
     const isLoading = ref(false)
-    const error = ref(null)
+    const isSaving = ref(false)
+    const isDeleting = ref(false)
+
+    const error = ref('')
     const searchQuery = ref('')
 
     const fetchProduk = async (params = {}) => {
         isLoading.value = true
-        error.value = null
+        error.value = ''
+
         try {
-            const response = await api.get('master/produk/', { params })
-            dataProduk.value = response.data.results || response.data || []
+            const response = await api.get(
+                'master/produk/',
+                { params }
+            )
+
+            const data = response?.data
+
+            dataProduk.value =
+                data?.results ||
+                data ||
+                []
         } catch (err) {
-            console.error("Gagal memuat data master produk:", err)
-            error.value = "Gagal memuat data dari database."
+            console.error(
+                'Gagal memuat data master produk:',
+                err
+            )
+
+            dataProduk.value = []
+
+            error.value = bacaError(
+                err,
+                'Gagal memuat data master produk.'
+            )
         } finally {
             isLoading.value = false
         }
     }
 
     const addProduk = async (payload) => {
-        isLoading.value = true
+        isSaving.value = true
+        error.value = ''
+
         try {
-            const response = await api.post('master/produk/', payload)
+            const response = await api.post(
+                'master/produk/',
+                payload
+            )
+
             await fetchProduk()
-            return { success: true, data: response.data }
-        } catch (err) {
-            // 1. Cetak detail error asli ke console untuk kita debugging
-            console.error("Detail Penolakan Django:", err.response?.data)
 
-            // 2. Ekstrak pesan error agar bisa tampil di UI
-            let errorMessage = "Gagal menyimpan data ke server."
-
-            if (err.response?.data) {
-                const resData = err.response.data
-
-                // Jika errornya berbentuk field spesifik dari Django (ex: {"kode": ["..."]})
-                if (typeof resData === 'object' && !resData.detail && !resData.message) {
-                    const messages = []
-                    for (const key in resData) {
-                        const val = resData[key]
-                        const teks = Array.isArray(val) ? val.join(', ') : val
-                        messages.push(`${key.toUpperCase()}: ${teks}`)
-                    }
-                    errorMessage = messages.join(' | ')
-                } else {
-                    // Jika errornya umum (401/403/500)
-                    errorMessage = resData.detail || resData.message || errorMessage
-                }
+            return {
+                success: true,
+                data: response?.data || null,
             }
+        } catch (err) {
+            console.error(
+                'Gagal menyimpan produk:',
+                err
+            )
+
+            console.error(
+                'Response Django:',
+                err?.response?.data
+            )
+
+            const message =
+                bacaError(
+                    err,
+                    'Gagal menyimpan data produk.'
+                )
+
+            error.value = message
 
             return {
                 success: false,
-                message: errorMessage
+                message,
+                data:
+                    err?.response?.data ||
+                    null,
             }
         } finally {
-            isLoading.value = false
+            isSaving.value = false
         }
     }
 
-    const deleteProduk = async (id_produk) => {
-        isLoading.value = true
-        try {
-            await api.delete(`master/produk/${id_produk}/`)
-            await fetchProduk()
-            return { success: true }
-        } catch (err) {
-            console.error("Gagal menghapus produk:", err)
-            let errorMessage = "Gagal menghapus data dari server."
-            if (err.response?.data) {
-                errorMessage = err.response.data.detail || err.response.data.message || errorMessage
+    const deleteProduk = async (idProduk) => {
+        if (!idProduk) {
+            const message =
+                'ID produk tidak ditemukan.'
+
+            error.value = message
+
+            return {
+                success: false,
+                message,
             }
-            return { success: false, message: errorMessage }
+        }
+
+        isDeleting.value = true
+        error.value = ''
+
+        try {
+            await api.delete(
+                `master/produk/${idProduk}/`
+            )
+
+            await fetchProduk()
+
+            return {
+                success: true,
+            }
+        } catch (err) {
+            console.error(
+                'Gagal menghapus produk:',
+                err
+            )
+
+            const message =
+                bacaError(
+                    err,
+                    'Gagal menghapus data produk.'
+                )
+
+            error.value = message
+
+            return {
+                success: false,
+                message,
+                data:
+                    err?.response?.data ||
+                    null,
+            }
         } finally {
-            isLoading.value = false
+            isDeleting.value = false
         }
     }
 
     const filteredProduk = computed(() => {
-        if (!searchQuery.value) return dataProduk.value
+        const keyword =
+            searchQuery.value
+                .trim()
+                .toLowerCase()
 
-        const lowerCaseQuery = searchQuery.value.toLowerCase()
-        return dataProduk.value.filter(prod => {
-            const nama = (prod.nama || '').toLowerCase()
-            const kode = (prod.kode || '').toLowerCase()
+        if (!keyword) {
+            return dataProduk.value
+        }
 
-            return nama.includes(lowerCaseQuery) || kode.includes(lowerCaseQuery)
-        })
+        return dataProduk.value.filter(
+            (produk) => {
+                const nama =
+                    String(
+                        produk?.nama || ''
+                    ).toLowerCase()
+
+                const kode =
+                    String(
+                        produk?.kode || ''
+                    ).toLowerCase()
+
+                const jenis =
+                    String(
+                        produk?.jenis || ''
+                    ).toLowerCase()
+
+                const satuan =
+                    String(
+                        produk?.satuan_kode || ''
+                    ).toLowerCase()
+
+                return (
+                    nama.includes(keyword) ||
+                    kode.includes(keyword) ||
+                    jenis.includes(keyword) ||
+                    satuan.includes(keyword)
+                )
+            }
+        )
     })
 
     return {
         dataProduk,
         filteredProduk,
         searchQuery,
+
         isLoading,
+        isSaving,
+        isDeleting,
+
         error,
+
         fetchProduk,
         addProduk,
-        deleteProduk
+        deleteProduk,
     }
 }

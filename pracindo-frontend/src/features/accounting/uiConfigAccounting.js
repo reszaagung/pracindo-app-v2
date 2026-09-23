@@ -53,7 +53,7 @@ export const menuInvoice = [
 export const akuntingModul = {
     id: 'akunting',
     nama: 'Input Entry',
-    ringkas: 'Purchase order, faktur, dan pembayaran',
+    ringkas: 'Purchase order, sales order, dan pengeluaran',
     ikon: 'buku',
     rute: '/accounting/input',
     siap: true,
