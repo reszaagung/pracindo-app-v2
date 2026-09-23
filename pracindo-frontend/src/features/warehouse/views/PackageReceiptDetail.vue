@@ -1,126 +1,601 @@
-<!-- features/warehouse/views/PackageReceiptDetail.vue -->
 <template>
-    <div class="flex flex-col w-full animate-fade-in relative">
-        <div v-if="galat" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600 font-medium flex items-start gap-3 shadow-sm">
-            <i class="pi pi-exclamation-triangle mt-0.5"></i>
-            <span>{{ galat }}</span>
-        </div>
+    <CardDetail
+        :loading="sedangProses"
+        :error="galat"
+        :hasData="!!ringkasan"
+        :title="ringkasan?.nomor || 'Memuat...'"
+        :subtitle="
+            ringkasan
+                ? `${ringkasan.suplier || '-'} • PO ${ringkasan.po || '-'} • ${ringkasan.tanggal || '-'}`
+                : ''
+        "
+        backRoute="/warehouse/input/receipt?tab=kemasan"
+        backLabel="Penerimaan Kemasan"
+        :badge="ringkasan?.ada_selisih ? 'Ada Selisih' : 'Sesuai'"
+        :badgeClass="
+            ringkasan?.ada_selisih
+                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        "
+        :badgeIcon="
+            ringkasan?.ada_selisih
+                ? 'pi-exclamation-circle'
+                : 'pi-check-circle'
+        "
+    >
+        <template v-if="ringkasan">
 
-        <!-- Loading State -->
-        <div v-if="sedangProses && !ringkasan" class="flex flex-col items-center justify-center py-12 text-slate-400">
-            <i class="pi pi-spin pi-spinner text-3xl mb-3"></i>
-            <p class="text-sm">Memuat detail penerimaan kemasan...</p>
-        </div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
+                            <i class="pi pi-box text-xs"></i>
+                        </div>
 
-        <template v-else-if="ringkasan">
-            <!-- Header -->
-            <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <p class="text-xs text-slate-400 mb-1">
-                        <router-link to="/warehouse/input/receipt?tab=kemasan" class="hover:text-slate-700 transition-colors">Penerimaan Kemasan</router-link>
-                        <span class="mx-1">/</span>
-                        <span class="text-slate-600 font-semibold">{{ ringkasan.nomor }}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Item
+                        </span>
+                    </div>
+
+                    <p class="text-xl md:text-2xl font-black text-slate-900 mt-3">
+                        {{ totalItem }}
                     </p>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">{{ ringkasan.nomor }}</h2>
-                    <p class="text-xs md:text-sm text-slate-500 mt-1">
-                        {{ ringkasan.suplier }} &bull; PO {{ ringkasan.po }} &bull; {{ ringkasan.tanggal }}
+
+                    <p class="text-[10px] text-slate-400 mt-0.5">
+                        Kemasan diterima
                     </p>
                 </div>
-                <span v-if="ringkasan.ada_selisih"
-                    class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase inline-flex items-center gap-1.5 shadow-sm">
-                    <i class="pi pi-exclamation-circle"></i> Ada Selisih
-                </span>
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                            <i class="pi pi-check text-xs"></i>
+                        </div>
+
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Diterima
+                        </span>
+                    </div>
+
+                    <p class="text-xl md:text-2xl font-black text-emerald-700 mt-3">
+                        {{ angka(totalDiterima) }}
+                    </p>
+
+                    <p class="text-[10px] text-slate-400 mt-0.5">
+                        Total qty kemasan
+                    </p>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+                            <i class="pi pi-times text-xs"></i>
+                        </div>
+
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Ditolak
+                        </span>
+                    </div>
+
+                    <p class="text-xl md:text-2xl font-black text-rose-600 mt-3">
+                        {{ angka(totalDitolak) }}
+                    </p>
+
+                    <p class="text-[10px] text-slate-400 mt-0.5">
+                        Total qty ditolak
+                    </p>
+                </div>
+
+                <div
+                    class="border rounded-2xl p-4 shadow-sm"
+                    :class="
+                        ringkasan.selisih?.length
+                            ? 'bg-amber-50 border-amber-200'
+                            : 'bg-emerald-50 border-emerald-100'
+                    "
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <div
+                            class="w-9 h-9 rounded-xl flex items-center justify-center"
+                            :class="
+                                ringkasan.selisih?.length
+                                    ? 'bg-amber-100 text-amber-600'
+                                    : 'bg-emerald-100 text-emerald-600'
+                            "
+                        >
+                            <i
+                                class="pi text-xs"
+                                :class="
+                                    ringkasan.selisih?.length
+                                        ? 'pi-exclamation-triangle'
+                                        : 'pi-check-circle'
+                                "
+                            ></i>
+                        </div>
+
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-wider"
+                            :class="
+                                ringkasan.selisih?.length
+                                    ? 'text-amber-600'
+                                    : 'text-emerald-600'
+                            "
+                        >
+                            Selisih
+                        </span>
+                    </div>
+
+                    <p
+                        class="text-xl md:text-2xl font-black mt-3"
+                        :class="
+                            ringkasan.selisih?.length
+                                ? 'text-amber-700'
+                                : 'text-emerald-700'
+                        "
+                    >
+                        {{ ringkasan.selisih?.length || 0 }}
+                    </p>
+
+                    <p
+                        class="text-[10px] mt-0.5"
+                        :class="
+                            ringkasan.selisih?.length
+                                ? 'text-amber-600'
+                                : 'text-emerald-600'
+                        "
+                    >
+                        Laporan otomatis
+                    </p>
+                </div>
             </div>
 
-            <!-- Panel 1: Kemasan Diterima -->
-            <div class="bg-white border border-slate-200 rounded-[24px] p-4 md:p-6 shadow-sm w-full mb-6">
-                <h3 class="text-sm font-bold text-slate-800 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
-                    <i class="pi pi-box text-emerald-600"></i> Aset Kemasan Diterima
-                </h3>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-sm table-auto min-w-[50rem]">
-                        <thead class="text-slate-500 bg-slate-50/50">
-                            <tr>
-                                <th class="py-3 px-4 font-semibold rounded-l-xl w-[40%]">Nama Kemasan</th>
-                                <th class="py-3 px-3 font-semibold text-right w-[20%]">Qty Diterima</th>
-                                <th class="py-3 px-3 font-semibold text-right w-[20%]">Ditolak</th>
-                                <th class="py-3 px-4 font-semibold text-right rounded-r-xl w-[20%]">Selisih Qty</th>
+            <section class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden mb-5">
+                <div class="px-4 py-4 md:px-6 md:py-5 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 shrink-0 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                            <i class="pi pi-box text-xs"></i>
+                        </div>
+
+                        <div>
+                            <h3 class="text-sm md:text-base font-bold text-slate-900">
+                                Aset Kemasan Diterima
+                            </h3>
+
+                            <p class="text-[11px] md:text-xs text-slate-500 mt-0.5">
+                                Detail kuantitas kemasan yang tercatat pada transaksi ini.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hidden md:block overflow-x-auto custom-scrollbar">
+                    <table class="w-full min-w-[720px] text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-5 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Nama Kemasan
+                                </th>
+
+                                <th class="px-4 py-3.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider text-right">
+                                    Qty Diterima
+                                </th>
+
+                                <th class="px-4 py-3.5 text-[10px] font-bold text-rose-500 uppercase tracking-wider text-right">
+                                    Ditolak
+                                </th>
+
+                                <th class="px-5 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Selisih Qty
+                                </th>
                             </tr>
                         </thead>
+
                         <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(it, i) in ringkasan.item" :key="i" class="hover:bg-slate-50/50 transition-colors">
-                                <td class="py-3.5 px-4 font-bold text-slate-800">{{ it.nama }}</td>
-                                <td class="py-3.5 px-3 text-right font-medium text-emerald-600">{{ angka(it.diterima) }}</td>
-                                <td class="py-3.5 px-3 text-right text-rose-600 font-medium">{{ angka(it.ditolak) }}</td>
-                                <td class="py-3.5 px-4 text-right font-bold" :class="{ 'text-rose-600': it.selisih !== 0 }">
-                                    {{ it.selisih != null ? angka(it.selisih) : '-' }}
+                            <tr
+                                v-for="(it, i) in ringkasan.item"
+                                :key="it.id ?? i"
+                                class="hover:bg-slate-50/60 transition-colors"
+                            >
+                                <td class="px-5 py-4 align-middle">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 shrink-0 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center">
+                                            <i class="pi pi-box text-[10px]"></i>
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-slate-800 break-words">
+                                                {{ it.nama || '-' }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- Panel 2: Laporan Selisih Otomatis -->
-            <div v-if="ringkasan.selisih?.length" class="bg-white border border-slate-200 rounded-[24px] p-4 md:p-6 shadow-sm w-full">
-                <h3 class="text-sm font-bold text-slate-800 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2">
-                    <i class="pi pi-exclamation-triangle text-amber-600"></i> Laporan Selisih Kemasan Otomatis
-                </h3>
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-sm table-auto min-w-[35rem]">
-                        <thead class="text-slate-500 bg-slate-50/50">
-                            <tr>
-                                <th class="py-3 px-3 font-semibold rounded-l-xl">Nomor</th>
-                                <th class="py-3 px-3 font-semibold">Jenis</th>
-                                <th class="py-3 px-3 font-semibold text-right">Qty</th>
-                                <th class="py-3 px-3 font-semibold text-center">Status</th>
-                                <th class="py-3 px-3 font-semibold rounded-r-xl">Resolusi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="s in ringkasan.selisih" :key="s.nomor" class="hover:bg-slate-50/50 transition-colors">
-                                <td class="py-3.5 px-3 font-bold text-slate-800">{{ s.nomor }}</td>
-                                <td class="py-3.5 px-3 text-slate-600">{{ s.jenis }}</td>
-                                <td class="py-3.5 px-3 text-right font-bold text-rose-600">{{ angka(s.qty) }}</td>
-                                <td class="py-3.5 px-3 text-center">
-                                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide uppercase border bg-amber-50 text-amber-600 border-amber-200">
-                                        {{ s.status }}
+                                <td class="px-4 py-4 text-right align-middle">
+                                    <span class="inline-flex px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-100 text-xs font-bold text-emerald-700">
+                                        {{ angka(it.diterima) }}
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-3 text-slate-600 font-medium">{{ s.resolusi ?? '-' }}</td>
+
+                                <td class="px-4 py-4 text-right align-middle">
+                                    <span
+                                        class="text-xs font-bold"
+                                        :class="Number(it.ditolak) > 0 ? 'text-rose-600' : 'text-slate-400'"
+                                    >
+                                        {{ angka(it.ditolak) }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-4 text-right align-middle">
+                                    <span
+                                        v-if="it.selisih != null"
+                                        class="inline-flex px-2.5 py-1 rounded-lg border text-xs font-bold"
+                                        :class="
+                                            Number(it.selisih) !== 0
+                                                ? 'bg-rose-50 border-rose-100 text-rose-600'
+                                                : 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                                        "
+                                    >
+                                        {{ angka(it.selisih) }}
+                                    </span>
+
+                                    <span
+                                        v-else
+                                        class="text-xs text-slate-400"
+                                    >
+                                        —
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+
+                        <tfoot
+                            v-if="ringkasan.item?.length"
+                            class="bg-slate-50/70 border-t border-slate-200"
+                        >
+                            <tr>
+                                <td class="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                    Total
+                                </td>
+
+                                <td class="px-4 py-3 text-right text-xs font-black text-emerald-700">
+                                    {{ angka(totalDiterima) }}
+                                </td>
+
+                                <td class="px-4 py-3 text-right text-xs font-black text-rose-600">
+                                    {{ angka(totalDitolak) }}
+                                </td>
+
+                                <td class="px-5 py-3 text-right">
+                                    —
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="md:hidden p-3 bg-slate-50/40 space-y-3">
+                    <article
+                        v-for="(it, i) in ringkasan.item"
+                        :key="'mobile-' + (it.id ?? i)"
+                        class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"
+                    >
+                        <div class="p-4 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 shrink-0 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center">
+                                    <i class="pi pi-box text-xs"></i>
+                                </div>
+
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-slate-900 break-words">
+                                        {{ it.nama || '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-emerald-600">
+                                        Diterima
+                                    </p>
+
+                                    <p class="text-sm font-black text-emerald-700 mt-1">
+                                        {{ angka(it.diterima) }}
+                                    </p>
+                                </div>
+
+                                <div class="rounded-xl bg-rose-50 border border-rose-100 p-3">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-rose-500">
+                                        Ditolak
+                                    </p>
+
+                                    <p class="text-sm font-black text-rose-600 mt-1">
+                                        {{ angka(it.ditolak) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div
+                                class="rounded-xl border p-3"
+                                :class="
+                                    Number(it.selisih) !== 0
+                                        ? 'bg-rose-50 border-rose-200'
+                                        : 'bg-emerald-50 border-emerald-100'
+                                "
+                            >
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p
+                                            class="text-[9px] font-bold uppercase tracking-wider"
+                                            :class="
+                                                Number(it.selisih) !== 0
+                                                    ? 'text-rose-500'
+                                                    : 'text-emerald-600'
+                                            "
+                                        >
+                                            Selisih Qty
+                                        </p>
+
+                                        <p
+                                            class="text-[10px] mt-0.5"
+                                            :class="
+                                                Number(it.selisih) !== 0
+                                                    ? 'text-rose-500'
+                                                    : 'text-emerald-600'
+                                            "
+                                        >
+                                            {{
+                                                Number(it.selisih) !== 0
+                                                    ? 'Perlu perhatian'
+                                                    : 'Sesuai'
+                                            }}
+                                        </p>
+                                    </div>
+
+                                    <span
+                                        class="text-sm font-black"
+                                        :class="
+                                            Number(it.selisih) !== 0
+                                                ? 'text-rose-600'
+                                                : 'text-emerald-700'
+                                        "
+                                    >
+                                        {{ it.selisih != null ? angka(it.selisih) : '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-emerald-600">
+                                Total Diterima
+                            </p>
+
+                            <p class="text-sm font-black text-emerald-700 mt-1">
+                                {{ angka(totalDiterima) }}
+                            </p>
+                        </div>
+
+                        <div class="rounded-xl bg-rose-50 border border-rose-100 p-3">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-rose-500">
+                                Total Ditolak
+                            </p>
+
+                            <p class="text-sm font-black text-rose-600 mt-1">
+                                {{ angka(totalDitolak) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section
+                v-if="ringkasan.selisih?.length"
+                class="bg-white border border-amber-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
+            >
+                <div class="px-4 py-4 md:px-6 md:py-5 bg-amber-50/70 border-b border-amber-100">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 shrink-0 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <i class="pi pi-exclamation-triangle text-sm"></i>
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-sm md:text-base font-bold text-amber-950">
+                                    Laporan Selisih Kemasan
+                                </h3>
+
+                                <span class="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-amber-200 text-amber-800 text-[10px] font-black">
+                                    {{ ringkasan.selisih.length }}
+                                </span>
+                            </div>
+
+                            <p class="text-[11px] md:text-xs text-amber-700 mt-1 leading-relaxed">
+                                Laporan diterbitkan otomatis berdasarkan hasil penerimaan.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hidden md:block overflow-x-auto custom-scrollbar">
+                    <table class="w-full min-w-[720px] text-left">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-5 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Nomor
+                                </th>
+
+                                <th class="px-4 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Jenis
+                                </th>
+
+                                <th class="px-4 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">
+                                    Qty
+                                </th>
+
+                                <th class="px-4 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+
+                                <th class="px-5 py-3.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    Resolusi
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-slate-100">
+                            <tr
+                                v-for="(s, i) in ringkasan.selisih"
+                                :key="s.nomor ?? i"
+                                class="hover:bg-slate-50/60 transition-colors"
+                            >
+                                <td class="px-5 py-4 text-xs font-bold text-slate-800">
+                                    {{ s.nomor || '-' }}
+                                </td>
+
+                                <td class="px-4 py-4 text-xs text-slate-600">
+                                    {{ s.jenis || '-' }}
+                                </td>
+
+                                <td class="px-4 py-4 text-right">
+                                    <span class="text-xs font-black text-rose-600">
+                                        {{ angka(s.qty) }}
+                                    </span>
+                                </td>
+
+                                <td class="px-4 py-4">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-bold uppercase tracking-wide">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        {{ s.status || 'Terbuka' }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-4 text-xs font-medium text-slate-600">
+                                    {{ s.resolusi || '-' }}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+
+                <div class="md:hidden p-3 bg-slate-50/40 space-y-3">
+                    <article
+                        v-for="(s, i) in ringkasan.selisih"
+                        :key="'mobile-selisih-' + (s.nomor ?? i)"
+                        class="rounded-2xl bg-white border border-slate-200 shadow-sm p-4"
+                    >
+                        <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                            <div class="min-w-0">
+                                <p class="text-xs font-black text-slate-900 break-all">
+                                    {{ s.nomor || '-' }}
+                                </p>
+
+                                <p class="text-[10px] text-slate-400 mt-1">
+                                    {{ s.jenis || '-' }}
+                                </p>
+                            </div>
+
+                            <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-bold uppercase">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                {{ s.status || 'Terbuka' }}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div class="rounded-xl bg-rose-50 border border-rose-100 p-3">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-rose-500">
+                                    Qty Selisih
+                                </p>
+
+                                <p class="text-sm font-black text-rose-600 mt-1">
+                                    {{ angka(s.qty) }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                    Resolusi
+                                </p>
+
+                                <p class="text-xs font-bold text-slate-700 mt-1 break-words">
+                                    {{ s.resolusi || '-' }}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
         </template>
-    </div>
+    </CardDetail>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { usePackageReceipt } from '../composables/usePackageReceipt' // Sambungkan ke composable
-import { angka } from '@/utils/format' // Gunakan utils format bawaan Anda
+import { computed, onMounted } from 'vue'
+import CardDetail from '../components/ui/CardDetail.vue'
+import { usePackageReceipt } from '../composables/usePackageReceipt'
+import { angka } from '@/utils/format'
 
 const props = defineProps({
-    id: { type: [String, Number], required: true }
+    id: {
+        type: [String, Number],
+        required: true,
+    },
 })
 
-const { ringkasan, sedangProses, galat, muatRingkasan } = usePackageReceipt()
+const {
+    ringkasan,
+    sedangProses,
+    galat,
+    muatRingkasan,
+} = usePackageReceipt()
+
+const totalItem = computed(() => {
+    return ringkasan.value?.item?.length || 0
+})
+
+const totalDiterima = computed(() => {
+    return (ringkasan.value?.item || []).reduce(
+        (total, item) => total + (Number(item.diterima) || 0),
+        0
+    )
+})
+
+const totalDitolak = computed(() => {
+    return (ringkasan.value?.item || []).reduce(
+        (total, item) => total + (Number(item.ditolak) || 0),
+        0
+    )
+})
 
 onMounted(() => {
-    muatRingkasan(props.id) // Tarik data sungguhan dari API
+    muatRingkasan(props.id)
 })
 </script>
 
 <style scoped>
-.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
-.custom-scrollbar::-webkit-scrollbar { height: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
 </style>

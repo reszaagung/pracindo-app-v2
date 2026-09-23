@@ -4,47 +4,55 @@ import { useRoute } from 'vue-router'
 const judulHeader = ref('Input Entry')
 const breadcrumb = ref('')
 
+const menus = [
+    {
+        id: 'goods-receipt',
+        label: 'Penerimaan',
+        ikon: 'pi-download',
+        rute: '/warehouse/input/receipt',
+        activate: true,
+    },
+    {
+        id: 'packing',
+        label: 'Input Packing',
+        ikon: 'pi-box',
+        rute: '/warehouse/input/packing',
+        activate: true,
+    },
+    {
+        id: 'discrepancy',
+        label: 'Selisih / Retur',
+        ikon: 'pi-exclamation-triangle',
+        rute: '/warehouse/input/discrepancy',
+        activate: true,
+    },
+    {
+        id: 'qc',
+        label: 'Inspeksi QC',
+        ikon: 'pi-check-square',
+        rute: '/warehouse/input/qc',
+        activate: true,
+    },
+]
+
 export function useNavInputEntry() {
     const route = useRoute()
-    
-    const menus = [
-        {
-            id: 'goods-receipt',
-            label: 'Penerimaan',
-            ikon: 'pi-download',
-            rute: '/warehouse/input/receipt',
-            activate: true
-        },
-        {
-            id: 'packing',
-            label: 'Input Packing',
-            ikon: 'pi-box',
-            rute: '/warehouse/input/packing',
-            activate: true
-        },
-        {
-            id: 'discrepancy',
-            label: 'Selisih / Retur',
-            ikon: 'pi-exclamation-triangle',
-            rute: '/warehouse/input/discrepancy',
-            activate: true
-        },
-        {
-            id: 'qc',
-            label: 'Inspeksi QC',
-            ikon: 'pi-check-square',
-            rute: '/warehouse/input/qc',
-            activate: true
-        }
-    ]
 
     const aktif = (path) => {
-        return computed(() => route.path.startsWith(path)).value
+        return computed(() => {
+            const currentPath = route.path
+            const normalizedPath = path.replace(/\/+$/, '')
+
+            return (
+                currentPath === normalizedPath ||
+                currentPath.startsWith(`${normalizedPath}/`)
+            )
+        })
     }
 
     const setNavInfo = (judulBaru, breadcrumbBaru = '') => {
-        judulHeader.value = judulBaru
-        breadcrumb.value = breadcrumbBaru
+        judulHeader.value = judulBaru || 'Input Entry'
+        breadcrumb.value = breadcrumbBaru || ''
     }
 
     const resetNav = () => {
@@ -58,6 +66,6 @@ export function useNavInputEntry() {
         judulHeader,
         breadcrumb,
         setNavInfo,
-        resetNav
+        resetNav,
     }
 }

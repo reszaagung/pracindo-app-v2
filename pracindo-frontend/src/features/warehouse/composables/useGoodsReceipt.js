@@ -1,7 +1,21 @@
-// src/features/warehouse/composables/useGoodsReceipt.js
 import { ref } from 'vue'
-import api from '@/utils/api'
+import warehouseApi from '../api'
 import { bacaError } from '@/utils/error'
+
+const isValidId = (id) => {
+    if (id === null || id === undefined || id === '') {
+        return false
+    }
+
+    const value = String(id).trim()
+    return value !== '' && value !== 'undefined' && value !== 'null'
+}
+
+const normalizeList = (data) => {
+    if (Array.isArray(data)) return data
+    if (Array.isArray(data?.results)) return data.results
+    return []
+}
 
 export function useGoodsReceipt() {
     const daftarPOSiapTerima = ref([])
@@ -10,68 +24,145 @@ export function useGoodsReceipt() {
     const sedangProses = ref(false)
     const galat = ref('')
 
-    const muatPOSiapTerima = async (params = {}) => {
+    let jumlahRequestAktif = 0
+
+    const mulaiRequest = () => {
+        jumlahRequestAktif += 1
         sedangProses.value = true
+    }
+
+    const selesaiRequest = () => {
+        jumlahRequestAktif = Math.max(0, jumlahRequestAktif - 1)
+        sedangProses.value = jumlahRequestAktif > 0
+    }
+
+    const bersihkanError = () => {
         galat.value = ''
+    }
+
+    const setError = (err, fallback) => {
+        galat.value = bacaError(err, fallback)
+    }
+
+    const muatPOSiapTerima = async (params = {}) => {
+        mulaiRequest()
+
         try {
-            const { data } = await api.get('warehouse/po-siap-terima/', { params })
-            daftarPOSiapTerima.value = data.results || data || []
+            const response = await warehouseApi.getPOSiapTerima(params)
+            daftarPOSiapTerima.value = normalizeList(response?.data)
         } catch (err) {
-            galat.value = bacaError(err, 'Gagal memuat PO siap terima.')
+            setError(err, 'Gagal memuat PO siap terima.')
         } finally {
-            sedangProses.value = false
+            selesaiRequest()
         }
     }
 
     const muatPenerimaan = async (params = {}) => {
-        sedangProses.value = true
-        galat.value = ''
+        mulaiRequest()
+
         try {
-            const { data } = await api.get('warehouse/penerimaan/', { params })
-            daftarPenerimaan.value = data.results || data || []
+            const response = await warehouseApi.getPenerimaan(params)
+            daftarPenerimaan.value = normalizeList(response?.data)
         } catch (err) {
-            galat.value = bacaError(err, 'Gagal memuat daftar penerimaan.')
+            setError(err, 'Gagal memuat daftar penerimaan.')
         } finally {
-            sedangProses.value = false
+            selesaiRequest()
         }
     }
 
     const muatRingkasan = async (id) => {
-        // PERLINDUNGAN: Cegah request jika ID kosong atau bernilai 'undefined'
-        if (!id || id === 'undefined' || id === 'null') {
-            console.warn('muatRingkasan dibatalkan: ID tidak valid atau undefined.')
+        if (!isValidId(id)) {
+            console.warn(
+                '[useGoodsReceipt] muatRingkasan dibatalkan: ID tidak valid.',
+                id
+            )
+
             ringkasan.value = null
-            return
+
+            return {
+                success: false,
+                message: 'ID penerimaan tidak valid.',
+            }
         }
 
-        sedangProses.value = true
-        galat.value = ''
+        mulaiRequest()
+        bersihkanError()
+
         try {
-            const { data } = await api.get(`warehouse/penerimaan/${id}/ringkasan/`)
-            ringkasan.value = data
+            const response = await warehouseApi.getRingkasanPenerimaan(id)
+            ringkasan.value = response?.data ?? null
+
+            return {
+                success: true,
+                data: ringkasan.value,
+            }
         } catch (err) {
-            galat.value = bacaError(err, 'Gagal memuat ringkasan penerimaan.')
+            setError(err, 'Gagal memuat ringkasan penerimaan.')
+
+            return {
+                success: false,
+                data: null,
+                message: galat.value,
+            }
         } finally {
-            sedangProses.value = false
+            selesaiRequest()
         }
     }
 
     const simpanPenerimaan = async (payload) => {
-        sedangProses.value = true
-        galat.value = ''
+        mulaiRequest()
+        bersihkanError()
+
         try {
-            const response = await api.post('warehouse/penerimaan/', payload)
-            return { success: true, data: response.data }
+            const response = await warehouseApi.simpanPenerimaan(payload)
+
+            return {
+                success: true,
+                data: response?.data ?? null,
+            }
         } catch (err) {
-            galat.value = bacaError(err, 'Gagal menyimpan penerimaan.')
-            return { success: false, message: galat.value }
+            setError(err, 'Gagal menyimpan penerimaan.')
+
+            return {
+                success: false,
+                data: null,
+                message: galat.value,
+            }
         } finally {
-            sedangProses.value = false
+            selesaiRequest()
         }
     }
 
+    const muatSemua = async (paramsPenerimaan = {}) => {
+        bersihkanError()
+
+        await Promise.all([
+            muatPenerimaan(paramsPenerimaan),
+            muatPOSiapTerima(),
+        ])
+    }
+
+    const reset = () => {
+        daftarPOSiapTerima.value = []
+        daftarPenerimaan.value = []
+        ringkasan.value = null
+        galat.value = ''
+        jumlahRequestAktif = 0
+        sedangProses.value = false
+    }
+
     return {
-        daftarPOSiapTerima, daftarPenerimaan, ringkasan, sedangProses, galat,
-        muatPOSiapTerima, muatPenerimaan, muatRingkasan, simpanPenerimaan,
+        daftarPOSiapTerima,
+        daftarPenerimaan,
+        ringkasan,
+        sedangProses,
+        galat,
+        muatPOSiapTerima,
+        muatPenerimaan,
+        muatSemua,
+        muatRingkasan,
+        simpanPenerimaan,
+        reset,
+        bersihkanError,
     }
 }

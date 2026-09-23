@@ -1,37 +1,60 @@
-import { useRoute } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useNavInputEntry } from './useNavInputEntry'
 
-export function useNavDistribution() {
+const TAB_BAHAN_BAKU = 'bahan_baku'
+const TAB_KEMASAN = 'kemasan'
+
+export function useReceiptIndex() {
     const route = useRoute()
-    const menus = [
-        {
-            id: 'packaging',
-            label: 'Pengemasan',
-            ikon: 'pi-box',
-            rute: '/warehouse/distribution/packaging',
-            activate: true
-        },
-        {
-            id: 'log-packaging',
-            label: 'Riwayat Kemas',
-            ikon: 'pi-history', 
-            rute: '/warehouse/distribution/logs',
-            activate: true
-        },
-        {
-            id: 'dispatch',
-            label: 'Pengiriman', 
-            ikon: 'pi-truck',
-            rute: '/warehouse/distribution/dispatch',
-            activate: true 
-        }
-    ]
+    const router = useRouter()
+    const { setNavInfo, resetNav } = useNavInputEntry()
 
-    const aktif = (path) => {
-        return route.path.startsWith(path)
+    const getTabFromRoute = () => {
+        return route.query.tab === TAB_KEMASAN
+            ? TAB_KEMASAN
+            : TAB_BAHAN_BAKU
     }
 
+    const tabAktif = ref(getTabFromRoute())
+
+    const ubahTab = async (tabBaru) => {
+        const tabValid = [TAB_BAHAN_BAKU, TAB_KEMASAN].includes(tabBaru)
+
+        if (!tabValid || tabAktif.value === tabBaru) {
+            return
+        }
+
+        tabAktif.value = tabBaru
+
+        await router.replace({
+            query: {
+                ...route.query,
+                tab: tabBaru,
+            },
+        })
+    }
+
+    watch(
+        () => route.query.tab,
+        () => {
+            tabAktif.value = getTabFromRoute()
+        }
+    )
+
+    onMounted(() => {
+        setNavInfo(
+            'Penerimaan Barang',
+            'Warehouse > Penerimaan > Index'
+        )
+    })
+
+    onUnmounted(() => {
+        resetNav()
+    })
+
     return {
-        menus,
-        aktif
+        tabAktif,
+        ubahTab,
     }
 }
