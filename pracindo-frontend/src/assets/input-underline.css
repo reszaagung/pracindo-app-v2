@@ -1,0 +1,261 @@
+/* =========================================================
+   PRACINDO — GLOBAL UNDERLINE INPUT DESIGN
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   NATIVE INPUT
+   --------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background-color .18s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — INPUT TEXT / TEXTAREA
+   --------------------------------------------------------- */
+.p-inputtext,
+.p-textarea {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.p-inputtext:enabled:focus,
+.p-textarea:enabled:focus {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — INPUT NUMBER
+   --------------------------------------------------------- */
+.p-inputnumber {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-inputnumber-input {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-inputnumber-input:enabled:focus {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — SELECT
+   --------------------------------------------------------- */
+.p-select {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-select:not(.p-disabled).p-focus,
+.p-select:not(.p-disabled):focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — MULTISELECT
+   --------------------------------------------------------- */
+.p-multiselect {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-multiselect:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled):focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — CASCADE SELECT
+   --------------------------------------------------------- */
+.p-cascadeselect {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-cascadeselect:not(.p-disabled).p-focus,
+.p-cascadeselect:not(.p-disabled):focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — DATEPICKER
+   --------------------------------------------------------- */
+.p-datepicker {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-datepicker:focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+.p-datepicker-input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — AUTOCOMPLETE
+   --------------------------------------------------------- */
+.p-autocomplete {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-autocomplete:focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+.p-autocomplete-input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   PRIMEVUE — PASSWORD
+   --------------------------------------------------------- */
+.p-password {
+    border: 0 !important;
+    border-bottom: 1.5px solid var(--input-border, #cbd5e1) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.p-password:focus-within {
+    border-bottom-color: var(--input-focus, #2563eb) !important;
+    box-shadow: 0 1px 0 0 var(--input-focus, #2563eb) !important;
+}
+
+.p-password-input {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------
+   READONLY
+   --------------------------------------------------------- */
+input[readonly],
+textarea[readonly],
+.p-inputtext[readonly],
+.p-inputnumber-input[readonly] {
+    border-bottom-style: dashed !important;
+    opacity: .8;
+}
+
+/* ---------------------------------------------------------
+   DISABLED
+   --------------------------------------------------------- */
+input:disabled,
+textarea:disabled,
+select:disabled,
+.p-inputtext:disabled,
+.p-inputnumber-input:disabled,
+.p-select.p-disabled,
+.p-multiselect.p-disabled,
+.p-datepicker.p-disabled,
+.p-autocomplete.p-disabled,
+.p-password.p-disabled {
+    opacity: .55 !important;
+    cursor: not-allowed !important;
+}
+
+/* ---------------------------------------------------------
+   PLACEHOLDER
+   --------------------------------------------------------- */
+input::placeholder,
+textarea::placeholder,
+.p-inputtext::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+/* =========================================================
+   HILANGKAN SEMUA SPINNER / INCREMENT-DECREMENT BUTTON
+   ========================================================= */
+
+/* PrimeVue InputNumber */
+.p-inputnumber-button-group,
+.p-inputnumber-button,
+.p-inputnumber .p-button {
+    display: none !important;
+}
+
+/* Pastikan InputNumber tetap full width setelah tombol hilang */
+.p-inputnumber {
+    width: 100%;
+}
+
+.p-inputnumber-input {
+    width: 100% !important;
+}
+
+/* Native number input — Chrome / Edge / Safari */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Native number input — Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
