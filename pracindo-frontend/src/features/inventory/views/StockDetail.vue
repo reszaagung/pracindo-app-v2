@@ -619,3 +619,158 @@
         </div>
     </div>
 </template>
+
+
+<script setup>
+import {
+    onMounted,
+    watch,
+} from 'vue'
+
+import {
+    useRoute,
+} from 'vue-router'
+
+import {
+    useStock,
+} from '../composables/useStock'
+
+import {
+    angka,
+} from '@/utils/format'
+
+
+const route = useRoute()
+
+const {
+    stokDetail,
+    daftarMutasi,
+    galat,
+    muatStokDetail,
+    muatMutasi,
+} = useStock()
+
+
+/* =========================================================
+   TANGGAL
+========================================================= */
+
+const tanggal = (nilai) => {
+    if (!nilai) {
+        return '—'
+    }
+
+    const date = new Date(nilai)
+
+    if (Number.isNaN(date.getTime())) {
+        return nilai
+    }
+
+    return date.toLocaleString(
+        'id-ID',
+        {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }
+    )
+}
+
+
+/* =========================================================
+   MUAT DATA
+========================================================= */
+
+const muatData = async () => {
+    const id = route.params.id
+
+    if (!id) {
+        return
+    }
+
+    await Promise.all([
+        muatStokDetail(id),
+        muatMutasi({
+            stok: id,
+        }),
+    ])
+}
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+onMounted(() => {
+    muatData()
+})
+
+
+/* =========================================================
+   ROUTE CHANGE
+========================================================= */
+
+watch(
+    () => route.params.id,
+    (id, idLama) => {
+        if (
+            id &&
+            id !== idLama
+        ) {
+            muatData()
+        }
+    }
+)
+</script>
+
+
+<style scoped>
+.animate-fade-in {
+    animation: fadeIn 0.35s ease-out forwards;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    height: 7px;
+    width: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+</style>

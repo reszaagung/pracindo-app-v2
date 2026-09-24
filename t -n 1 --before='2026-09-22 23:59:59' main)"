@@ -1,0 +1,64 @@
+[1mdiff --git a/pracindo-frontend/package.json b/pracindo-frontend/package.json[m
+[1mindex 7895f280..15818bdd 100644[m
+[1m--- a/pracindo-frontend/package.json[m
+[1m+++ b/pracindo-frontend/package.json[m
+[36m@@ -14,7 +14,7 @@[m
+     "format": "oxfmt src/"[m
+   },[m
+   "dependencies": {[m
+[31m-    "@primeicons/vue": "^8.0.1",[m
+[32m+[m[32m    "@primeicons/vue": "^8.0.2",[m
+     "@primevue/themes": "^4.5.4",[m
+     "@tailwindcss/vite": "^4.3.3",[m
+     "axios": "^1.19.0",[m
+[36m@@ -23,31 +23,31 @@[m
+     "jsencrypt": "^3.5.4",[m
+     "nprogress": "^0.2.0",[m
+     "pinia": "^3.0.4",[m
+[31m-    "primeicons": "^8.0.0",[m
+[32m+[m[32m    "primeicons": "^8.0.2",[m
+     "primevue": "^4.5.5",[m
+[31m-    "vue": "^3.5.38",[m
+[32m+[m[32m    "vue": "^3.5.43",[m
+     "vue-chartjs": "^5.3.4",[m
+[31m-    "vue-router": "^5.1.0"[m
+[32m+[m[32m    "vue-router": "^5.3.1"[m
+   },[m
+   "devDependencies": {[m
+     "@eslint/js": "^10.0.1",[m
+[31m-    "@vitejs/plugin-vue": "^6.0.7",[m
+[32m+[m[32m    "@vitejs/plugin-vue": "^6.0.9",[m
+     "@vitejs/plugin-vue-jsx": "^5.1.5",[m
+     "@vitest/eslint-plugin": "^1.6.20",[m
+[31m-    "@vue/test-utils": "^2.2.7",[m
+[31m-    "autoprefixer": "^10.5.4",[m
+[31m-    "eslint": "^10.5.0",[m
+[32m+[m[32m    "@vue/test-utils": "^2.5.1",[m
+[32m+[m[32m    "autoprefixer": "^10.6.1",[m
+[32m+[m[32m    "eslint": "^10.11.0",[m
+     "eslint-config-prettier": "^10.1.8",[m
+     "eslint-plugin-oxlint": "~1.69.0",[m
+[31m-    "eslint-plugin-vue": "~10.9.2",[m
+[31m-    "globals": "^17.6.0",[m
+[32m+[m[32m    "eslint-plugin-vue": "^10.11.0",[m
+[32m+[m[32m    "globals": "^17.12.0",[m
+     "jsdom": "^29.1.1",[m
+     "npm-run-all2": "^9.0.2",[m
+     "oxfmt": "^0.54.0",[m
+     "oxlint": "~1.69.0",[m
+[31m-    "postcss": "^8.5.26",[m
+[32m+[m[32m    "postcss": "^8.5.28",[m
+     "tailwindcss": "^4.3.3",[m
+[31m-    "vite": "^8.0.16",[m
+[32m+[m[32m    "vite": "^8.3.0",[m
+     "vite-plugin-vue-devtools": "^8.2.1",[m
+     "vitest": "^4.1.9",[m
+     "vue-eslint-parser": "^10.4.1"[m
+[36m@@ -57,6 +57,6 @@[m
+   },[m
+   "overrides": {[m
+     "minimatch": "^9.0.5",[m
+[31m-    "brace-expansion": "2.0.1"[m
+[32m+[m[32m    "brace-expansion": "2.1.4"[m
+   }[m
+ }[m

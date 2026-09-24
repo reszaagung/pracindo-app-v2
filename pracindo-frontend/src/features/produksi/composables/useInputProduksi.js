@@ -20,7 +20,6 @@ const JENIS = {
 
 export function useInputProduksi() {
   const mode = ref('list')
-  const jenisProduksi = ref(JENIS.MIXING)
   const editingBatchId = ref(null)
 
   const loadingList = ref(false)
@@ -54,6 +53,73 @@ export function useInputProduksi() {
   let seqBom = 0
   let seqWip = 0
 
+  // =========================================================
+  // JENIS PROSES
+  // =========================================================
+  //
+  // JENIS TIDAK DISIMPAN SEBAGAI INPUT.
+  // JENIS DITENTUKAN DARI KODE TANGKI TUJUAN.
+  //
+  // TK-BLD-*  -> BLENDING
+  // TK-MIX-*  -> MIXING
+  // =========================================================
+
+  function normalisasiKodeTangki(tangki) {
+    return String(
+      tangki?.kode ??
+      tangki?.nama ??
+      ''
+    )
+      .trim()
+      .toUpperCase()
+  }
+
+  function tentukanJenisDariTangki(tangki) {
+    const kode =
+      normalisasiKodeTangki(tangki)
+
+    if (
+      kode.startsWith('TK-BLD-')
+    ) {
+      return JENIS.BLENDING
+    }
+
+    if (
+      kode.startsWith('TK-MIX-')
+    ) {
+      return JENIS.MIXING
+    }
+
+    return ''
+  }
+
+  const jenisProduksi = computed(() => {
+    const tangki =
+      daftarTangki.value.find(
+        (t) =>
+          String(t.id) ===
+          String(form.tangki_tujuan)
+      )
+
+    return tentukanJenisDariTangki(
+      tangki
+    )
+  })
+
+  const isBlending = computed(() =>
+    jenisProduksi.value ===
+    JENIS.BLENDING
+  )
+
+  const isMixing = computed(() =>
+    jenisProduksi.value ===
+    JENIS.MIXING
+  )
+
+  // =========================================================
+  // ROW BOM
+  // =========================================================
+
   function buatBarisBom() {
     seqBom += 1
 
@@ -66,6 +132,14 @@ export function useInputProduksi() {
       subtotal: 0
     }
   }
+
+  // =========================================================
+  // ROW WIP
+  // =========================================================
+  //
+  // WIP TIDAK MEMILIKI BATCH SUMBER.
+  // SUMBER HANYA TANGKI.
+  // =========================================================
 
   function buatBarisWip() {
     seqWip += 1
@@ -81,9 +155,14 @@ export function useInputProduksi() {
     }
   }
 
+  // =========================================================
+  // LOAD TANGKI
+  // =========================================================
+
   async function muatTangki() {
     try {
-      const res = await apiTangki.daftar()
+      const res =
+        await apiTangki.daftar()
 
       const list =
         res?.results ??
@@ -92,40 +171,61 @@ export function useInputProduksi() {
         res ??
         []
 
-      daftarTangki.value = Array.isArray(list)
-        ? list.map((t) => {
-            const saldoKg =
-              Number(t.saldo_kg ?? 0)
+      daftarTangki.value =
+        Array.isArray(list)
+          ? list.map((t) => {
+              const saldoKg =
+                Number(
+                  t.saldo_kg ?? 0
+                )
 
-            const saldoNilai =
-              Number(t.saldo_nilai ?? 0)
+              const saldoNilai =
+                Number(
+                  t.saldo_nilai ?? 0
+                )
 
-            const harga =
-              saldoKg > 0
-                ? Number(
-                    t.harga_per_kg ??
-                    saldoNilai / saldoKg
-                  )
-                : 0
+              const harga =
+                saldoKg > 0
+                  ? Number(
+                      t.harga_per_kg ??
+                      (
+                        saldoNilai /
+                        saldoKg
+                      )
+                    )
+                  : 0
 
-            return {
-              ...t,
-              saldo_kg: saldoKg,
-              saldo_nilai: saldoNilai,
-              harga_per_kg: harga,
-              nama_hasil:
-                t.nama_hasil ||
-                t.isi_saat_ini ||
-                ''
-            }
-          })
-        : []
+              return {
+                ...t,
+
+                saldo_kg:
+                  saldoKg,
+
+                saldo_nilai:
+                  saldoNilai,
+
+                harga_per_kg:
+                  harga,
+
+                nama_hasil:
+                  t.nama_hasil ||
+                  t.isi_saat_ini ||
+                  ''
+              }
+            })
+          : []
+
     } catch (error) {
       console.error(error)
+
       errorMsg.value =
         'Gagal memuat daftar tangki'
     }
   }
+
+  // =========================================================
+  // LOAD RAW POOL
+  // =========================================================
 
   async function muatRawPool() {
     try {
@@ -140,26 +240,36 @@ export function useInputProduksi() {
         res ??
         []
 
-      daftarRaw.value = Array.isArray(list)
-        ? list
-            .filter(
-              (item) =>
-                Number(item.qty_kg) > 0
-            )
-            .map((item) => ({
-              ...item,
-              raw:
-                item.produk_id ??
-                item.raw ??
-                item.produk
-            }))
-        : []
+      daftarRaw.value =
+        Array.isArray(list)
+          ? list
+              .filter(
+                (item) =>
+                  Number(
+                    item.qty_kg
+                  ) > 0
+              )
+              .map((item) => ({
+                ...item,
+
+                raw:
+                  item.produk_id ??
+                  item.raw ??
+                  item.produk
+              }))
+          : []
+
     } catch (error) {
       console.error(error)
+
       errorMsg.value =
         'Gagal memuat saldo bahan baku'
     }
   }
+
+  // =========================================================
+  // LOAD DAFTAR BATCH
+  // =========================================================
 
   async function muatDaftarBatch() {
     loadingList.value = true
@@ -167,20 +277,32 @@ export function useInputProduksi() {
     try {
       const params = {}
 
+      /*
+       * Filter jenis masih boleh dipakai
+       * untuk LIST jika backend mendukung.
+       *
+       * Ini bukan field produksi.
+       */
+
       if (filter.jenis) {
-        params.jenis = filter.jenis
+        params.jenis =
+          filter.jenis
       }
 
       if (filter.tangki) {
-        params.tangki = filter.tangki
+        params.tangki =
+          filter.tangki
       }
 
       if (filter.search) {
-        params.search = filter.search
+        params.search =
+          filter.search
       }
 
       const res =
-        await apiBatch.daftar(params)
+        await apiBatch.daftar(
+          params
+        )
 
       daftarBatch.value =
         res?.results ??
@@ -188,14 +310,21 @@ export function useInputProduksi() {
         res?.data ??
         res ??
         []
+
     } catch (error) {
       console.error(error)
+
       errorMsg.value =
         'Gagal memuat daftar batch produksi'
+
     } finally {
       loadingList.value = false
     }
   }
+
+  // =========================================================
+  // INIT
+  // =========================================================
 
   async function initHalaman() {
     await Promise.all([
@@ -204,43 +333,100 @@ export function useInputProduksi() {
     ])
   }
 
+  // =========================================================
+  // PILIH TANGKI TUJUAN
+  // =========================================================
+
   function saatTangkiTujuanDipilih() {
     const tangki =
       daftarTangki.value.find(
         (t) =>
           String(t.id) ===
-          String(form.tangki_tujuan)
+          String(
+            form.tangki_tujuan
+          )
       )
 
     if (!tangki) {
       form.nama_hasil = ''
-      isNamaHasilReadonly.value = false
+
+      isNamaHasilReadonly.value =
+        false
+
+      wipRows.value = []
+
       return
     }
+
+    const jenis =
+      tentukanJenisDariTangki(
+        tangki
+      )
 
     const namaHasil =
       tangki.nama_hasil ||
       tangki.isi_saat_ini ||
       ''
 
+    // =======================================================
+    // NAMA HASIL
+    // =======================================================
+
     if (
-      Number(tangki.saldo_kg) > 0 &&
+      Number(
+        tangki.saldo_kg
+      ) > 0 &&
       namaHasil
     ) {
-      form.nama_hasil = namaHasil
-      isNamaHasilReadonly.value = true
+      form.nama_hasil =
+        namaHasil
+
+      isNamaHasilReadonly.value =
+        true
     } else {
       form.nama_hasil = ''
-      isNamaHasilReadonly.value = false
+
+      isNamaHasilReadonly.value =
+        false
     }
 
-    const tujuanId =
-      String(form.tangki_tujuan)
+    // =======================================================
+    // WIP BERDASARKAN JENIS TANGKI
+    // =======================================================
 
-    for (const row of wipRows.value) {
+    if (
+      jenis === JENIS.BLENDING
+    ) {
+      if (
+        wipRows.value.length ===
+        0
+      ) {
+        wipRows.value = [
+          buatBarisWip()
+        ]
+      }
+    } else {
+      wipRows.value = []
+    }
+
+    // =======================================================
+    // TANGKI TUJUAN TIDAK BOLEH JADI SUMBER
+    // =======================================================
+
+    const tujuanId =
+      String(
+        form.tangki_tujuan
+      )
+
+    for (
+      const row of
+      wipRows.value
+    ) {
       if (
         row.tangki_asal &&
-        String(row.tangki_asal) === tujuanId
+        String(
+          row.tangki_asal
+        ) === tujuanId
       ) {
         row.tangki_asal = ''
         row.nama_hasil = ''
@@ -252,117 +438,186 @@ export function useInputProduksi() {
     }
   }
 
-  const opsiTangkiSumber = computed(() => {
-    const tujuanId =
-      String(form.tangki_tujuan || '')
+  // =========================================================
+  // OPSI TANGKI SUMBER
+  // =========================================================
 
-    const terpakai =
-      new Set(
-        wipRows.value
-          .map((row) =>
-            row.tangki_asal
-              ? String(row.tangki_asal)
-              : null
-          )
-          .filter(Boolean)
-      )
-
-    return daftarTangki.value
-      .filter((t) => {
-        const id =
-          String(t.id)
-
-        const saldo =
-          Number(t.saldo_kg || 0)
-
-        return (
-          t.aktif !== false &&
-          id !== tujuanId &&
-          saldo > 0
+  const opsiTangkiSumber =
+    computed(() => {
+      const tujuanId =
+        String(
+          form.tangki_tujuan || ''
         )
-      })
-      .map((t) => {
-        const saldo =
-          Number(t.saldo_kg || 0)
 
-        const nilai =
-          Number(t.saldo_nilai || 0)
-
-        const harga =
-          Number(
-            t.harga_per_kg ||
-            (
-              saldo > 0
-                ? nilai / saldo
-                : 0
+      const terpakai =
+        new Set(
+          wipRows.value
+            .map((row) =>
+              row.tangki_asal
+                ? String(
+                    row.tangki_asal
+                  )
+                : null
             )
-          )
+            .filter(Boolean)
+        )
 
-        const namaHasil =
-          t.nama_hasil ||
-          t.isi_saat_ini ||
-          '-'
-
-        const sudahDipakai =
-          terpakai.has(
+      return daftarTangki.value
+        .filter((t) => {
+          const id =
             String(t.id)
+
+          const saldo =
+            Number(
+              t.saldo_kg || 0
+            )
+
+          const kode =
+            normalisasiKodeTangki(
+              t
+            )
+
+          /*
+           * Sumber WIP harus berasal dari
+           * tangki yang memiliki identitas
+           * proses yang valid.
+           */
+
+          const tangkiValid =
+            kode.startsWith(
+              'TK-MIX-'
+            ) ||
+            kode.startsWith(
+              'TK-BLD-'
+            )
+
+          return (
+            t.aktif !== false &&
+            tangkiValid &&
+            id !== tujuanId &&
+            saldo > 0
           )
+        })
+        .map((t) => {
+          const saldo =
+            Number(
+              t.saldo_kg || 0
+            )
 
-        return {
-          id: t.id,
-          kode: t.kode,
-          nama: t.nama,
-          nama_hasil: namaHasil,
-          saldo_kg: saldo,
-          saldo_nilai: nilai,
-          harga_per_kg: harga,
-          disabled: sudahDipakai,
-          label:
-            `${t.kode} • ${namaHasil} • ` +
-            `Tersedia ${saldo.toLocaleString(
-              'id-ID',
-              {
-                minimumFractionDigits: 3,
-                maximumFractionDigits: 3
-              }
-            )} Kg`
-        }
-      })
-  })
+          const nilai =
+            Number(
+              t.saldo_nilai || 0
+            )
 
-  async function bukaFormBaru(
-    jenis = JENIS.MIXING
-  ) {
+          const harga =
+            Number(
+              t.harga_per_kg ||
+              (
+                saldo > 0
+                  ? nilai / saldo
+                  : 0
+              )
+            )
+
+          const namaHasil =
+            t.nama_hasil ||
+            t.isi_saat_ini ||
+            '-'
+
+          const sudahDipakai =
+            terpakai.has(
+              String(t.id)
+            )
+
+          return {
+            id: t.id,
+            kode: t.kode,
+            nama: t.nama,
+            nama_hasil:
+              namaHasil,
+
+            saldo_kg:
+              saldo,
+
+            saldo_nilai:
+              nilai,
+
+            harga_per_kg:
+              harga,
+
+            disabled:
+              sudahDipakai,
+
+            label:
+              `${t.kode} • ${namaHasil} • ` +
+              `Tersedia ${saldo.toLocaleString(
+                'id-ID',
+                {
+                  minimumFractionDigits: 3,
+                  maximumFractionDigits: 3
+                }
+              )} Kg`
+          }
+        })
+    })
+
+  // =========================================================
+  // FORM BARU
+  // =========================================================
+
+  async function bukaFormBaru() {
     resetForm()
 
-    jenisProduksi.value = jenis
-    editingBatchId.value = null
-    mode.value = 'form'
-    loadingForm.value = true
+    editingBatchId.value =
+      null
 
-    await Promise.all([
-      muatTangki(),
-      muatRawPool()
-    ])
+    mode.value =
+      'form'
 
-    bomRows.value = [
-      buatBarisBom()
-    ]
+    loadingForm.value =
+      true
 
-    wipRows.value =
-      jenis === JENIS.BLENDING
-        ? [buatBarisWip()]
-        : []
+    try {
+      await Promise.all([
+        muatTangki(),
+        muatRawPool()
+      ])
 
-    loadingForm.value = false
+      bomRows.value = [
+        buatBarisBom()
+      ]
+
+      /*
+       * Jangan langsung menentukan WIP.
+       *
+       * WIP akan dibuat setelah user memilih
+       * tangki tujuan TK-BLD-*.
+       */
+
+      wipRows.value = []
+
+    } finally {
+      loadingForm.value =
+        false
+    }
   }
 
-  async function bukaFormEdit(batchId) {
+  // =========================================================
+  // EDIT
+  // =========================================================
+
+  async function bukaFormEdit(
+    batchId
+  ) {
     editingBatchId.value =
       batchId
 
-    mode.value = 'form'
-    loadingForm.value = true
+    mode.value =
+      'form'
+
+    loadingForm.value =
+      true
+
     errorMsg.value = ''
 
     try {
@@ -370,18 +625,21 @@ export function useInputProduksi() {
         detail,
         komposisi
       ] = await Promise.all([
-        apiBatch.detail(batchId),
-        apiBatch.komposisi(batchId),
+        apiBatch.detail(
+          batchId
+        ),
+
+        apiBatch.komposisi(
+          batchId
+        ),
+
         muatTangki(),
         muatRawPool()
       ])
 
-      jenisProduksi.value =
-        detail.jenis ||
-        JENIS.MIXING
-
       form.nama_hasil =
-        detail.nama_hasil || ''
+        detail.nama_hasil ||
+        ''
 
       form.tangki_tujuan =
         detail.tangki_tujuan ??
@@ -404,52 +662,83 @@ export function useInputProduksi() {
           form.nama_hasil
         )
 
+      // =====================================================
+      // BOM
+      // =====================================================
+
       bomRows.value =
         (
           komposisi?.materials ??
           komposisi?.bahan_baku ??
           []
-        ).map((material) => {
-          const row =
-            buatBarisBom()
+        ).map(
+          (material) => {
+            const row =
+              buatBarisBom()
 
-          row.raw =
-            material.raw ??
-            material.produk_id ??
-            material.produk
+            row.raw =
+              material.raw ??
+              material.produk_id ??
+              material.produk
 
-          row.qty =
-            Number(
-              material.qty_kg ?? 0
-            )
+            row.qty =
+              Number(
+                material.qty_kg ?? 0
+              )
 
-          row.saldo =
-            Number(
-              material.saldo ??
-              material.qty_tersedia ??
-              0
-            )
+            row.saldo =
+              Number(
+                material.saldo ??
+                material.qty_tersedia ??
+                0
+              )
 
-          row.harga =
-            Number(
-              material.harga_per_kg ?? 0
-            )
+            row.harga =
+              Number(
+                material.harga_per_kg ??
+                0
+              )
 
-          row.subtotal =
-            row.qty * row.harga
+            row.subtotal =
+              row.qty *
+              row.harga
 
-          return row
-        })
+            return row
+          }
+        )
 
-      if (!bomRows.value.length) {
+      if (
+        !bomRows.value.length
+      ) {
         bomRows.value = [
           buatBarisBom()
         ]
       }
 
+      // =====================================================
+      // JENIS OTOMATIS DARI TANGKI
+      // =====================================================
+
+      const tangkiTujuan =
+        daftarTangki.value.find(
+          (t) =>
+            String(t.id) ===
+            String(
+              form.tangki_tujuan
+            )
+        )
+
+      const jenis =
+        tentukanJenisDariTangki(
+          tangkiTujuan
+        )
+
+      // =====================================================
+      // WIP
+      // =====================================================
+
       if (
-        jenisProduksi.value ===
-        JENIS.BLENDING
+        jenis === JENIS.BLENDING
       ) {
         const wipSources =
           komposisi?.wip_sources ??
@@ -457,100 +746,132 @@ export function useInputProduksi() {
           []
 
         wipRows.value =
-          wipSources.map((wip) => {
-            const row =
-              buatBarisWip()
+          wipSources.map(
+            (wip) => {
+              const row =
+                buatBarisWip()
 
-            row.tangki_asal =
-              wip.tangki_sumber_id ??
-              wip.tangki_asal
+              /*
+               * Backend baru:
+               * tangki_sumber_id
+               *
+               * Compatibility:
+               * tangki_asal
+               */
 
-            row.qty =
-              Number(
-                wip.qty_kg ?? 0
-              )
+              row.tangki_asal =
+                wip.tangki_sumber_id ??
+                wip.tangki_asal
 
-            const tangki =
-              daftarTangki.value.find(
-                (t) =>
-                  String(t.id) ===
-                  String(
-                    row.tangki_asal
+              row.qty =
+                Number(
+                  wip.qty_kg ?? 0
+                )
+
+              const tangki =
+                daftarTangki.value.find(
+                  (t) =>
+                    String(
+                      t.id
+                    ) ===
+                    String(
+                      row.tangki_asal
+                    )
+                )
+
+              if (tangki) {
+                row.nama_hasil =
+                  tangki.nama_hasil ||
+                  tangki.isi_saat_ini ||
+                  ''
+
+                row.tersedia =
+                  Number(
+                    tangki.saldo_kg ??
+                    0
                   )
-              )
 
-            if (tangki) {
-              row.nama_hasil =
-                tangki.nama_hasil ||
-                tangki.isi_saat_ini ||
-                ''
+                row.nilai =
+                  Number(
+                    tangki.saldo_nilai ??
+                    0
+                  )
 
-              row.tersedia =
-                Number(
-                  tangki.saldo_kg ?? 0
-                )
+                row.harga =
+                  Number(
+                    tangki.harga_per_kg ??
+                    0
+                  )
 
-              row.nilai =
-                Number(
-                  tangki.saldo_nilai ?? 0
-                )
+              } else {
+                row.nama_hasil =
+                  wip.nama_hasil ||
+                  ''
 
-              row.harga =
-                Number(
-                  tangki.harga_per_kg ??
-                  0
-                )
-            } else {
-              row.nama_hasil =
-                wip.nama_hasil ||
-                ''
+                row.tersedia =
+                  Number(
+                    wip.tersedia ??
+                    wip.sisa_qty ??
+                    0
+                  )
 
-              row.tersedia =
-                Number(
-                  wip.tersedia ??
-                  wip.sisa_qty ??
-                  0
-                )
+                row.nilai =
+                  Number(
+                    wip.nilai ??
+                    0
+                  )
 
-              row.nilai =
-                Number(
-                  wip.nilai ??
-                  0
-                )
+                row.harga =
+                  Number(
+                    wip.harga_per_kg ??
+                    0
+                  )
+              }
 
-              row.harga =
-                Number(
-                  wip.harga_per_kg ??
-                  0
-                )
+              return row
             }
+          )
 
-            return row
-          })
-
-        if (!wipRows.value.length) {
+        if (
+          !wipRows.value.length
+        ) {
           wipRows.value = [
             buatBarisWip()
           ]
         }
+
       } else {
         wipRows.value = []
       }
 
-      pratinjau.value = null
+      pratinjau.value =
+        null
+
     } catch (error) {
       console.error(error)
+
       errorMsg.value =
         'Gagal memuat detail batch'
+
     } finally {
-      loadingForm.value = false
+      loadingForm.value =
+        false
     }
   }
 
+  // =========================================================
+  // TUTUP FORM
+  // =========================================================
+
   function tutupForm() {
     mode.value = 'list'
+
     resetForm()
   }
+
+  // =========================================================
+  // RESET
+  // =========================================================
 
   function resetForm() {
     form.nama_hasil = ''
@@ -558,38 +879,33 @@ export function useInputProduksi() {
     form.batch = ''
     form.tekor_kg = 0
 
+    editingBatchId.value =
+      null
+
     isNamaHasilReadonly.value =
       false
 
     bomRows.value = []
     wipRows.value = []
-    pratinjau.value = null
-    errorMsg.value = ''
+
+    pratinjau.value =
+      null
+
+    errorMsg.value =
+      ''
   }
 
-  function gantiJenisProduksi(jenis) {
-    if (editingBatchId.value) {
-      return
-    }
+  // =========================================================
+  // TAMBAH TANGKI
+  // =========================================================
 
-    jenisProduksi.value =
-      jenis
-
-    bomRows.value = [
-      buatBarisBom()
-    ]
-
-    wipRows.value =
-      jenis === JENIS.BLENDING
-        ? [buatBarisWip()]
-        : []
-
-    pratinjau.value = null
-  }
-
-  async function tambahTangkiBaru(nama) {
+  async function tambahTangkiBaru(
+    nama
+  ) {
     const namaBersih =
-      String(nama || '')
+      String(
+        nama || ''
+      )
         .trim()
         .toUpperCase()
 
@@ -622,6 +938,7 @@ export function useInputProduksi() {
       await muatTangki()
 
       return dibuat
+
     } catch (error) {
       console.error(error)
 
@@ -632,17 +949,38 @@ export function useInputProduksi() {
     }
   }
 
+  // =========================================================
+  // GENERATE BATCH
+  // =========================================================
+  //
+  // Untuk generate nomor batch, jenis masih ditentukan
+  // dari tangki tujuan.
+  //
+  // BUKAN dari state jenisProduksi manual.
+  // =========================================================
+
   async function generateNomorBatch() {
+    const jenis =
+      jenisProduksi.value
+
+    if (!jenis) {
+      errorMsg.value =
+        'Pilih tangki tujuan terlebih dahulu'
+
+      return
+    }
+
     try {
       const res =
         await apiBatch.nomorBaru(
-          jenisProduksi.value
+          jenis
         )
 
       form.batch =
         res?.nomor ??
         res?.batch ??
         ''
+
     } catch (error) {
       console.error(error)
 
@@ -650,6 +988,10 @@ export function useInputProduksi() {
         'Gagal membuat nomor batch otomatis'
     }
   }
+
+  // =========================================================
+  // BOM
+  // =========================================================
 
   function tambahBomRow() {
     bomRows.value.push(
@@ -671,7 +1013,9 @@ export function useInputProduksi() {
       )
   }
 
-  function perbaruiTelemetriBom(row) {
+  function perbaruiTelemetriBom(
+    row
+  ) {
     const item =
       daftarRaw.value.find(
         (item) =>
@@ -681,7 +1025,9 @@ export function useInputProduksi() {
 
     row.saldo =
       item
-        ? Number(item.qty_kg || 0)
+        ? Number(
+            item.qty_kg || 0
+          )
         : 0
 
     row.harga =
@@ -702,7 +1048,17 @@ export function useInputProduksi() {
       )
   }
 
+  // =========================================================
+  // WIP
+  // =========================================================
+
   function tambahWipRow() {
+    if (
+      !isBlending.value
+    ) {
+      return
+    }
+
     wipRows.value.push(
       buatBarisWip()
     )
@@ -716,7 +1072,17 @@ export function useInputProduksi() {
       )
   }
 
-  function saatTangkiAsalDipilih(row) {
+  // =========================================================
+  // PILIH TANGKI SUMBER
+  // =========================================================
+  //
+  // TIDAK ADA PEMILIHAN BATCH SUMBER.
+  // Saldo dan harga langsung berasal dari tangki.
+  // =========================================================
+
+  function saatTangkiAsalDipilih(
+    row
+  ) {
     row.nama_hasil = ''
     row.tersedia = 0
     row.nilai = 0
@@ -726,11 +1092,28 @@ export function useInputProduksi() {
       return
     }
 
+    const tujuanId =
+      String(
+        form.tangki_tujuan
+      )
+
+    if (
+      String(
+        row.tangki_asal
+      ) === tujuanId
+    ) {
+      row.tangki_asal = ''
+
+      return
+    }
+
     const tangki =
       daftarTangki.value.find(
         (t) =>
           String(t.id) ===
-          String(row.tangki_asal)
+          String(
+            row.tangki_asal
+          )
       )
 
     if (!tangki) {
@@ -764,94 +1147,128 @@ export function useInputProduksi() {
       )
   }
 
-  const totalQtyBom = computed(() =>
-    bomRows.value.reduce(
-      (sum, row) =>
-        sum +
-        (
-          Number(row.qty) || 0
-        ),
-      0
+  // =========================================================
+  // TOTAL BOM
+  // =========================================================
+
+  const totalQtyBom =
+    computed(() =>
+      bomRows.value.reduce(
+        (sum, row) =>
+          sum +
+          (
+            Number(row.qty) || 0
+          ),
+        0
+      )
     )
-  )
 
-  const totalNilaiBom = computed(() =>
-    bomRows.value.reduce(
-      (sum, row) =>
-        sum +
-        (
-          Number(row.qty) || 0
-        ) *
-        (
-          Number(row.harga) || 0
-        ),
-      0
+  const totalNilaiBom =
+    computed(() =>
+      bomRows.value.reduce(
+        (sum, row) =>
+          sum +
+          (
+            Number(row.qty) || 0
+          ) *
+          (
+            Number(row.harga) || 0
+          ),
+        0
+      )
     )
-  )
 
-  const totalQtyWip = computed(() => {
-    if (
-      jenisProduksi.value !==
-      JENIS.BLENDING
-    ) {
-      return 0
-    }
+  // =========================================================
+  // TOTAL WIP
+  // =========================================================
 
-    return wipRows.value.reduce(
-      (sum, row) =>
-        sum +
-        (
-          Number(row.qty) || 0
-        ),
-      0
+  const totalQtyWip =
+    computed(() => {
+      if (
+        !isBlending.value
+      ) {
+        return 0
+      }
+
+      return wipRows.value.reduce(
+        (sum, row) =>
+          sum +
+          (
+            Number(row.qty) || 0
+          ),
+        0
+      )
+    })
+
+  const totalNilaiWip =
+    computed(() => {
+      if (
+        !isBlending.value
+      ) {
+        return 0
+      }
+
+      return wipRows.value.reduce(
+        (sum, row) =>
+          sum +
+          (
+            Number(row.qty) || 0
+          ) *
+          (
+            Number(row.harga) || 0
+          ),
+        0
+      )
+    })
+
+  // =========================================================
+  // TOTAL INPUT
+  // =========================================================
+
+  const totalInputKg =
+    computed(() =>
+      totalQtyBom.value +
+      totalQtyWip.value
     )
-  })
 
-  const totalNilaiWip = computed(() => {
-    if (
-      jenisProduksi.value !==
-      JENIS.BLENDING
-    ) {
-      return 0
-    }
-
-    return wipRows.value.reduce(
-      (sum, row) =>
-        sum +
-        (
-          Number(row.qty) || 0
-        ) *
-        (
-          Number(row.harga) || 0
-        ),
-      0
+  const totalInputNilai =
+    computed(() =>
+      totalNilaiBom.value +
+      totalNilaiWip.value
     )
-  })
 
-  const totalInputKg = computed(() =>
-    totalQtyBom.value +
-    totalQtyWip.value
-  )
-
-  const totalInputNilai = computed(() =>
-    totalNilaiBom.value +
-    totalNilaiWip.value
-  )
-
-  const proyeksiYield = computed(() =>
-    totalInputKg.value -
-    (
-      Number(form.tekor_kg) ||
-      0
+  const proyeksiYield =
+    computed(() =>
+      totalInputKg.value -
+      (
+        Number(
+          form.tekor_kg
+        ) || 0
+      )
     )
-  )
 
-  const proyeksiHargaRata = computed(() =>
-    proyeksiYield.value > 0
-      ? totalInputNilai.value /
-        proyeksiYield.value
-      : 0
-  )
+  const proyeksiHargaRata =
+    computed(() =>
+      proyeksiYield.value > 0
+        ? totalInputNilai.value /
+          proyeksiYield.value
+        : 0
+    )
+
+  // =========================================================
+  // PAYLOAD
+  // =========================================================
+  //
+  // PENTING:
+  // TIDAK ADA `jenis`
+  //
+  // Jenis proses diketahui dari kode tangki tujuan.
+  //
+  // WIP source hanya:
+  // tangki_sumber_id + qty_kg
+  //
+  // Tidak ada batch source.
+  // =========================================================
 
   function susunPayload() {
     const payload = {
@@ -859,13 +1276,17 @@ export function useInputProduksi() {
         form.nama_hasil.trim(),
 
       tangki_tujuan:
-        Number(form.tangki_tujuan),
+        Number(
+          form.tangki_tujuan
+        ),
 
       batch:
         form.batch.trim(),
 
       tekor_kg:
-        Number(form.tekor_kg) || 0,
+        Number(
+          form.tekor_kg
+        ) || 0,
 
       materials:
         bomRows.value
@@ -885,9 +1306,12 @@ export function useInputProduksi() {
       wip_sources: []
     }
 
+    // =======================================================
+    // WIP HANYA UNTUK TANGKI TK-BLD-*
+    // =======================================================
+
     if (
-      jenisProduksi.value ===
-      JENIS.BLENDING
+      isBlending.value
     ) {
       payload.wip_sources =
         wipRows.value
@@ -903,27 +1327,65 @@ export function useInputProduksi() {
               ),
 
             qty_kg:
-              Number(row.qty)
+              Number(
+                row.qty
+              )
           }))
     }
 
     return payload
   }
 
+  // =========================================================
+  // VALIDASI
+  // =========================================================
+
   function validasiForm() {
-    if (!form.nama_hasil.trim()) {
+    if (
+      !form.nama_hasil.trim()
+    ) {
       return (
         'Nama hasil produksi wajib diisi'
       )
     }
 
-    if (!form.tangki_tujuan) {
+    if (
+      !form.tangki_tujuan
+    ) {
       return (
         'Tangki tujuan wajib dipilih'
       )
     }
 
-    if (!form.batch.trim()) {
+    const tangkiTujuan =
+      daftarTangki.value.find(
+        (t) =>
+          String(t.id) ===
+          String(
+            form.tangki_tujuan
+          )
+      )
+
+    if (!tangkiTujuan) {
+      return (
+        'Tangki tujuan tidak ditemukan'
+      )
+    }
+
+    const jenis =
+      tentukanJenisDariTangki(
+        tangkiTujuan
+      )
+
+    if (!jenis) {
+      return (
+        'Kode tangki tujuan tidak dikenali. Gunakan TK-MIX-* atau TK-BLD-*'
+      )
+    }
+
+    if (
+      !form.batch.trim()
+    ) {
       return (
         'Nomor batch wajib diisi'
       )
@@ -937,17 +1399,19 @@ export function useInputProduksi() {
       )
 
     const adaWip =
-      jenisProduksi.value ===
-        JENIS.BLENDING &&
+      jenis === JENIS.BLENDING &&
       wipRows.value.some(
         (row) =>
           row.tangki_asal &&
           Number(row.qty) > 0
       )
 
+    // =======================================================
+    // MIXING
+    // =======================================================
+
     if (
-      jenisProduksi.value ===
-        JENIS.MIXING &&
+      jenis === JENIS.MIXING &&
       !adaBom
     ) {
       return (
@@ -955,9 +1419,12 @@ export function useInputProduksi() {
       )
     }
 
+    // =======================================================
+    // BLENDING
+    // =======================================================
+
     if (
-      jenisProduksi.value ===
-        JENIS.BLENDING &&
+      jenis === JENIS.BLENDING &&
       !adaBom &&
       !adaWip
     ) {
@@ -966,14 +1433,26 @@ export function useInputProduksi() {
       )
     }
 
+    // =======================================================
+    // TANGKI SUMBER
+    // =======================================================
+
     const tujuanId =
       String(
         form.tangki_tujuan
       )
 
-    for (const row of wipRows.value) {
+    for (
+      const row of
+      wipRows.value
+    ) {
       if (
-        row.tangki_asal &&
+        !row.tangki_asal
+      ) {
+        continue
+      }
+
+      if (
         String(
           row.tangki_asal
         ) === tujuanId
@@ -983,64 +1462,97 @@ export function useInputProduksi() {
         )
       }
 
+      const qty =
+        Number(
+          row.qty
+        ) || 0
+
+      const tersedia =
+        Number(
+          row.tersedia
+        ) || 0
+
       if (
-        row.tangki_asal &&
-        Number(row.qty) >
-          Number(row.tersedia) +
-          0.001
+        qty >
+        tersedia + 0.001
       ) {
         return (
           `Saldo WIP tangki sumber tidak cukup. ` +
-          `Diminta ${Number(
-            row.qty
-          ).toFixed(3)} Kg, ` +
-          `tersedia ${Number(
-            row.tersedia
-          ).toFixed(3)} Kg.`
+          `Diminta ${qty.toFixed(
+            3
+          )} Kg, ` +
+          `tersedia ${tersedia.toFixed(
+            3
+          )} Kg.`
         )
       }
     }
 
-    for (const row of bomRows.value) {
+    // =======================================================
+    // SALDO BOM
+    // =======================================================
+
+    for (
+      const row of
+      bomRows.value
+    ) {
       if (
         row.raw &&
         Number(row.qty) >
-          Number(row.saldo) +
-          0.001
+          Number(
+            row.saldo
+          ) + 0.001
       ) {
         return (
           `Saldo pool tidak cukup. ` +
           `Diminta ${Number(
             row.qty
-          ).toFixed(3)} Kg, ` +
+          ).toFixed(
+            3
+          )} Kg, ` +
           `tersedia ${Number(
             row.saldo
-          ).toFixed(3)} Kg.`
+          ).toFixed(
+            3
+          )} Kg.`
         )
       }
     }
+
+    // =======================================================
+    // DUPLIKASI TANGKI SUMBER
+    // =======================================================
 
     const sumberIds =
       wipRows.value
         .filter(
           (row) =>
             row.tangki_asal &&
-            Number(row.qty) > 0
+            Number(
+              row.qty
+            ) > 0
         )
-        .map((row) =>
-          String(
-            row.tangki_asal
-          )
+        .map(
+          (row) =>
+            String(
+              row.tangki_asal
+            )
         )
 
     if (
-      new Set(sumberIds).size !==
+      new Set(
+        sumberIds
+      ).size !==
       sumberIds.length
     ) {
       return (
         'Satu tangki sumber hanya boleh digunakan satu kali.'
       )
     }
+
+    // =======================================================
+    // YIELD
+    // =======================================================
 
     if (
       proyeksiYield.value <= 0
@@ -1053,11 +1565,17 @@ export function useInputProduksi() {
     return ''
   }
 
+  // =========================================================
+  // PREVIEW
+  // =========================================================
+
   async function mintaPratinjau() {
     errorMsg.value =
       validasiForm()
 
-    if (errorMsg.value) {
+    if (
+      errorMsg.value
+    ) {
       return null
     }
 
@@ -1085,6 +1603,7 @@ export function useInputProduksi() {
       }
 
       return res
+
     } catch (error) {
       console.error(error)
 
@@ -1092,17 +1611,26 @@ export function useInputProduksi() {
         error?.response
           ?.data
           ?.pesan ||
+        error?.response
+          ?.data
+          ?.detail ||
         'Gagal terhubung ke server untuk kalkulasi.'
 
       return null
     }
   }
 
+  // =========================================================
+  // SAVE
+  // =========================================================
+
   async function simpanDanPosting() {
     errorMsg.value =
       validasiForm()
 
-    if (errorMsg.value) {
+    if (
+      errorMsg.value
+    ) {
       return false
     }
 
@@ -1112,7 +1640,9 @@ export function useInputProduksi() {
       const payload =
         susunPayload()
 
-      if (editingBatchId.value) {
+      if (
+        editingBatchId.value
+      ) {
         await apiBatch.ubah(
           editingBatchId.value,
           payload
@@ -1132,6 +1662,7 @@ export function useInputProduksi() {
       tutupForm()
 
       return true
+
     } catch (error) {
       console.error(error)
 
@@ -1144,7 +1675,9 @@ export function useInputProduksi() {
         data !== null
       ) {
         const firstError =
-          Object.values(data)[0]
+          Object.values(
+            data
+          )[0]
 
         errorMsg.value =
           typeof firstError ===
@@ -1160,23 +1693,33 @@ export function useInputProduksi() {
       }
 
       return false
+
     } finally {
-      submitting.value = false
+      submitting.value =
+        false
     }
   }
+
+  // =========================================================
+  // WATCH
+  // =========================================================
 
   watch(
     bomRows,
     (rows) => {
-      rows.forEach((row) => {
-        row.subtotal =
-          (
-            Number(row.qty) || 0
-          ) *
-          (
-            Number(row.harga) || 0
-          )
-      })
+      rows.forEach(
+        (row) => {
+          row.subtotal =
+            (
+              Number(row.qty) ||
+              0
+            ) *
+            (
+              Number(row.harga) ||
+              0
+            )
+        }
+      )
     },
     {
       deep: true
@@ -1199,6 +1742,9 @@ export function useInputProduksi() {
 
     mode,
     jenisProduksi,
+    isBlending,
+    isMixing,
+
     editingBatchId,
 
     loadingList,
@@ -1239,8 +1785,6 @@ export function useInputProduksi() {
     tutupForm,
     resetForm,
 
-    gantiJenisProduksi,
-
     tambahTangkiBaru,
     generateNomorBatch,
 
@@ -1251,7 +1795,6 @@ export function useInputProduksi() {
     tambahWipRow,
     hapusWipRow,
     saatTangkiAsalDipilih,
-
     saatTangkiTujuanDipilih,
 
     mintaPratinjau,

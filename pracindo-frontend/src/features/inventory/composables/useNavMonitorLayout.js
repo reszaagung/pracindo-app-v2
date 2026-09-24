@@ -9,35 +9,41 @@ export function useNavMonitorLayout() {
             label: 'Posisi Stok Gudang',
             ikon: 'pi-box',
             rute: '/inventory',
-            activate: true
+            activate: true,
         },
+
         {
             id: 'tangki',
             label: 'Monitor Tangki',
             ikon: 'pi-database',
             rute: '/inventory/tangki',
-            activate: true
+            activate: true,
         },
         {
             id: 'klaim-distribusi',
             label: 'Transaksi & Klaim Pool',
             ikon: 'pi-truck',
             rute: '/inventory/distribusi',
-            activate: true
-        }
+            activate: true,
+        },
     ]
 
     const aktif = (ruteTujuan) => {
         if (!route) return false
+
         if (ruteTujuan === '/inventory') {
-            return route.path === '/inventory' || route.path.startsWith('/inventory/stok')
+            return (
+                route.path === '/inventory' ||
+                route.path.startsWith('/inventory/stok')
+            )
         }
 
-        return route.path.startsWith(ruteTujuan)
+        return route.path === ruteTujuan ||
+               route.path.startsWith(`${ruteTujuan}/`)
     }
 
     return {
         menu,
-        aktif
+        aktif,
     }
 }

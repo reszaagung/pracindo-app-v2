@@ -804,24 +804,28 @@ def terbitkan_pembelian_dari_penerimaan(
         kategori = None
 
         if is_kemasan:
-            kategori = getattr(
-                b,
-                "kategori_kemasan",
-                None,
+            from .models import PoolKemasan
+
+            pool_kemasan = (
+                PoolKemasan.objects
+                .select_for_update()
+                .filter(
+                    produk_id=item.produk_id,
+                )
+                .first()
             )
 
-            if not kategori:
-                kategori = getattr(
-                    item,
-                    "kategori_kemasan",
-                    None,
-                )
+            kategori = getattr(
+                pool_kemasan,
+                "kategori",
+                None,
+            )
 
             if not kategori:
                 raise GalatInventory(
                     f"Kategori kemasan untuk "
                     f"{item.produk.nama} "
-                    f"wajib ditentukan."
+                    f"belum tersedia di PoolKemasan."
                 )
 
             kategori = _kategori_kemasan_valid(

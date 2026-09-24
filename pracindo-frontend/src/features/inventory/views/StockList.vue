@@ -1,3 +1,4 @@
+```vue
 <template>
     <div class="min-h-full w-full animate-fade-in">
 
@@ -9,7 +10,10 @@
                 <div class="mb-2 flex items-center gap-2 text-[11px] font-medium text-slate-400">
                     <span>Inventory</span>
                     <i class="pi pi-angle-right text-[9px]"></i>
-                    <span class="font-semibold text-slate-600">Stok Gudang</span>
+
+                    <span class="font-semibold text-slate-600">
+                        Stok Gudang
+                    </span>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -25,7 +29,8 @@
                         </h1>
 
                         <p class="mt-1 text-xs text-slate-500 md:text-sm">
-                            Pantau posisi persediaan, mutasi entitas, saldo pool, dan stok barang jadi.
+                            Pantau posisi persediaan, mutasi entitas, saldo pool,
+                            pool kemasan, dan stok barang jadi.
                         </p>
                     </div>
                 </div>
@@ -37,11 +42,23 @@
             >
                 <span
                     class="h-2 w-2 rounded-full"
-                    :class="sedangProses ? 'animate-pulse bg-amber-400' : 'bg-emerald-500'"
+                    :class="
+                        sedangProses ||
+                        (lapis === 'KEMASAN' && loadingPoolKemasan)
+                            ? 'animate-pulse bg-amber-400'
+                            : 'bg-emerald-500'
+                    "
                 ></span>
 
                 <span>
-                    {{ sedangProses ? 'Memuat data' : 'Data terkini' }}
+                    {{
+                        sedangProses ||
+                        (lapis === 'KEMASAN' && loadingPoolKemasan)
+                            ? 'Memuat data'
+                            : lapis === 'KEMASAN'
+                                ? 'Realtime aktif'
+                                : 'Data terkini'
+                    }}
                 </span>
             </div>
         </div>
@@ -52,7 +69,7 @@
         ========================================================== -->
         <Transition name="slide">
             <div
-                v-if="galat"
+                v-if="galat || (lapis === 'KEMASAN' && galatPoolKemasan)"
                 class="mb-5 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 shadow-sm"
             >
                 <div
@@ -67,7 +84,7 @@
                     </div>
 
                     <div class="mt-0.5 text-xs leading-5 text-rose-600">
-                        {{ galat }}
+                        {{ galat || galatPoolKemasan }}
                     </div>
                 </div>
             </div>
@@ -111,23 +128,25 @@
                         class="flex w-full gap-1 overflow-x-auto rounded-2xl bg-slate-100/80 p-1.5 custom-scrollbar xl:w-auto"
                     >
                         <button
-                            v-for="l in LAPIS"
-                            :key="l.nilai"
+                            v-for="item in LAPIS"
+                            :key="item.nilai"
                             type="button"
-                            @click="pilihLapis(l.nilai)"
+                            @click="pilihLapis(item.nilai)"
                             class="group flex min-w-[145px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-200 md:min-w-[155px] md:text-sm"
                             :class="
-                                lapis === l.nilai
+                                lapis === item.nilai
                                     ? 'bg-white text-emerald-700 shadow-[0_4px_14px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/80'
                                     : 'text-slate-500 hover:bg-white/60 hover:text-slate-700'
                             "
                         >
                             <i
                                 class="text-xs transition-transform duration-200 group-hover:scale-110"
-                                :class="getTabIcon(l.nilai)"
+                                :class="getTabIcon(item.nilai)"
                             ></i>
 
-                            <span>{{ l.label }}</span>
+                            <span>
+                                {{ item.label }}
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -135,9 +154,11 @@
 
 
             <!-- =====================================================
-                 SUMMARY CARDS
+                 SUMMARY
             ====================================================== -->
-            <div class="grid grid-cols-1 gap-3 border-b border-slate-100 bg-slate-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4 md:p-6">
+            <div
+                class="grid grid-cols-1 gap-3 border-b border-slate-100 bg-slate-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4 md:p-6"
+            >
 
                 <!-- TOTAL -->
                 <div
@@ -154,9 +175,7 @@
                             </div>
                         </div>
 
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"
-                        >
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                             <i :class="summaryIcon"></i>
                         </div>
                     </div>
@@ -164,7 +183,13 @@
                     <div class="mt-3 h-1 overflow-hidden rounded-full bg-slate-100">
                         <div
                             class="h-full rounded-full bg-emerald-500 transition-all duration-700"
-                            :style="{ width: sedangProses ? '20%' : '100%' }"
+                            :style="{
+                                width:
+                                    sedangProses ||
+                                    (lapis === 'KEMASAN' && loadingPoolKemasan)
+                                        ? '20%'
+                                        : '100%'
+                            }"
                         ></div>
                     </div>
                 </div>
@@ -185,9 +210,7 @@
                             </div>
                         </div>
 
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
-                        >
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                             <i :class="secondaryIcon"></i>
                         </div>
                     </div>
@@ -213,9 +236,7 @@
                             </div>
                         </div>
 
-                        <div
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"
-                        >
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                             <i :class="tertiaryIcon"></i>
                         </div>
                     </div>
@@ -238,7 +259,11 @@
 
                             <div
                                 class="mt-2 text-xl font-black"
-                                :class="fourthNegative ? 'text-rose-600' : 'text-slate-900'"
+                                :class="
+                                    fourthNegative
+                                        ? 'text-rose-600'
+                                        : 'text-slate-900'
+                                "
                             >
                                 {{ fourthValue }}
                             </div>
@@ -269,14 +294,31 @@
             <div class="p-4 md:p-6">
 
                 <!-- LOADING -->
-                <div v-if="sedangProses" class="py-10 md:py-16">
+                <div
+                    v-if="
+                        sedangProses ||
+                        (
+                            lapis === 'KEMASAN' &&
+                            loadingPoolKemasan &&
+                            !poolKemasan.length
+                        )
+                    "
+                    class="py-10 md:py-16"
+                >
                     <div class="mx-auto flex max-w-md flex-col items-center text-center">
 
                         <div class="relative mb-5">
                             <div
                                 class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"
                             >
-                                <i class="pi pi-box text-2xl"></i>
+                                <i
+                                    class="text-2xl"
+                                    :class="
+                                        lapis === 'KEMASAN'
+                                            ? 'pi pi-inbox'
+                                            : 'pi pi-box'
+                                    "
+                                ></i>
                             </div>
 
                             <div
@@ -317,24 +359,21 @@
                             </p>
                         </div>
 
-                        <div
-                            class="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500"
-                        >
+                        <div class="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500">
                             <i class="pi pi-database text-emerald-500"></i>
                             {{ daftarStok.length }} entitas
                         </div>
                     </div>
 
-
                     <div
-                        v-if="daftarStok.length > 0"
+                        v-if="daftarStok.length"
                         class="overflow-hidden rounded-2xl border border-slate-200"
                     >
                         <div class="overflow-x-auto custom-scrollbar">
                             <table class="w-full min-w-[900px] text-left text-sm">
                                 <thead class="bg-slate-50">
                                     <tr>
-                                        <th class="px-4 py-3.5 text-left text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                        <th class="px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
                                             Entitas
                                         </th>
 
@@ -418,9 +457,9 @@
                                             <div
                                                 class="font-black"
                                                 :class="
-                                                    s.saldo > 0
+                                                    Number(s.saldo || 0) > 0
                                                         ? 'text-emerald-600'
-                                                        : s.saldo < 0
+                                                        : Number(s.saldo || 0) < 0
                                                             ? 'text-rose-600'
                                                             : 'text-slate-700'
                                                 "
@@ -448,9 +487,7 @@
                         v-else
                         class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center"
                     >
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200"
-                        >
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200">
                             <i class="pi pi-building text-xl"></i>
                         </div>
 
@@ -481,17 +518,14 @@
                             </p>
                         </div>
 
-                        <div
-                            class="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500"
-                        >
+                        <div class="inline-flex w-fit items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500">
                             <i class="pi pi-box text-blue-500"></i>
                             {{ daftarStok.length }} produk
                         </div>
                     </div>
 
-
                     <div
-                        v-if="daftarStok.length > 0"
+                        v-if="daftarStok.length"
                         class="overflow-hidden rounded-2xl border border-slate-200"
                     >
                         <div class="overflow-x-auto custom-scrollbar">
@@ -524,9 +558,7 @@
                                     >
                                         <td class="px-4 py-4">
                                             <div class="flex items-center gap-3">
-                                                <div
-                                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
-                                                >
+                                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                                                     <i class="pi pi-box text-sm"></i>
                                                 </div>
 
@@ -569,9 +601,7 @@
                         v-else
                         class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center"
                     >
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200"
-                        >
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200">
                             <i class="pi pi-inbox text-xl"></i>
                         </div>
 
@@ -581,6 +611,302 @@
 
                         <div class="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-400">
                             Belum ada saldo bahan baku yang tersedia di pool.
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- =================================================
+                     POOL KEMASAN
+                ================================================== -->
+                <div v-else-if="lapis === 'KEMASAN'">
+
+                    <!-- TOOLBAR -->
+                    <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-sm font-black text-slate-800">
+                                    Stock Pool Kemasan
+                                </h3>
+
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700"
+                                >
+                                    <span class="relative flex h-1.5 w-1.5">
+                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                    </span>
+
+                                    Realtime
+                                </span>
+                            </div>
+
+                            <p class="mt-1 text-xs text-slate-500">
+                                Posisi unit kemasan yang tersedia di pool.
+                            </p>
+                        </div>
+
+
+                        <!-- SEARCH -->
+                        <div class="flex w-full gap-2 lg:w-auto">
+                            <div
+                                class="flex flex-1 items-center rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-sm transition-all focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-500/10 lg:w-[290px] lg:flex-none"
+                            >
+                                <i class="pi pi-search text-sm text-slate-400"></i>
+
+                                <input
+                                    v-model="cariPoolKemasan"
+                                    type="text"
+                                    class="min-w-0 flex-1 border-0 bg-transparent px-2.5 text-xs font-medium text-slate-700 outline-none placeholder:text-slate-400 focus:ring-0"
+                                    placeholder="Cari kode atau produk..."
+                                />
+
+                                <button
+                                    v-if="cariPoolKemasan"
+                                    type="button"
+                                    @click="cariPoolKemasan = ''"
+                                    class="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                                >
+                                    <i class="pi pi-times text-[10px]"></i>
+                                </button>
+                            </div>
+
+
+                            <select
+                                v-model="filterKategoriPoolKemasan"
+                                class="h-11 min-w-[110px] rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm outline-none focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/10"
+                            >
+                                <option value="SEMUA">
+                                    Semua
+                                </option>
+
+                                <option
+                                    v-for="kategori in kategoriPoolKemasan"
+                                    :key="kategori"
+                                    :value="kategori"
+                                >
+                                    {{ kategori }}
+                                </option>
+                            </select>
+
+
+                            <button
+                                type="button"
+                                @click="muatPoolKemasan()"
+                                :disabled="loadingPoolKemasan"
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                                title="Refresh"
+                            >
+                                <i
+                                    class="pi pi-refresh text-xs"
+                                    :class="{
+                                        'animate-spin': loadingPoolKemasan
+                                    }"
+                                ></i>
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- ERROR POOL KEMASAN -->
+                    <div
+                        v-if="galatPoolKemasan"
+                        class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-600"
+                    >
+                        {{ galatPoolKemasan }}
+                    </div>
+
+
+                    <!-- DESKTOP TABLE -->
+                    <div
+                        v-if="poolKemasanTampil.length"
+                        class="hidden overflow-hidden rounded-2xl border border-slate-200 md:block"
+                    >
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full min-w-[800px] text-left text-sm">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Produk
+                                        </th>
+
+                                        <th class="px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Kategori
+                                        </th>
+
+                                        <th class="px-4 py-3.5 text-right text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Qty Unit
+                                        </th>
+
+                                        <th class="px-4 py-3.5 text-right text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Harga / Unit
+                                        </th>
+
+                                        <th class="px-4 py-3.5 text-right text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Nilai
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="divide-y divide-slate-100 bg-white">
+                                    <tr
+                                        v-for="s in poolKemasanTampil"
+                                        :key="s.id"
+                                        class="group transition-colors hover:bg-emerald-50/30"
+                                    >
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100"
+                                                >
+                                                    <i class="pi pi-inbox text-sm"></i>
+                                                </div>
+
+                                                <div class="min-w-0">
+                                                    <div class="truncate font-black uppercase text-slate-800">
+                                                        {{ s.produk_kode }}
+                                                    </div>
+
+                                                    <div class="mt-0.5 truncate text-xs text-slate-500">
+                                                        {{ s.produk_nama }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td class="px-4 py-4">
+                                            <span
+                                                class="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600"
+                                            >
+                                                {{ s.kategori_label || s.kategori || '-' }}
+                                            </span>
+                                        </td>
+
+                                        <td class="px-4 py-4 text-right">
+                                            <span
+                                                class="text-base font-black"
+                                                :class="
+                                                    Number(s.qty_unit || 0) > 0
+                                                        ? 'text-slate-900'
+                                                        : 'text-rose-500'
+                                                "
+                                            >
+                                                {{ angka(s.qty_unit || 0) }}
+                                            </span>
+
+                                            <span class="ml-1 text-[10px] font-semibold text-slate-400">
+                                                unit
+                                            </span>
+                                        </td>
+
+                                        <td class="px-4 py-4 text-right font-semibold text-slate-600">
+                                            {{ angka(s.harga_satuan || 0) }}
+                                        </td>
+
+                                        <td class="px-4 py-4 text-right font-black text-emerald-600">
+                                            {{ angka(s.nilai || 0) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- MOBILE CARDS -->
+                    <div
+                        v-if="poolKemasanTampil.length"
+                        class="space-y-3 md:hidden"
+                    >
+                        <div
+                            v-for="s in poolKemasanTampil"
+                            :key="`mobile-${s.id}`"
+                            class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
+                                    >
+                                        <i class="pi pi-inbox text-sm"></i>
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <div class="truncate text-sm font-black uppercase text-slate-800">
+                                            {{ s.produk_kode }}
+                                        </div>
+
+                                        <div class="mt-0.5 truncate text-xs text-slate-500">
+                                            {{ s.produk_nama }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <span
+                                    class="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-600"
+                                >
+                                    {{ s.kategori_label || s.kategori || '-' }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-2 gap-3">
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <div class="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                        Qty Unit
+                                    </div>
+
+                                    <div
+                                        class="mt-1 text-base font-black"
+                                        :class="
+                                            Number(s.qty_unit || 0) > 0
+                                                ? 'text-slate-900'
+                                                : 'text-rose-500'
+                                        "
+                                    >
+                                        {{ angka(s.qty_unit || 0) }}
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl bg-slate-50 p-3">
+                                    <div class="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                        Harga / Unit
+                                    </div>
+
+                                    <div class="mt-1 truncate text-sm font-black text-slate-700">
+                                        {{ angka(s.harga_satuan || 0) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-span-2 rounded-xl bg-emerald-50 p-3">
+                                    <div class="text-[10px] font-bold uppercase tracking-wide text-emerald-500">
+                                        Nilai Pool
+                                    </div>
+
+                                    <div class="mt-1 text-base font-black text-emerald-700">
+                                        {{ angka(s.nilai || 0) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- EMPTY -->
+                    <div
+                        v-if="!poolKemasanTampil.length"
+                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center"
+                    >
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200">
+                            <i class="pi pi-inbox text-xl"></i>
+                        </div>
+
+                        <div class="mt-4 text-sm font-bold text-slate-700">
+                            Data pool kemasan tidak ditemukan
+                        </div>
+
+                        <div class="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-400">
+                            Tidak ada stok yang sesuai dengan filter.
                         </div>
                     </div>
                 </div>
@@ -605,7 +931,6 @@
                         </div>
 
                         <div class="flex w-full items-center gap-2 lg:w-auto">
-
                             <div
                                 class="flex flex-1 items-center rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-sm transition-all focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-500/10 lg:w-[300px] lg:flex-none"
                             >
@@ -640,7 +965,8 @@
                             <div
                                 class="hidden shrink-0 rounded-xl bg-slate-100 px-3 py-2.5 text-[11px] font-bold text-slate-500 sm:block"
                             >
-                                {{ dataYangDitampilkan.length }} / {{ stokPivot.length }}
+                                {{ dataYangDitampilkan.length }} /
+                                {{ stokPivot.length }}
                             </div>
                         </div>
                     </div>
@@ -660,7 +986,7 @@
 
                     <!-- TABLE -->
                     <div
-                        v-if="dataYangDitampilkan.length > 0"
+                        v-if="dataYangDitampilkan.length"
                         class="overflow-hidden rounded-2xl border border-slate-200"
                     >
                         <div class="overflow-x-auto custom-scrollbar">
@@ -674,7 +1000,7 @@
                                         </th>
 
                                         <th
-                                            v-for="(kemasan, index) in kemasanUnik"
+                                            v-for="kemasan in kemasanUnik"
                                             :key="kemasan"
                                             class="px-4 py-3.5 text-center text-[10px] font-black uppercase tracking-wider text-blue-600"
                                         >
@@ -730,9 +1056,7 @@
                         v-else-if="pencarianBarang"
                         class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center"
                     >
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200"
-                        >
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200">
                             <i class="pi pi-search text-xl"></i>
                         </div>
 
@@ -757,14 +1081,12 @@
                     </div>
 
 
-                    <!-- EMPTY DATA -->
+                    <!-- EMPTY -->
                     <div
                         v-else
                         class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center"
                     >
-                        <div
-                            class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200"
-                        >
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200">
                             <i class="pi pi-inbox text-xl"></i>
                         </div>
 
@@ -778,7 +1100,6 @@
                     </div>
 
 
-                    <!-- FOOTER INFO -->
                     <div
                         v-if="stokPivot.length > 10"
                         class="mt-3 flex flex-col gap-1 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between"
@@ -787,15 +1108,8 @@
                             Menampilkan maksimal 10 barang pada tampilan ini.
                         </span>
 
-                        <span v-if="!pencarianBarang">
+                        <span>
                             Total {{ stokPivot.length }} barang tersedia.
-                        </span>
-
-                        <span v-else>
-                            Hasil pencarian untuk
-                            <span class="font-semibold text-slate-500">
-                                "{{ pencarianBarang }}"
-                            </span>
                         </span>
                     </div>
                 </div>
@@ -807,7 +1121,11 @@
 
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import {
+    computed,
+    ref,
+} from 'vue'
+
 import { useStock } from '../composables/useStock'
 import { angka } from '@/utils/format'
 
@@ -822,50 +1140,92 @@ const LAPIS = [
         label: 'Saldo Pool',
     },
     {
+        nilai: 'KEMASAN',
+        label: 'Pool Kemasan',
+    },
+    {
         nilai: 'JADI',
         label: 'Barang Jadi',
     },
 ]
 
 
-const { daftarStok, sedangProses, galat, muatStok } = useStock()
+const {
+    daftarStok,
+    sedangProses,
+    galat,
+    muatStok,
+
+    poolKemasan,
+    totalNilaiPoolKemasan,
+    loadingPoolKemasan,
+    galatPoolKemasan,
+
+    cariPoolKemasan,
+    filterKategoriPoolKemasan,
+    kategoriPoolKemasan,
+    poolKemasanTampil,
+
+    muatPoolKemasan,
+} = useStock()
+
 
 const lapis = ref('ENTITAS')
 const pencarianBarang = ref('')
 
 
-const STANDAR_KEMASAN = [
-    'PCS@1KG',
-    'GALON@5KG',
-    'DUS@12KG',
-    'PAIL@20KG',
-    'PAIL@25KG',
-    'PAIL@30KG',
-]
-
-
 /* =========================================================
-   BASIC HELPERS
+   PILIH LAPIS
 ========================================================= */
 
-const pilihLapis = (l) => {
-    lapis.value = l
+const pilihLapis = async (nilai) => {
+    lapis.value = nilai
     pencarianBarang.value = ''
-    muatStok({ lapis: l })
+
+    await muatStok({
+        lapis: nilai,
+    })
 }
 
 
+/* =========================================================
+   LABEL / ICON
+========================================================= */
+
+const labelLapisAktif = computed(() => {
+    return (
+        LAPIS.find(
+            item => item.nilai === lapis.value
+        )?.label || '-'
+    )
+})
+
+
 const getTabIcon = (nilai) => {
-    if (nilai === 'ENTITAS') return 'pi pi-building'
-    if (nilai === 'POOL') return 'pi pi-box'
-    if (nilai === 'JADI') return 'pi pi-shopping-bag'
+    if (nilai === 'ENTITAS') {
+        return 'pi pi-building'
+    }
+
+    if (nilai === 'POOL') {
+        return 'pi pi-box'
+    }
+
+    if (nilai === 'KEMASAN') {
+        return 'pi pi-inbox'
+    }
+
+    if (nilai === 'JADI') {
+        return 'pi pi-shopping-bag'
+    }
 
     return 'pi pi-circle'
 }
 
 
 const getStatusBadge = (status) => {
-    const s = String(status || '').toUpperCase()
+    const s = String(
+        status || ''
+    ).toUpperCase()
 
     if (s === 'KLAIM') {
         return 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -880,20 +1240,7 @@ const getStatusBadge = (status) => {
 
 
 /* =========================================================
-   LABEL TAB
-========================================================= */
-
-const labelLapisAktif = computed(() => {
-    return (
-        LAPIS.find(
-            item => item.nilai === lapis.value
-        )?.label || '-'
-    )
-})
-
-
-/* =========================================================
-   SUMMARY CARDS
+   SUMMARY
 ========================================================= */
 
 const summaryLabel = computed(() => {
@@ -905,12 +1252,24 @@ const summaryLabel = computed(() => {
         return 'Total Produk Raw'
     }
 
+    if (lapis.value === 'KEMASAN') {
+        return 'Jenis Kemasan'
+    }
+
     return 'Total Barang'
 })
 
 
 const summaryValue = computed(() => {
-    return angka(daftarStok.value?.length || 0)
+    if (lapis.value === 'KEMASAN') {
+        return angka(
+            poolKemasanTampil.value.length
+        )
+    }
+
+    return angka(
+        daftarStok.value.length
+    )
 })
 
 
@@ -921,6 +1280,10 @@ const summaryIcon = computed(() => {
 
     if (lapis.value === 'POOL') {
         return 'pi pi-box'
+    }
+
+    if (lapis.value === 'KEMASAN') {
+        return 'pi pi-inbox'
     }
 
     return 'pi pi-shopping-bag'
@@ -945,7 +1308,10 @@ const secondaryValue = computed(() => {
         return angka(
             daftarStok.value.reduce(
                 (sum, item) =>
-                    sum + Number(item.qty_setor || 0),
+                    sum +
+                    Number(
+                        item.qty_setor || 0
+                    ),
                 0
             ),
             3
@@ -956,17 +1322,36 @@ const secondaryValue = computed(() => {
         return angka(
             daftarStok.value.reduce(
                 (sum, item) =>
-                    sum + Number(item.qty_kg || 0),
+                    sum +
+                    Number(
+                        item.qty_kg || 0
+                    ),
                 0
             ),
             3
         )
     }
 
+    if (lapis.value === 'KEMASAN') {
+        return angka(
+            poolKemasanTampil.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.qty_unit || 0
+                    ),
+                0
+            )
+        )
+    }
+
     return angka(
         daftarStok.value.reduce(
             (sum, item) =>
-                sum + Number(item.qty_unit || 0),
+                sum +
+                Number(
+                    item.qty_unit || 0
+                ),
             0
         )
     )
@@ -982,6 +1367,10 @@ const secondaryIcon = computed(() => {
         return 'pi pi-weight'
     }
 
+    if (lapis.value === 'KEMASAN') {
+        return 'pi pi-box'
+    }
+
     return 'pi pi-box'
 })
 
@@ -995,6 +1384,10 @@ const tertiaryLabel = computed(() => {
         return 'Nilai Pool'
     }
 
+    if (lapis.value === 'KEMASAN') {
+        return 'Nilai Pool'
+    }
+
     return 'Jenis Kemasan'
 })
 
@@ -1004,7 +1397,10 @@ const tertiaryValue = computed(() => {
         return angka(
             daftarStok.value.reduce(
                 (sum, item) =>
-                    sum + Number(item.qty_tarik || 0),
+                    sum +
+                    Number(
+                        item.qty_tarik || 0
+                    ),
                 0
             ),
             3
@@ -1015,13 +1411,24 @@ const tertiaryValue = computed(() => {
         return angka(
             daftarStok.value.reduce(
                 (sum, item) =>
-                    sum + Number(item.nilai || 0),
+                    sum +
+                    Number(
+                        item.nilai || 0
+                    ),
                 0
             )
         )
     }
 
-    return angka(kemasanUnik.value.length)
+    if (lapis.value === 'KEMASAN') {
+        return angka(
+            totalNilaiPoolKemasan.value
+        )
+    }
+
+    return angka(
+        kemasanUnik.value.length
+    )
 })
 
 
@@ -1030,7 +1437,10 @@ const tertiaryIcon = computed(() => {
         return 'pi pi-arrow-up-right'
     }
 
-    if (lapis.value === 'POOL') {
+    if (
+        lapis.value === 'POOL' ||
+        lapis.value === 'KEMASAN'
+    ) {
         return 'pi pi-wallet'
     }
 
@@ -1047,40 +1457,84 @@ const fourthLabel = computed(() => {
         return 'Harga Rata-rata'
     }
 
+    if (lapis.value === 'KEMASAN') {
+        return 'Harga Rata / Unit'
+    }
+
     return 'Kemasan Aktif'
 })
 
 
 const fourthValue = computed(() => {
     if (lapis.value === 'ENTITAS') {
-        const saldo = daftarStok.value.reduce(
-            (sum, item) =>
-                sum + Number(item.saldo || 0),
-            0
-        )
+        const saldo =
+            daftarStok.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.saldo || 0
+                    ),
+                0
+            )
 
         return angka(saldo)
     }
 
     if (lapis.value === 'POOL') {
-        const qty = daftarStok.value.reduce(
-            (sum, item) =>
-                sum + Number(item.qty_kg || 0),
-            0
-        )
+        const qty =
+            daftarStok.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.qty_kg || 0
+                    ),
+                0
+            )
 
-        const nilai = daftarStok.value.reduce(
-            (sum, item) =>
-                sum + Number(item.nilai || 0),
-            0
-        )
+        const nilai =
+            daftarStok.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.nilai || 0
+                    ),
+                0
+            )
 
         return qty > 0
             ? angka(nilai / qty)
             : angka(0)
     }
 
-    return angka(kemasanUnik.value.length)
+    if (lapis.value === 'KEMASAN') {
+        const qty =
+            poolKemasanTampil.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.qty_unit || 0
+                    ),
+                0
+            )
+
+        const nilai =
+            poolKemasanTampil.value.reduce(
+                (sum, item) =>
+                    sum +
+                    Number(
+                        item.nilai || 0
+                    ),
+                0
+            )
+
+        return qty > 0
+            ? angka(nilai / qty)
+            : angka(0)
+    }
+
+    return angka(
+        kemasanUnik.value.length
+    )
 })
 
 
@@ -1089,11 +1543,15 @@ const fourthNegative = computed(() => {
         return false
     }
 
-    const saldo = daftarStok.value.reduce(
-        (sum, item) =>
-            sum + Number(item.saldo || 0),
-        0
-    )
+    const saldo =
+        daftarStok.value.reduce(
+            (sum, item) =>
+                sum +
+                Number(
+                    item.saldo || 0
+                ),
+            0
+        )
 
     return saldo < 0
 })
@@ -1104,7 +1562,10 @@ const fourthIcon = computed(() => {
         return 'pi pi-wallet'
     }
 
-    if (lapis.value === 'POOL') {
+    if (
+        lapis.value === 'POOL' ||
+        lapis.value === 'KEMASAN'
+    ) {
         return 'pi pi-chart-line'
     }
 
@@ -1116,24 +1577,43 @@ const fourthIcon = computed(() => {
    BARANG JADI
 ========================================================= */
 
+const STANDAR_KEMASAN = [
+    'PCS@1KG',
+    'GALON@5KG',
+    'DUS@12KG',
+    'PAIL@20KG',
+    'PAIL@25KG',
+    'PAIL@30KG',
+]
+
+
 const kemasanUnik = computed(() => {
     if (lapis.value !== 'JADI') {
         return []
     }
 
-    const unik = new Set(STANDAR_KEMASAN)
+    const unik =
+        new Set(
+            STANDAR_KEMASAN
+        )
 
-    daftarStok.value.forEach(item => {
-        if (item.kemasan_nama) {
-            unik.add(
-                String(item.kemasan_nama)
-                    .trim()
-                    .toUpperCase()
-            )
+    daftarStok.value.forEach(
+        item => {
+            if (item.kemasan_nama) {
+                unik.add(
+                    String(
+                        item.kemasan_nama
+                    )
+                        .trim()
+                        .toUpperCase()
+                )
+            }
         }
-    })
+    )
 
-    return Array.from(unik)
+    return Array.from(
+        unik
+    )
 })
 
 
@@ -1143,48 +1623,78 @@ const stokPivot = computed(() => {
     }
 
     const pivotMap = {}
-    const headers = kemasanUnik.value
+    const headers =
+        kemasanUnik.value
 
-    daftarStok.value.forEach(item => {
-        const namaBarang =
-            item.item_nama ||
-            item.produk_nama ||
-            '-'
+    daftarStok.value.forEach(
+        item => {
+            const namaBarang =
+                item.item_nama ||
+                item.produk_nama ||
+                '-'
 
-        const namaKemasan = item.kemasan_nama
-            ? String(item.kemasan_nama)
-                .trim()
-                .toUpperCase()
-            : '-'
+            const namaKemasan =
+                item.kemasan_nama
+                    ? String(
+                        item.kemasan_nama
+                    )
+                        .trim()
+                        .toUpperCase()
+                    : '-'
 
-        if (!pivotMap[namaBarang]) {
-            pivotMap[namaBarang] = {
-                nama: namaBarang,
-            }
-
-            headers.forEach(k => {
-                pivotMap[namaBarang][k] = {
-                    qty: 0,
+            if (
+                !pivotMap[namaBarang]
+            ) {
+                pivotMap[namaBarang] = {
+                    nama: namaBarang,
                 }
-            })
-        }
 
-        if (
-            pivotMap[namaBarang][namaKemasan] !==
-            undefined
-        ) {
-            pivotMap[namaBarang][namaKemasan].qty +=
-                Number(item.qty_unit || 0)
-        } else {
-            pivotMap[namaBarang][namaKemasan] = {
-                qty: Number(item.qty_unit || 0),
+                headers.forEach(
+                    k => {
+                        pivotMap[
+                            namaBarang
+                        ][k] = {
+                            qty: 0,
+                        }
+                    }
+                )
+            }
+
+            if (
+                pivotMap[
+                    namaBarang
+                ][
+                    namaKemasan
+                ] !== undefined
+            ) {
+                pivotMap[
+                    namaBarang
+                ][
+                    namaKemasan
+                ].qty += Number(
+                    item.qty_unit || 0
+                )
+            } else {
+                pivotMap[
+                    namaBarang
+                ][
+                    namaKemasan
+                ] = {
+                    qty: Number(
+                        item.qty_unit || 0
+                    ),
+                }
             }
         }
-    })
+    )
 
-    return Object.values(pivotMap).sort(
+    return Object.values(
+        pivotMap
+    ).sort(
         (a, b) =>
-            a.nama.localeCompare(b.nama)
+            a.nama.localeCompare(
+                b.nama
+            )
     )
 })
 
@@ -1196,37 +1706,53 @@ const saranNamaBarang = computed(() => {
 })
 
 
-const dataYangDitampilkan = computed(() => {
-    let hasil = stokPivot.value
+const dataYangDitampilkan =
+    computed(() => {
+        let hasil =
+            stokPivot.value
 
-    if (pencarianBarang.value) {
-        const keyword =
+        if (
             pencarianBarang.value
-                .toLowerCase()
-                .trim()
+        ) {
+            const keyword =
+                pencarianBarang.value
+                    .toLowerCase()
+                    .trim()
 
-        hasil = hasil.filter(row =>
-            String(row.nama)
-                .toLowerCase()
-                .includes(keyword)
+            hasil =
+                hasil.filter(
+                    row =>
+                        String(
+                            row.nama
+                        )
+                            .toLowerCase()
+                            .includes(
+                                keyword
+                            )
+                )
+        }
+
+        return hasil.slice(
+            0,
+            10
         )
-    }
-
-    return hasil.slice(0, 10)
-})
+    })
 
 
-const renderCell = (namaKemasan, cellData) => {
+const renderCell = (
+    namaKemasan,
+    cellData
+) => {
     const qty =
-        cellData && cellData.qty
-            ? cellData.qty
-            : 0
+        cellData?.qty || 0
 
-    let satuan = 'unit'
+    let satuan =
+        'unit'
 
     const str =
-        String(namaKemasan)
-            .toUpperCase()
+        String(
+            namaKemasan
+        ).toUpperCase()
 
     if (
         str.includes('DUS') ||
@@ -1237,17 +1763,6 @@ const renderCell = (namaKemasan, cellData) => {
 
     return `${qty} ${satuan}`
 }
-
-
-/* =========================================================
-   INIT
-========================================================= */
-
-onMounted(() => {
-    muatStok({
-        lapis: lapis.value,
-    })
-})
 </script>
 
 
@@ -1321,3 +1836,4 @@ input[type="text"]::-webkit-search-cancel-button {
     display: none;
 }
 </style>
+

@@ -1,6 +1,5 @@
 <template>
     <div class="space-y-4">
-        <!-- ERROR -->
         <div
             v-if="errorMsg"
             class="bg-red-50 text-red-600 border border-red-100 rounded-lg px-4 py-2.5 text-sm"
@@ -8,7 +7,6 @@
             {{ errorMsg }}
         </div>
 
-        <!-- LOADING -->
         <div
             v-if="loadingForm"
             class="flex justify-center items-center py-10 text-slate-400"
@@ -17,7 +15,6 @@
         </div>
 
         <template v-else>
-            <!-- TELEMETRI PRODUKSI -->
             <div
                 class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 w-full overflow-hidden"
             >
@@ -30,8 +27,9 @@
                 <div
                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
                 >
-                    <!-- NAMA HASIL -->
-                    <label class="flex flex-col gap-1 w-full overflow-hidden">
+                    <label
+                        class="flex flex-col gap-1 w-full overflow-hidden"
+                    >
                         <span
                             class="text-[11px] font-bold text-slate-500 uppercase tracking-wide"
                         >
@@ -52,8 +50,9 @@
                         />
                     </label>
 
-                    <!-- TANGKI TUJUAN -->
-                    <label class="flex flex-col gap-1 w-full overflow-hidden">
+                    <label
+                        class="flex flex-col gap-1 w-full overflow-hidden"
+                    >
                         <span
                             class="text-[11px] font-bold text-slate-500 uppercase tracking-wide"
                         >
@@ -71,11 +70,17 @@
                                 </option>
 
                                 <option
-                                    v-for="t in daftarTangki"
+                                    v-for="t in daftarTangkiTujuan"
                                     :key="t.id"
                                     :value="t.id"
                                 >
-                                    {{ t.nama || t.kode }}
+                                    {{ t.kode }}
+                                    —
+                                    {{
+                                        t.nama_hasil ||
+                                        t.isi_saat_ini ||
+                                        'Kosong'
+                                    }}
                                 </option>
                             </select>
 
@@ -83,16 +88,22 @@
                                 type="button"
                                 class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
                                 style="flex: 0 0 42px; width: 42px; height: 42px"
-                                title="Tambah tangki baru"
+                                title="Tambah tangki blending"
                                 @click="tambahTangkiBaruPrompt"
                             >
                                 +
                             </button>
                         </div>
+
+                        <span class="text-[10px] text-slate-400">
+                            Tangki tujuan blending wajib menggunakan kode
+                            <strong>TK-BLD-*</strong>.
+                        </span>
                     </label>
 
-                    <!-- BATCH ID -->
-                    <label class="flex flex-col gap-1 w-full overflow-hidden">
+                    <label
+                        class="flex flex-col gap-1 w-full overflow-hidden"
+                    >
                         <span
                             class="text-[11px] font-bold text-slate-500 uppercase tracking-wide"
                         >
@@ -109,8 +120,9 @@
 
                             <button
                                 type="button"
-                                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors"
+                                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 style="flex: 0 0 65px; width: 65px; height: 42px"
+                                :disabled="!form.tangki_tujuan"
                                 @click="generateNomorBatch"
                             >
                                 Auto
@@ -118,8 +130,9 @@
                         </div>
                     </label>
 
-                    <!-- TEKOR -->
-                    <label class="flex flex-col gap-1 w-full overflow-hidden">
+                    <label
+                        class="flex flex-col gap-1 w-full overflow-hidden"
+                    >
                         <span
                             class="text-[11px] font-bold text-slate-500 uppercase tracking-wide"
                         >
@@ -137,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- ALOKASI WIP -->
             <div
                 class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full"
             >
@@ -147,8 +159,8 @@
                     </h3>
 
                     <p class="text-[11px] text-slate-400 mt-1">
-                        Sumber WIP diambil langsung dari saldo Tangki.
-                        Tangki tujuan tidak dapat digunakan sebagai sumber.
+                        Sumber WIP diambil langsung dari saldo tangki.
+                        Tangki tujuan otomatis dikeluarkan dari daftar sumber.
                     </p>
                 </div>
 
@@ -198,14 +210,16 @@
                                 :key="row._id"
                                 class="hover:bg-slate-50/50 transition-colors"
                             >
-                                <!-- TANGKI SUMBER -->
                                 <td class="px-4 py-2">
                                     <select
                                         v-model="row.tangki_asal"
                                         @change="saatTangkiAsalDipilih(row)"
                                         class="w-full min-w-[220px] px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                                     >
-                                        <option value="" disabled>
+                                        <option
+                                            value=""
+                                            disabled
+                                        >
                                             Pilih tangki sumber
                                         </option>
 
@@ -213,24 +227,18 @@
                                             v-for="t in opsiTangkiSumber"
                                             :key="t.id"
                                             :value="t.id"
+                                            :disabled="t.disabled"
                                         >
                                             {{ t.kode }}
                                             —
-                                            {{
-                                                t.nama_hasil || '-'
-                                            }}
+                                            {{ t.nama_hasil || '-' }}
                                             —
-                                            {{
-                                                formatKg(
-                                                    t.saldo_kg
-                                                )
-                                            }}
+                                            {{ formatKg(t.saldo_kg) }}
                                             Kg
                                         </option>
                                     </select>
                                 </td>
 
-                                <!-- NAMA HASIL -->
                                 <td class="px-4 py-2">
                                     <div class="min-w-[180px]">
                                         <div
@@ -251,7 +259,6 @@
                                     </div>
                                 </td>
 
-                                <!-- TERSEDIA -->
                                 <td
                                     class="px-4 py-2 text-right"
                                 >
@@ -273,11 +280,11 @@
                                     </span>
                                 </td>
 
-                                <!-- HARGA -->
                                 <td
                                     class="px-4 py-2 text-right text-slate-500"
                                 >
                                     {{ formatRupiah(row.harga) }}
+
                                     <span
                                         class="block text-[9px] text-slate-400"
                                     >
@@ -285,19 +292,18 @@
                                     </span>
                                 </td>
 
-                                <!-- QTY -->
                                 <td class="px-4 py-2">
                                     <input
                                         v-model.number="row.qty"
                                         type="number"
+                                        inputmode="decimal"
                                         step="0.001"
                                         min="0"
                                         :max="row.tersedia"
-                                        class="w-full min-w-[120px] px-2 py-1.5 bg-white border border-slate-200 rounded-md text-sm text-right focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                        class="w-full min-w-[120px] px-1 py-1.5 bg-transparent border-0 border-b-2 border-slate-300 rounded-none text-sm text-right focus:outline-none focus:ring-0 focus:border-purple-500 transition-colors"
                                     />
                                 </td>
 
-                                <!-- NILAI -->
                                 <td
                                     class="px-4 py-2 text-right font-semibold text-slate-700"
                                 >
@@ -309,7 +315,6 @@
                                     }}
                                 </td>
 
-                                <!-- AKSI -->
                                 <td class="px-4 py-2 text-center">
                                     <button
                                         type="button"
@@ -317,16 +322,12 @@
                                         @click="hapusWipRow(row._id)"
                                         title="Hapus sumber WIP"
                                     >
-                                        <i
-                                            class="pi pi-trash text-xs"
-                                        ></i>
+                                        <i class="pi pi-trash text-xs"></i>
                                     </button>
                                 </td>
                             </tr>
 
-                            <tr
-                                v-if="wipRows.length === 0"
-                            >
+                            <tr v-if="wipRows.length === 0">
                                 <td
                                     colspan="7"
                                     class="px-4 py-10 text-center text-slate-400"
@@ -335,9 +336,7 @@
                                         class="pi pi-database text-2xl mb-2"
                                     ></i>
 
-                                    <p
-                                        class="text-xs font-medium"
-                                    >
+                                    <p class="text-xs font-medium">
                                         Belum ada sumber WIP.
                                     </p>
                                 </td>
@@ -346,24 +345,21 @@
                     </table>
                 </div>
 
-                <!-- TOTAL WIP -->
                 <div
                     class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between gap-2 text-xs"
                 >
                     <div class="text-slate-500">
                         Total WIP:
-                        <strong
-                            class="text-slate-800 ml-1"
-                        >
+
+                        <strong class="text-slate-800 ml-1">
                             {{ formatKg(totalQtyWip) }} Kg
                         </strong>
                     </div>
 
                     <div class="text-slate-500">
                         Nilai WIP:
-                        <strong
-                            class="text-slate-800 ml-1"
-                        >
+
+                        <strong class="text-slate-800 ml-1">
                             {{ formatRupiah(totalNilaiWip) }}
                         </strong>
                     </div>
@@ -375,23 +371,17 @@
                         class="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
                         @click="tambahWipRow"
                     >
-                        <i
-                            class="pi pi-plus text-[10px]"
-                        ></i>
-
+                        <i class="pi pi-plus text-[10px]"></i>
                         Tambah Sumber WIP
                     </button>
                 </div>
             </div>
 
-            <!-- BOM -->
             <div
                 class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full"
             >
                 <div class="p-4 pb-3">
-                    <h3
-                        class="font-bold text-slate-800 text-sm"
-                    >
+                    <h3 class="font-bold text-slate-800 text-sm">
                         Bahan Baku Tambahan (BOM)
                     </h3>
                 </div>
@@ -414,27 +404,19 @@
                                     Qty Terpakai (Kg)
                                 </th>
 
-                                <th
-                                    class="px-4 py-2 text-right"
-                                >
+                                <th class="px-4 py-2 text-right">
                                     Saldo Pool
                                 </th>
 
-                                <th
-                                    class="px-4 py-2 text-right"
-                                >
+                                <th class="px-4 py-2 text-right">
                                     Harga (IDR/Kg)
                                 </th>
 
-                                <th
-                                    class="px-4 py-2 text-right"
-                                >
+                                <th class="px-4 py-2 text-right">
                                     Subtotal
                                 </th>
 
-                                <th
-                                    class="px-4 py-2 text-center"
-                                >
+                                <th class="px-4 py-2 text-center">
                                     Aksi
                                 </th>
                             </tr>
@@ -468,6 +450,14 @@
                                             v-for="r in daftarRaw"
                                             :key="r.raw"
                                             :value="r.raw"
+                                            :disabled="
+                                                bomRows.some(
+                                                    b =>
+                                                        String(b.raw) ===
+                                                            String(r.raw) &&
+                                                        b._id !== row._id
+                                                )
+                                            "
                                         >
                                             {{ r.produk_kode }}
                                             -
@@ -486,9 +476,10 @@
                                     <input
                                         v-model.number="row.qty"
                                         type="number"
+                                        inputmode="decimal"
                                         step="0.001"
                                         min="0"
-                                        class="w-full min-w-[100px] px-2 py-1.5 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                        class="w-full min-w-[100px] px-1 py-1.5 bg-transparent border-0 border-b-2 border-slate-300 rounded-none text-sm focus:outline-none focus:ring-0 focus:border-purple-500 transition-colors"
                                     />
                                 </td>
 
@@ -498,7 +489,8 @@
                                     <span
                                         class="font-medium"
                                         :class="
-                                            row.qty > row.saldo
+                                            Number(row.qty) >
+                                            Number(row.saldo)
                                                 ? 'text-red-600'
                                                 : 'text-slate-700'
                                         "
@@ -543,9 +535,7 @@
                                             )
                                         "
                                     >
-                                        <i
-                                            class="pi pi-trash text-xs"
-                                        ></i>
+                                        <i class="pi pi-trash text-xs"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -559,25 +549,19 @@
                         class="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
                         @click="tambahBomRow"
                     >
-                        <i
-                            class="pi pi-plus text-[10px]"
-                        ></i>
-
+                        <i class="pi pi-plus text-[10px]"></i>
                         Tambah Baris BOM
                     </button>
                 </div>
             </div>
 
-            <!-- PROYEKSI -->
             <div
                 class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-center sm:text-left"
             >
                 <div class="text-blue-800">
                     Proyeksi Yield:
 
-                    <strong
-                        class="text-blue-900 ml-1"
-                    >
+                    <strong class="text-blue-900 ml-1">
                         {{ formatKg(proyeksiYield) }} Kg
                     </strong>
                 </div>
@@ -585,9 +569,7 @@
                 <div class="text-blue-800">
                     Estimasi Cost Nom:
 
-                    <strong
-                        class="text-blue-900 ml-1"
-                    >
+                    <strong class="text-blue-900 ml-1">
                         {{
                             formatRupiah(
                                 proyeksiHargaRata
@@ -598,7 +580,6 @@
                 </div>
             </div>
 
-            <!-- PRATINJAU -->
             <div
                 v-if="pratinjau"
                 class="mb-3"
@@ -608,7 +589,6 @@
                 />
             </div>
 
-            <!-- ACTION -->
             <div
                 class="flex flex-col sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100"
             >
@@ -647,11 +627,19 @@
     </div>
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
 
-import { useBlendingForm } from '../composables/useBlendingForm'
-import PratinjauValuasi from '../components/PratinjauValuasi.vue'
+<script setup>
+import {
+    computed,
+    onMounted
+} from 'vue'
+
+import {
+    useBlendingForm
+} from '../composables/useBlendingForm'
+
+import PratinjauValuasi
+    from '../components/PratinjauValuasi.vue'
 
 const props = defineProps({
     batchId: {
@@ -666,7 +654,6 @@ const emit = defineEmits([
 ])
 
 const {
-    JENIS,
     loadingForm,
     submitting,
     errorMsg,
@@ -708,11 +695,32 @@ const {
     simpanDanPosting
 } = useBlendingForm()
 
+const daftarTangkiTujuan = computed(() => {
+    return daftarTangki.value.filter(
+        tangki => {
+            const kode =
+                String(
+                    tangki.kode ??
+                    tangki.nama ??
+                    ''
+                )
+                    .trim()
+                    .toUpperCase()
+
+            return kode.startsWith(
+                'TK-BLD-'
+            )
+        }
+    )
+})
+
 onMounted(() => {
     if (props.batchId) {
-        bukaFormEdit(props.batchId)
+        bukaFormEdit(
+            props.batchId
+        )
     } else {
-        bukaFormBaru(JENIS.BLENDING)
+        bukaFormBaru()
     }
 })
 
@@ -741,26 +749,45 @@ function formatRupiah(value) {
 }
 
 async function tambahTangkiBaruPrompt() {
-    const nama =
+    const input =
         window.prompt(
-            'Nama/kode tangki baru:'
+            'Masukkan kode tangki blending:\n\nContoh: TK-BLD-004'
         )
 
-    if (!nama) {
+    if (!input) {
+        return
+    }
+
+    const kode =
+        String(input)
+            .trim()
+            .toUpperCase()
+
+    if (
+        !kode.startsWith(
+            'TK-BLD-'
+        )
+    ) {
+        alert(
+            'Tangki tujuan Blending wajib menggunakan kode TK-BLD-*.\n\nContoh: TK-BLD-004'
+        )
+
         return
     }
 
     const dibuat =
         await tambahTangkiBaru(
-            nama
+            kode
         )
 
-    if (dibuat) {
-        form.tangki_tujuan =
-            dibuat.id
-
-        saatTangkiTujuanDipilih()
+    if (!dibuat) {
+        return
     }
+
+    form.tangki_tujuan =
+        dibuat.id
+
+    saatTangkiTujuanDipilih()
 }
 
 async function tanganiSimpanDanPosting() {
@@ -772,19 +799,25 @@ async function tanganiSimpanDanPosting() {
     }
 }
 
-const cekBahanDuplikat = (row) => {
+function cekBahanDuplikat(row) {
     if (!row.raw) {
         return
     }
 
     const jumlahMuncul =
         bomRows.value.filter(
-            (item) =>
-                String(item.raw) ===
-                String(row.raw)
+            item =>
+                String(
+                    item.raw
+                ) ===
+                String(
+                    row.raw
+                )
         ).length
 
-    if (jumlahMuncul > 1) {
+    if (
+        jumlahMuncul > 1
+    ) {
         alert(
             'Bahan baku ini sudah dipilih di baris BOM lain! Silakan gabungkan QTY-nya.'
         )
