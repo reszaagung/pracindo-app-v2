@@ -1,191 +1,540 @@
 <template>
-    <div class="max-w-7xl mx-auto pb-10 space-y-6 font-sans">
+    <div class="min-h-screen bg-slate-100 text-slate-800 font-sans">
+        <div class="w-full max-w-[1700px] mx-auto p-4 lg:p-6">
 
-        <!-- HEADER POS -->
-        <header
-            class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-4">
-            
-            <!-- Kiri: Tombol Back & Judul -->
-            <div class="flex items-center gap-5">
-                <!-- 👇 TOMBOL KEMBALI KE DASHBOARD 👇 -->
-                <button @click="router.push('/dashboard')" 
-                    class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm">
-                    <i class="pi pi-arrow-left"></i> Dashboard
-                </button>
+            <header class="mb-5">
+                <div class="bg-white border border-slate-200 shadow-sm">
+                    <div
+                        class="px-5 py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4"
+                    >
+                        <div class="flex items-center gap-4">
+                            <button
+                                type="button"
+                                @click="router.push('/dashboard')"
+                                class="h-10 px-4 bg-slate-900 text-white flex items-center gap-2 text-sm font-semibold hover:bg-slate-800 transition"
+                            >
+                                <i class="pi pi-arrow-left text-xs"></i>
+                                Dashboard
+                            </button>
 
-                <div>
-                    <p class="text-sm text-slate-500 mb-1">Retail / Point of Sale</p>
-                    <h1 class="text-2xl font-bold text-slate-800">Mesin Kasir Utama</h1>
-                </div>
-            </div>
+                            <div class="hidden sm:block h-8 w-px bg-slate-200"></div>
 
-            <!-- Kanan: Search Bar Produk -->
-            <div class="relative w-full md:w-72">
-                <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                <input v-model="searchQuery" type="text" placeholder="Cari produk atau barcode..."
-                    class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 bg-white">
-            </div>
-        </header>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-blue-600"></span>
 
-        <div class="flex flex-col lg:flex-row gap-6">
+                                    <span
+                                        class="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400"
+                                    >
+                                        Retail / Point of Sale
+                                    </span>
+                                </div>
 
-            <!-- ==========================================
-           KIRI: KATALOG PRODUK (60%) 
-      =========================================== -->
-            <div
-                class="w-full lg:w-3/5 bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col h-[calc(100vh-200px)] overflow-hidden">
-                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h2 class="font-bold text-slate-700">Katalog Produk</h2>
-                    <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md">{{
-                        filteredProducts.length }} Item</span>
-                </div>
-
-                <div
-                    class="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-4 custom-scrollbar content-start">
-
-                    <button v-for="item in filteredProducts" :key="item.id" @click="addToCart(item)"
-                        :disabled="item.qty <= 0"
-                        class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all text-left flex flex-col group disabled:opacity-50 disabled:cursor-not-allowed">
-                        <div
-                            class="h-16 bg-slate-50 rounded-lg mb-3 flex items-center justify-center text-slate-400 text-xs font-mono group-hover:bg-blue-50 transition-colors w-full border border-slate-100">
-                            {{ item.kode_produk || 'SKU' }}
+                                <h1
+                                    class="text-xl lg:text-2xl font-black tracking-tight text-slate-900 mt-1"
+                                >
+                                    Mesin Kasir
+                                </h1>
+                            </div>
                         </div>
-                        <p class="font-semibold text-sm text-slate-700 truncate w-full">{{ item.nama_produk || item.nama
-                            }}</p>
-                        <p class="text-blue-600 font-black mt-1 text-lg">Rp {{ (item.harga_jual || item.harga ||
-                            0).toLocaleString('id-ID') }}</p>
-                        <div class="mt-auto pt-3 flex justify-between items-center w-full">
-                            <span class="text-xs text-slate-400 font-medium">Stok: {{ item.qty || item.stok || 0
-                                }}</span>
-                            <i class="pi pi-cart-plus text-slate-300 group-hover:text-blue-500"></i>
+
+                        <div class="w-full xl:w-[430px]">
+                            <div class="relative">
+                                <i
+                                    class="pi pi-search absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 text-sm"
+                                ></i>
+
+                                <input
+                                    v-model="searchQuery"
+                                    type="text"
+                                    placeholder="Cari produk atau barcode..."
+                                    class="w-full pl-7 pr-8 py-3 bg-transparent border-0 border-b-2 border-slate-200 focus:border-blue-600 focus:ring-0 outline-none text-sm font-medium placeholder:text-slate-400 transition"
+                                />
+
+                                <button
+                                    v-if="searchQuery"
+                                    type="button"
+                                    @click="searchQuery = ''"
+                                    class="absolute right-0 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 transition"
+                                >
+                                    <i class="pi pi-times text-xs"></i>
+                                </button>
+                            </div>
                         </div>
-                    </button>
-
+                    </div>
                 </div>
-            </div>
+            </header>
 
-            <!-- ==========================================
-           KANAN: KERANJANG & PEMBAYARAN (40%)
-      =========================================== -->
             <div
-                class="w-full lg:w-2/5 bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col h-[calc(100vh-200px)] overflow-hidden">
+                class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_430px] gap-5 items-start"
+            >
+                <section
+                    class="bg-white border border-slate-200 shadow-sm flex flex-col xl:h-[calc(100vh-155px)]"
+                >
+                    <div class="px-5 py-4 border-b border-slate-200">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p
+                                    class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400"
+                                >
+                                    Product Catalog
+                                </p>
 
-                <!-- Header Keranjang -->
-                <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="font-bold text-slate-700 flex items-center gap-2">
-                        <i class="pi pi-shopping-bag text-blue-500"></i> Keranjang
-                    </h2>
-                </div>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <h2 class="text-lg font-black text-slate-900">
+                                        Katalog Produk
+                                    </h2>
 
-                <!-- Daftar Barang di Keranjang (Scrollable) -->
-                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/30">
-                    <div v-if="cart.length === 0" class="flex h-full flex-col items-center justify-center opacity-60">
-                        <i class="pi pi-shopping-cart text-5xl mb-4 text-slate-300"></i>
-                        <p class="text-slate-500 text-sm font-medium">Belum ada barang dipilih.</p>
+                                    <span
+                                        class="min-w-7 h-7 px-2 bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-black"
+                                    >
+                                        {{ filteredProducts.length }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div
+                                class="hidden md:flex items-center gap-2 text-[11px] font-medium text-slate-400"
+                            >
+                                <i class="pi pi-info-circle"></i>
+                                Klik produk untuk menambahkan
+                            </div>
+                        </div>
                     </div>
 
-                    <div v-else class="space-y-3">
-                        <div v-for="(cartItem, index) in cart" :key="index"
-                            class="flex flex-col bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
-                            <div class="flex justify-between items-start mb-2">
-                                <p class="font-bold text-sm text-slate-800 pr-2">{{ cartItem.nama }}</p>
-                                <button @click="hapusItem(index)" class="text-rose-400 hover:text-rose-600"><i
-                                        class="pi pi-trash text-sm"></i></button>
+                    <div class="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                        <div
+                            v-if="isLoading && filteredProducts.length === 0"
+                            class="min-h-[450px] flex items-center justify-center"
+                        >
+                            <div class="text-center">
+                                <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
+
+                                <p class="mt-3 text-sm font-medium text-slate-400">
+                                    Memuat produk...
+                                </p>
                             </div>
-                            <div class="flex justify-between items-end">
-                                <p class="text-xs text-slate-500 font-medium">Rp {{
-                                    cartItem.harga.toLocaleString('id-ID') }}</p>
+                        </div>
+
+                        <div
+                            v-else-if="filteredProducts.length === 0"
+                            class="min-h-[450px] flex items-center justify-center"
+                        >
+                            <div class="text-center">
                                 <div
-                                    class="flex items-center border border-slate-200 rounded-lg bg-slate-50 overflow-hidden shadow-inner">
-                                    <button @click="decreaseQty(index)"
-                                        class="text-rose-500 hover:bg-rose-100 px-3 py-1.5 transition-colors"><i
-                                            class="pi pi-minus text-xs"></i></button>
-                                    <span class="text-sm font-bold w-8 text-center text-slate-700">{{ cartItem.qty
-                                        }}</span>
-                                    <button @click="increaseQty(index)"
-                                        class="text-blue-600 hover:bg-blue-100 px-3 py-1.5 transition-colors"><i
-                                            class="pi pi-plus text-xs"></i></button>
+                                    class="w-16 h-16 mx-auto mb-4 border border-dashed border-slate-300 flex items-center justify-center"
+                                >
+                                    <i class="pi pi-box text-xl text-slate-300"></i>
+                                </div>
+
+                                <p class="text-sm font-bold text-slate-600">
+                                    Produk tidak ditemukan
+                                </p>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Coba gunakan kata pencarian lain
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            v-else
+                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3"
+                        >
+                            <button
+                                v-for="item in filteredProducts"
+                                :key="item.id"
+                                type="button"
+                                @click="addToCart(item)"
+                                :disabled="(item.qty || item.stok || 0) <= 0"
+                                class="group min-w-0 text-left bg-white border border-slate-200 p-3 hover:border-blue-500 hover:shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <div
+                                    class="h-20 bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 transition"
+                                >
+                                    <span
+                                        class="text-[10px] font-mono font-black tracking-wider text-slate-400 group-hover:text-blue-500"
+                                    >
+                                        {{ item.kode_produk || 'SKU' }}
+                                    </span>
+                                </div>
+
+                                <div class="pt-3">
+                                    <p class="font-bold text-sm text-slate-800 truncate">
+                                        {{ item.nama_produk || item.nama }}
+                                    </p>
+
+                                    <p class="text-blue-600 text-base font-black mt-1">
+                                        Rp {{
+                                            (
+                                                item.harga_jual ||
+                                                item.harga ||
+                                                0
+                                            ).toLocaleString('id-ID')
+                                        }}
+                                    </p>
+                                </div>
+
+                                <div
+                                    class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between"
+                                >
+                                    <span
+                                        class="text-[10px] font-semibold"
+                                        :class="
+                                            (item.qty || item.stok || 0) > 0
+                                                ? 'text-slate-400'
+                                                : 'text-rose-500'
+                                        "
+                                    >
+                                        Stok: {{ item.qty || item.stok || 0 }}
+                                    </span>
+
+                                    <span
+                                        class="w-7 h-7 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-500 transition"
+                                    >
+                                        <i class="pi pi-plus text-[10px]"></i>
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <aside
+                    class="bg-white border border-slate-200 shadow-sm flex flex-col xl:h-[calc(100vh-155px)] xl:sticky xl:top-5"
+                >
+                    <div class="px-5 py-4 border-b border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p
+                                    class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400"
+                                >
+                                    Current Order
+                                </p>
+
+                                <h2 class="text-lg font-black text-slate-900 mt-1">
+                                    Keranjang
+                                </h2>
+                            </div>
+
+                            <div
+                                class="min-w-8 h-8 px-2 bg-slate-900 text-white flex items-center justify-center text-xs font-black"
+                            >
+                                {{ cart.length }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50">
+                        <div
+                            v-if="cart.length === 0"
+                            class="h-full min-h-[260px] flex items-center justify-center px-6"
+                        >
+                            <div class="text-center">
+                                <div
+                                    class="w-16 h-16 mx-auto mb-4 border border-dashed border-slate-300 flex items-center justify-center"
+                                >
+                                    <i class="pi pi-shopping-cart text-xl text-slate-300"></i>
+                                </div>
+
+                                <p class="text-sm font-bold text-slate-500">
+                                    Keranjang masih kosong
+                                </p>
+
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Pilih produk dari katalog
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-else class="divide-y divide-slate-200">
+                            <div
+                                v-for="(cartItem, index) in cart"
+                                :key="index"
+                                class="bg-white p-4"
+                            >
+                                <div class="flex gap-3">
+                                    <div
+                                        class="w-7 h-7 shrink-0 bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-black"
+                                    >
+                                        {{ String(index + 1).padStart(2, '0') }}
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div
+                                            class="flex items-start justify-between gap-3"
+                                        >
+                                            <p
+                                                class="font-bold text-sm text-slate-800 leading-snug"
+                                            >
+                                                {{ cartItem.nama }}
+                                            </p>
+
+                                            <button
+                                                type="button"
+                                                @click="hapusItem(index)"
+                                                class="shrink-0 text-slate-300 hover:text-rose-500 transition"
+                                            >
+                                                <i class="pi pi-trash text-xs"></i>
+                                            </button>
+                                        </div>
+
+                                        <p class="text-xs text-slate-400 mt-1">
+                                            Rp {{
+                                                cartItem.harga.toLocaleString('id-ID')
+                                            }}
+                                            / item
+                                        </p>
+
+                                        <div
+                                            class="flex items-end justify-between gap-3 mt-3"
+                                        >
+                                            <div
+                                                class="flex items-center border-b-2 border-slate-200"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    @click="decreaseQty(index)"
+                                                    class="w-7 h-7 text-slate-500 hover:text-rose-500 transition"
+                                                >
+                                                    <i class="pi pi-minus text-[9px]"></i>
+                                                </button>
+
+                                                <span
+                                                    class="w-8 text-center text-sm font-black text-slate-800"
+                                                >
+                                                    {{ cartItem.qty }}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    @click="increaseQty(index)"
+                                                    class="w-7 h-7 text-slate-500 hover:text-blue-600 transition"
+                                                >
+                                                    <i class="pi pi-plus text-[9px]"></i>
+                                                </button>
+                                            </div>
+
+                                            <p
+                                                class="font-black text-sm text-slate-900"
+                                            >
+                                                Rp {{
+                                                    (
+                                                        cartItem.harga *
+                                                        cartItem.qty
+                                                    ).toLocaleString('id-ID')
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- AREA FORM: SALES VS END USER & PEMBAYARAN -->
-                <div class="p-4 border-t border-slate-200 bg-white space-y-4 shadow-[0_-4px_15px_rgba(0,0,0,0.02)]">
+                    <div class="border-t border-slate-200 bg-white">
+                        <div class="p-5 space-y-5">
+                            <div>
+                                <p
+                                    class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400 mb-2"
+                                >
+                                    Tipe Penjualan
+                                </p>
 
-                    <!-- 1. TOGLE TIPE PENJUALAN (End User vs Sales) -->
-                    <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
-                        <button @click="tipePenjualan = 'END_USER'"
-                            :class="tipePenjualan === 'END_USER' ? 'bg-white text-blue-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
-                            class="flex-1 py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-2">
-                            <i class="pi pi-user"></i> End-User (Langsung)
-                        </button>
-                        <button @click="tipePenjualan = 'SALES'"
-                            :class="tipePenjualan === 'SALES' ? 'bg-white text-blue-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700 font-medium'"
-                            class="flex-1 py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-2">
-                            <i class="pi pi-briefcase"></i> Via Sales
-                        </button>
-                    </div>
+                                <div
+                                    class="grid grid-cols-2 border-b-2 border-slate-200"
+                                >
+                                    <button
+                                        type="button"
+                                        @click="tipePenjualan = 'END_USER'"
+                                        :class="
+                                            tipePenjualan === 'END_USER'
+                                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                                : 'text-slate-400'
+                                        "
+                                        class="py-2.5 -mb-[2px] text-xs font-black flex items-center justify-center gap-2 transition"
+                                    >
+                                        <i class="pi pi-user text-[10px]"></i>
+                                        End User
+                                    </button>
 
-                    <!-- 2. DROPDOWN DINAMIS (Berdasarkan Tipe) -->
-                    <div class="space-y-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                        <!-- Jika Via Sales, tampilkan pilihan Sales -->
-                        <div v-if="tipePenjualan === 'SALES'">
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Nama Sales <span
-                                    class="text-rose-500">*</span></label>
-                            <select v-model="selectedSales"
-                                class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
-                                <option :value="null" disabled>-- Pilih Sales --</option>
-                                <option v-for="s in salesList" :key="s.id" :value="s.id">{{ s.nama }}</option>
-                            </select>
+                                    <button
+                                        type="button"
+                                        @click="tipePenjualan = 'SALES'"
+                                        :class="
+                                            tipePenjualan === 'SALES'
+                                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                                : 'text-slate-400'
+                                        "
+                                        class="py-2.5 -mb-[2px] text-xs font-black flex items-center justify-center gap-2 transition"
+                                    >
+                                        <i
+                                            class="pi pi-briefcase text-[10px]"
+                                        ></i>
+                                        Via Sales
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="tipePenjualan === 'SALES'">
+                                <label
+                                    class="block text-[10px] uppercase tracking-[0.14em] font-black text-slate-400 mb-1"
+                                >
+                                    Sales
+                                    <span class="text-rose-500">*</span>
+                                </label>
+
+                                <div class="relative">
+                                    <select
+                                        v-model="selectedSales"
+                                        class="w-full appearance-none bg-transparent border-0 border-b-2 border-slate-200 focus:border-blue-600 focus:ring-0 outline-none py-2.5 pr-7 text-sm font-semibold text-slate-700 transition"
+                                    >
+                                        <option :value="null" disabled>
+                                            Pilih Sales
+                                        </option>
+
+                                        <option
+                                            v-for="s in salesList"
+                                            :key="s.id"
+                                            :value="s.id"
+                                        >
+                                            {{ s.nama }}
+                                        </option>
+                                    </select>
+
+                                    <i
+                                        class="pi pi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"
+                                    ></i>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label
+                                    class="block text-[10px] uppercase tracking-[0.14em] font-black text-slate-400 mb-1"
+                                >
+                                    Pelanggan
+
+                                    <span
+                                        v-if="metodeBayar === 'TEMPO'"
+                                        class="text-rose-500"
+                                    >
+                                        * Wajib Tempo
+                                    </span>
+                                </label>
+
+                                <div class="relative">
+                                    <select
+                                        v-model="selectedPelanggan"
+                                        class="w-full appearance-none bg-transparent border-0 border-b-2 border-slate-200 focus:border-blue-600 focus:ring-0 outline-none py-2.5 pr-7 text-sm font-semibold text-slate-700 transition"
+                                    >
+                                        <option :value="null">
+                                            Pelanggan Umum
+                                        </option>
+
+                                        <option
+                                            v-for="p in pelangganList"
+                                            :key="p.id"
+                                            :value="p.id"
+                                        >
+                                            {{ p.nama }}
+                                        </option>
+                                    </select>
+
+                                    <i
+                                        class="pi pi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"
+                                    ></i>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p
+                                    class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400 mb-2"
+                                >
+                                    Metode Pembayaran
+                                </p>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        @click="metodeBayar = 'TUNAI'"
+                                        :class="
+                                            metodeBayar === 'TUNAI'
+                                                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                                        "
+                                        class="py-3 border text-xs font-black transition"
+                                    >
+                                        TUNAI
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="metodeBayar = 'TEMPO'"
+                                        :class="
+                                            metodeBayar === 'TEMPO'
+                                                ? 'border-orange-500 text-orange-600 bg-orange-50'
+                                                : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                                        "
+                                        class="py-3 border text-xs font-black transition"
+                                    >
+                                        TEMPO / BON
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Pelanggan (Opsional untuk Tunai, Wajib untuk Tempo) -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">
-                                Data Pelanggan <span v-if="metodeBayar === 'TEMPO'" class="text-rose-500">* Wajib untuk
-                                    Tempo</span>
-                            </label>
-                            <select v-model="selectedPelanggan"
-                                class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 bg-white">
-                                <option :value="null">-- Pelanggan Umum (Tanpa Nama) --</option>
-                                <option v-for="p in pelangganList" :key="p.id" :value="p.id">{{ p.nama }}</option>
-                            </select>
-                        </div>
-                    </div>
+                        <div
+                            class="px-5 py-4 border-t border-slate-200 bg-slate-50"
+                        >
+                            <div
+                                class="flex items-end justify-between gap-4"
+                            >
+                                <div>
+                                    <p
+                                        class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400"
+                                    >
+                                        Total Tagihan
+                                    </p>
 
-                    <!-- 3. METODE PEMBAYARAN -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-2">Metode Bayar</label>
-                        <div class="flex gap-2">
-                            <button @click="metodeBayar = 'TUNAI'"
-                                :class="metodeBayar === 'TUNAI' ? 'bg-emerald-500 text-white shadow-md border-emerald-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
-                                class="flex-1 py-2 border rounded-lg text-sm font-bold transition-all">TUNAI</button>
-                            <button @click="metodeBayar = 'TEMPO'"
-                                :class="metodeBayar === 'TEMPO' ? 'bg-orange-500 text-white shadow-md border-orange-600' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
-                                class="flex-1 py-2 border rounded-lg text-sm font-bold transition-all">TEMPO
-                                (BON)</button>
-                        </div>
-                    </div>
+                                    <p class="text-xs text-slate-400 mt-1">
+                                        {{ cart.length }} item
+                                    </p>
+                                </div>
 
-                    <!-- 4. TOTAL & SUBMIT -->
-                    <div class="pt-2">
-                        <div class="flex justify-between items-end mb-3">
-                            <span class="text-slate-500 font-bold text-sm">TOTAL TAGIHAN</span>
-                            <span class="font-black text-slate-900 text-2xl tracking-tight">Rp {{
-                                totalHarga.toLocaleString('id-ID') }}</span>
+                                <p
+                                    class="text-2xl font-black tracking-tight text-slate-900"
+                                >
+                                    Rp {{ totalHarga.toLocaleString('id-ID') }}
+                                </p>
+                            </div>
                         </div>
 
-                        <button @click="prosesBayar" :disabled="isButtonDisabled"
-                            class="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2">
-                            <i v-if="isLoading" class="pi pi-spin pi-spinner"></i>
-                            <i v-else class="pi pi-check-circle"></i>
-                            {{ isLoading ? 'MEMPROSES...' : 'BAYAR SEKARANG' }}
-                        </button>
-                    </div>
+                        <div class="p-5 pt-3">
+                            <button
+                                type="button"
+                                @click="prosesBayar"
+                                :disabled="isButtonDisabled"
+                                class="w-full h-14 bg-slate-900 text-white font-black text-sm tracking-wide flex items-center justify-center gap-2 hover:bg-blue-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <i
+                                    v-if="isLoading"
+                                    class="pi pi-spin pi-spinner"
+                                ></i>
 
-                </div>
+                                <i
+                                    v-else
+                                    class="pi pi-check-circle"
+                                ></i>
+
+                                {{
+                                    isLoading
+                                        ? 'MEMPROSES...'
+                                        : 'BAYAR SEKARANG'
+                                }}
+                            </button>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </div>
     </div>
@@ -197,7 +546,17 @@ import { useRouter } from 'vue-router'
 import { useRetail } from '../composables/useRetail'
 
 const router = useRouter()
-const { posProducts, isLoading, pelangganList, salesList, fetchPosProducts, fetchPelanggan, fetchSales, checkoutCart } = useRetail()
+
+const {
+    posProducts,
+    isLoading,
+    pelangganList,
+    salesList,
+    fetchPosProducts,
+    fetchPelanggan,
+    fetchSales,
+    checkoutCart
+} = useRetail()
 
 const searchQuery = ref('')
 const cart = ref([])
@@ -213,62 +572,114 @@ onMounted(() => {
     fetchSales()
 })
 
-// --- Logic UI ---
 const filteredProducts = computed(() => {
-    let data = Array.isArray(posProducts.value) ? posProducts.value : (posProducts.value?.results || [])
-    if (searchQuery.value) {
-        const key = searchQuery.value.toLowerCase()
-        return data.filter(p => p.nama_produk?.toLowerCase().includes(key) || p.kode_produk?.toLowerCase().includes(key))
+    const data = Array.isArray(posProducts.value)
+        ? posProducts.value
+        : (posProducts.value?.results || [])
+
+    const key = searchQuery.value.trim().toLowerCase()
+
+    if (!key) {
+        return data
     }
-    return data
+
+    return data.filter(product =>
+        product.nama_produk?.toLowerCase().includes(key) ||
+        product.nama?.toLowerCase().includes(key) ||
+        product.kode_produk?.toLowerCase().includes(key)
+    )
 })
 
-const totalHarga = computed(() => cart.value.reduce((total, item) => total + (item.harga * item.qty), 0))
+const totalHarga = computed(() => {
+    return cart.value.reduce(
+        (total, item) => total + (item.harga * item.qty),
+        0
+    )
+})
 
 const isButtonDisabled = computed(() => {
-    if (cart.value.length === 0) return true
-    if (isLoading.value) return true
-    if (metodeBayar.value === 'TEMPO' && !selectedPelanggan.value) return true
-    if (tipePenjualan.value === 'SALES' && !selectedSales.value) return true
+    if (cart.value.length === 0) {
+        return true
+    }
+
+    if (isLoading.value) {
+        return true
+    }
+
+    if (
+        metodeBayar.value === 'TEMPO' &&
+        !selectedPelanggan.value
+    ) {
+        return true
+    }
+
+    if (
+        tipePenjualan.value === 'SALES' &&
+        !selectedSales.value
+    ) {
+        return true
+    }
+
     return false
 })
 
-watch(tipePenjualan, (newVal) => {
-    if (newVal === 'END_USER') {
+watch(tipePenjualan, (newValue) => {
+    if (newValue === 'END_USER') {
         selectedSales.value = null
     }
 })
 
-// --- Logic Keranjang ---
 const addToCart = (product) => {
-    const pId = product.produk_id || product.id
-    const pStok = product.qty || product.stok || 0
-    const existing = cart.value.find(item => item.id === pId)
+    const productId = product.produk_id || product.id
+    const stock = product.qty || product.stok || 0
+
+    const existing = cart.value.find(
+        item => item.id === productId
+    )
 
     if (existing) {
-        if (existing.qty < pStok) existing.qty++
-    } else {
-        if (pStok > 0) {
-            cart.value.push({
-                id: pId,
-                kemasan: product.kemasan_id || product.kemasan || null,
-                nama: product.nama_produk || product.nama,
-                harga: product.harga_jual || product.harga,
-                stok: pStok,
-                qty: 1
-            })
+        if (existing.qty < stock) {
+            existing.qty++
         }
+
+        return
     }
+
+    if (stock <= 0) {
+        return
+    }
+
+    cart.value.push({
+        id: productId,
+        kemasan: product.kemasan_id || product.kemasan || null,
+        nama: product.nama_produk || product.nama,
+        harga: product.harga_jual || product.harga || 0,
+        stok: stock,
+        qty: 1
+    })
 }
 
 const increaseQty = (index) => {
     const item = cart.value[index]
-    if (item.qty < item.stok) item.qty++
+
+    if (!item) {
+        return
+    }
+
+    if (item.qty < item.stok) {
+        item.qty++
+    }
 }
 
 const decreaseQty = (index) => {
-    if (cart.value[index].qty > 1) {
-        cart.value[index].qty--
+    const item = cart.value[index]
+
+    if (!item) {
+        return
+    }
+
+    if (item.qty > 1) {
+        item.qty--
     }
 }
 
@@ -277,11 +688,18 @@ const hapusItem = (index) => {
 }
 
 const prosesBayar = async () => {
+    if (isButtonDisabled.value) {
+        return
+    }
+
     const payload = {
         subtotal: totalHarga.value,
         metode_bayar: metodeBayar.value,
         pelanggan_id: selectedPelanggan.value,
-        sales_id: tipePenjualan.value === 'SALES' ? selectedSales.value : null,
+        sales_id:
+            tipePenjualan.value === 'SALES'
+                ? selectedSales.value
+                : null,
         keranjang: cart.value.map(item => ({
             produk_id: item.id,
             kemasan_id: item.kemasan,
@@ -292,26 +710,49 @@ const prosesBayar = async () => {
 
     const result = await checkoutCart(payload)
 
-    if (result.status === 'sukses') {
-        alert(`Transaksi Berhasil!\nNomor Struk: ${result.nomor_struk}`)
+    if (result?.status === 'sukses') {
+        alert(
+            `Transaksi Berhasil!\nNomor Struk: ${result.nomor_struk}`
+        )
+
         cart.value = []
         metodeBayar.value = 'TUNAI'
         tipePenjualan.value = 'END_USER'
         selectedPelanggan.value = null
         selectedSales.value = null
-        fetchPosProducts()
-    } else {
-        alert(`Transaksi Gagal: ${result.pesan}`)
+
+        await fetchPosProducts()
+
+        return
     }
+
+    alert(
+        `Transaksi Gagal: ${
+            result?.pesan || 'Terjadi kesalahan'
+        }`
+    )
 }
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #cbd5e1;
-    border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 </style>

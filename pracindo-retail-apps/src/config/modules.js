@@ -28,8 +28,8 @@ export const RETAIL_MODUL = [
     nama: 'Stok & Opname',
     ringkas: 'Modul untuk cek stok warna dan opname harian cabang.',
     ikon: 'gudang',
-    rute: '/stok',  // 👈 Rute sudah diisi
-    siap: true,     // 👈 Modul diaktifkan
+    rute: '/stok', 
+    siap: true,     
   },
 ]
 
