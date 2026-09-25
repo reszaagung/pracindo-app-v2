@@ -1,63 +1,137 @@
-<!-- src/features/produksi/layout/DesktopInputProduksi.vue -->
 <template>
-  <div class="flex h-screen bg-[#F8FAFC] font-sans text-slate-700 overflow-hidden">
+    <div
+        class="flex h-screen overflow-hidden bg-[#F8FAFC] font-sans text-slate-700"
+    >
+        <aside
+            class="relative z-20 m-4 flex h-[calc(100vh-2rem)] w-[88px] flex-shrink-0 flex-col items-center justify-between rounded-3xl border border-slate-100 bg-white py-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+        >
+            <div class="flex w-full flex-col items-center gap-8">
+                <nav
+                    class="flex w-full flex-col gap-4 px-4"
+                    aria-label="Navigasi Produksi"
+                >
+                    <button
+                        v-for="menu in menuProduksi"
+                        :key="menu.id"
+                        type="button"
+                        :disabled="!menu.activate"
+                        :aria-current="
+                            aktif(menu.rute)
+                                ? 'page'
+                                : undefined
+                        "
+                        :aria-label="
+                            menu.activate
+                                ? menu.label
+                                : `${menu.label} - Segera`
+                        "
+                        :title="
+                            menu.activate
+                                ? menu.label
+                                : `${menu.label} - Segera`
+                        "
+                        @click="klikMenu(menu)"
+                        class="group relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed"
+                        :class="
+                            menu.activate
+                                ? aktif(menu.rute)
+                                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10'
+                                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+                                : 'cursor-default text-slate-300'
+                        "
+                    >
+                        <i
+                            :class="[
+                                'pi',
+                                menu.ikon,
+                                'text-lg lg:text-xl',
+                                'transition-transform',
+                                menu.activate
+                                    ? 'group-hover:scale-110'
+                                    : ''
+                            ]"
+                            aria-hidden="true"
+                        ></i>
 
-    <!-- SIDEBAR DESKTOP MURNI (Statis & Selalu Terbuka) -->
-    <aside class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex flex-col items-center py-6 flex-shrink-0 justify-between w-[88px] h-[calc(100vh-2rem)] m-4 z-20">
+                        <span
+                            class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                            aria-hidden="true"
+                        >
+                            {{ menu.label }}
 
-      <div class="flex flex-col items-center w-full gap-8">
-        <!-- Tombol Back Atas -->
-        <div @click="kembali" class="mb-2 cursor-pointer">
-          <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shadow-md hover:scale-105 transition-transform">
-            <i class="pi pi-arrow-left text-white text-xl"></i>
-          </div>
-        </div>
+                            <template v-if="!menu.activate">
+                                (Segera)
+                            </template>
+                        </span>
+                    </button>
+                </nav>
+            </div>
 
-        <!-- Menu Navigasi -->
-        <nav class="flex flex-col gap-4 w-full px-4">
-          <button v-for="menu in menuProduksi" :key="menu.id" :disabled="!menu.activate" @click="klikMenu(menu)"
-            class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 relative mx-auto group"
-            :class="menu.activate ? (aktif(menu.rute) ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600') : 'text-slate-300 cursor-default'">
-            <i :class="['pi', menu.ikon, 'text-lg lg:text-xl', 'transition-transform', menu.activate ? 'group-hover:scale-110' : '']"></i>
-            <span class="absolute left-16 bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg transition-opacity">
-              {{ menu.label }}<template v-if="!menu.activate"> (Segera)</template>
-            </span>
-          </button>
-        </nav>
-      </div>
+            <div class="relative mb-4 mt-auto flex flex-col items-center gap-4">
+                <div class="group relative flex flex-col items-center">
+                    <button
+                        @click="keDashboard"
+                        type="button"
+                        aria-label="Ke Dashboard"
+                        title="Ke Dashboard"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+                    >
+                        <i
+                            class="pi pi-home text-slate-400 transition-colors group-hover:text-slate-600"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
 
-      <!-- Area Bawah: Home & Logout -->
-      <div class="mt-auto flex flex-col items-center gap-4 relative mb-4">
-        <div class="group relative flex flex-col items-center">
-            <button @click="keDashboard" type="button" class="w-10 h-10 rounded-xl overflow-hidden cursor-pointer border border-slate-200 hover:border-slate-400 bg-white hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center">
-            <i class="pi pi-home text-slate-400 group-hover:text-slate-600 transition-colors"></i>
-            </button>
-            <span class="absolute -top-10 bg-slate-800 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-            Ke Dashboard
-            </span>
-        </div>
-        <div class="group relative flex flex-col items-center">
-            <button @click="keluar" type="button" class="w-10 h-10 rounded-xl overflow-hidden cursor-pointer border border-rose-100 hover:border-rose-400 bg-white hover:bg-rose-50 transition-all shadow-sm flex items-center justify-center">
-                <i class="pi pi-power-off text-rose-400 group-hover:text-rose-600 transition-colors"></i>
-            </button>
-            <span class="absolute -top-10 bg-rose-600 text-white text-[11px] font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                Keluar
-            </span>
-        </div>
-      </div>
-    </aside>
+                    <span
+                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                        aria-hidden="true"
+                    >
+                        Ke Dashboard
+                    </span>
+                </div>
 
-    <!-- KONTEN UTAMA DESKTOP -->
-    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-      <div class="mx-auto w-full max-w-7xl">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </div>
-    </main>
-  </div>
+                <div class="group relative flex flex-col items-center">
+                    <button
+                        @click="keluar"
+                        type="button"
+                        aria-label="Keluar"
+                        title="Keluar"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-white shadow-sm transition-all hover:border-rose-400 hover:bg-rose-50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                    >
+                        <i
+                            class="pi pi-power-off text-rose-400 transition-colors group-hover:text-rose-600"
+                            aria-hidden="true"
+                        ></i>
+                    </button>
+
+                    <span
+                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-rose-600 px-2 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                        aria-hidden="true"
+                    >
+                        Keluar
+                    </span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="custom-scrollbar flex-1 overflow-y-auto p-8">
+            <div class="mx-auto w-full max-w-7xl">
+                <router-view v-slot="{ Component }">
+                    <transition
+                        name="fade"
+                        mode="out-in"
+                    >
+                        <div
+                            :key="$route.fullPath"
+                            class="min-h-full w-full"
+                        >
+                            <component :is="Component" />
+                        </div>
+                    </transition>
+                </router-view>
+            </div>
+        </main>
+    </div>
 </template>
 
 <script setup>
@@ -69,19 +143,16 @@ const router = useRouter()
 const { menuProduksi, aktif } = useNavProduksi()
 const { logout } = useAuth()
 
-const kembali = () => {
-    if (window.history.length > 2) {
-        router.back()
-    } else {
-        router.push('/')
-    }
+const keDashboard = () => {
+    router.push('/')
 }
 
-const keDashboard = () => router.push('/')
-
 const klikMenu = (menu) => {
-  if (!menu.activate) return
-  router.push(menu.rute)
+    if (!menu?.activate || !menu?.rute) return
+
+    if (router.currentRoute.value.path === menu.rute) return
+
+    router.push(menu.rute)
 }
 
 const keluar = async () => {
@@ -91,8 +162,39 @@ const keluar = async () => {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.fade-enter-active,
+.fade-leave-active {
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+.fade-enter-from {
+    opacity: 0;
+    transform: translateY(4px);
+}
+
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(-4px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+button:focus-visible {
+    outline: 2px solid #0f172a;
+    outline-offset: 2px;
+}
 </style>
+

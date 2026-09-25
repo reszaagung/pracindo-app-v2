@@ -14,7 +14,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
-    "@primeicons/vue": "^8.0.1",
+    "@primeicons/vue": "^8.0.2",
     "@primevue/themes": "^4.5.4",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.19.0",
@@ -23,7 +23,7 @@
     "jsencrypt": "^3.5.4",
     "nprogress": "^0.2.0",
     "pinia": "^3.0.4",
-    "primeicons": "^8.0.0",
+    "primeicons": "^8.0.2",
     "primevue": "^4.5.5",
     "vue": "^3.5.38",
     "vue-chartjs": "^5.3.4",

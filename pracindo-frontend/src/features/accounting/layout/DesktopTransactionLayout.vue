@@ -31,16 +31,13 @@
 
                 <nav
                     class="flex w-full flex-col gap-3 px-4"
-                    aria-label="Navigasi Input Entry Warehouse"
+                    aria-label="Navigasi transaksi akunting"
                 >
                     <button
-                        v-for="menu in menus"
+                        v-for="menu in transaksi"
                         :key="menu.id"
                         type="button"
-                        :disabled="
-                            !menu.activate ||
-                            isLoggingOut
-                        "
+                        :disabled="!menu.activate || isLoggingOut"
                         :aria-current="
                             aktif(menu.rute)
                                 ? 'page'
@@ -94,7 +91,6 @@
                             aria-hidden="true"
                         >
                             {{ menu.label }}
-
                             <template v-if="!menu.activate">
                                 · segera
                             </template>
@@ -160,19 +156,15 @@
             </div>
         </aside>
 
-        <main
-            class="custom-scrollbar min-w-0 flex-1 overflow-y-auto p-8"
-        >
-            <div
-                class="mx-auto min-h-full w-full max-w-[1480px]"
-            >
-                <router-view v-slot="{ Component, route }">
+        <main class="custom-scrollbar min-w-0 flex-1 overflow-y-auto p-8">
+            <div class="mx-auto min-h-full w-full max-w-[1480px]">
+                <router-view v-slot="{ Component }">
                     <transition
                         name="fade"
                         mode="out-in"
                     >
                         <div
-                            :key="route.fullPath"
+                            :key="$route.fullPath"
                             class="min-h-full w-full"
                         >
                             <component :is="Component" />
@@ -188,45 +180,32 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { useNavInputEntry } from '../composables/useNavInputEntry'
+import { useNavTransaksi } from '@/features/accounting/composables/useNavTransaction'
 
 const route = useRoute()
 const router = useRouter()
 
 const { logout } = useAuth()
-
-const {
-    menus,
-    aktif
-} = useNavInputEntry()
+const { transaksi, aktif } = useNavTransaksi()
 
 const isLoggingOut = ref(false)
 
-const kembali = async () => {
-    if (isLoggingOut.value) {
-        return
-    }
+const kembali = () => {
+    if (isLoggingOut.value) return
 
-    if (window.history.length > 1) {
+    if (window.history.length > 2) {
         router.back()
     } else {
-        await router.push('/warehouse')
+        router.push('/accounting')
     }
 }
 
-const keDashboard = async () => {
-    if (isLoggingOut.value) {
-        return
-    }
-
-    if (route.path === '/') {
-        return
-    }
-
-    await router.push('/')
+const keDashboard = () => {
+    if (isLoggingOut.value) return
+    router.push('/')
 }
 
-const klikMenu = async (menu) => {
+const klikMenu = (menu) => {
     if (
         !menu?.activate ||
         !menu?.rute ||
@@ -239,13 +218,11 @@ const klikMenu = async (menu) => {
         return
     }
 
-    await router.push(menu.rute)
+    router.push(menu.rute)
 }
 
 const keluar = async () => {
-    if (isLoggingOut.value) {
-        return
-    }
+    if (isLoggingOut.value) return
 
     isLoggingOut.value = true
 

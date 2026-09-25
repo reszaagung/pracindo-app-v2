@@ -31,7 +31,7 @@
                                 v-model="form.tanggal"
                                 type="date"
                                 required
-                                class="min-w-0 flex-1 bg-transparent text-sm font-bold text-slate-800 outline-none"
+                                class="min-w-0 flex-1 border-0 border-b border-slate-300 bg-transparent px-0 pb-2 text-sm font-bold text-slate-800 outline-none transition-colors focus:border-slate-900 focus:ring-0"
                             />
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                                 v-model="form.tujuan_toko_id"
                                 required
                                 :disabled="sedangMuatStok || sedangProses"
-                                class="min-w-0 flex-1 cursor-pointer appearance-none bg-transparent text-sm font-bold text-slate-800 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                                class="min-w-0 flex-1 cursor-pointer appearance-none border-0 border-b border-blue-200 bg-transparent px-0 pb-2 text-sm font-bold text-slate-800 outline-none transition-colors focus:border-blue-600 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <option value="" disabled>
                                     -- Pilih Cabang Retail --
@@ -72,6 +72,7 @@
                                     :value="toko.id"
                                 >
                                     {{ toko.nama }}
+
                                     <template v-if="toko.kode">
                                         ({{ toko.kode }})
                                     </template>
@@ -110,11 +111,13 @@
                                 type="text"
                                 :value="previewNomor"
                                 readonly
-                                class="min-w-0 flex-1 cursor-not-allowed bg-transparent text-sm font-extrabold tracking-tight text-blue-700 outline-none"
+                                class="min-w-0 flex-1 cursor-not-allowed border-0 border-b border-blue-200 bg-transparent px-0 pb-2 text-sm font-extrabold tracking-tight text-blue-700 outline-none focus:border-blue-300 focus:ring-0"
                             />
                         </div>
 
-                        <p class="mt-2 pl-12 text-[10px] font-medium text-blue-500">
+                        <p
+                            class="mt-2 pl-12 text-[10px] font-medium text-blue-500"
+                        >
                             Nomor final akan ditentukan otomatis oleh sistem.
                         </p>
                     </div>
@@ -141,7 +144,7 @@
                                 id="kendaraan"
                                 v-model="form.kendaraan_id"
                                 :disabled="sedangMuatStok || sedangProses"
-                                class="min-w-0 flex-1 cursor-pointer appearance-none bg-transparent text-sm font-bold text-slate-800 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                                class="min-w-0 flex-1 cursor-pointer appearance-none border-0 border-b border-slate-300 bg-transparent px-0 pb-2 text-sm font-bold text-slate-800 outline-none transition-colors focus:border-slate-900 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <option value="">
                                     -- Bebas (Ditentukan Kemudian) --
@@ -191,7 +194,9 @@
                                 Memuat Stok Pabrik
                             </p>
 
-                            <p class="mt-1 text-[10px] font-medium text-slate-400">
+                            <p
+                                class="mt-1 text-[10px] font-medium text-slate-400"
+                            >
                                 Menyiapkan data barang dan kemasan...
                             </p>
                         </div>
@@ -217,7 +222,9 @@
                                 Rincian Barang
                             </h2>
 
-                            <p class="mt-0.5 text-[10px] font-medium text-slate-400">
+                            <p
+                                class="mt-0.5 text-[10px] font-medium text-slate-400"
+                            >
                                 Pilih barang, kemasan, dan jumlah yang akan dikirim.
                             </p>
                         </div>
@@ -227,14 +234,22 @@
                         class="self-start rounded-full bg-white px-3 py-1.5 text-[10px] font-extrabold text-slate-500 shadow-sm ring-1 ring-slate-200 sm:self-auto"
                     >
                         {{ form.items.length }}
-                        {{ form.items.length === 1 ? 'Baris' : 'Baris' }}
+                        {{
+                            form.items.length === 1
+                                ? 'Baris'
+                                : 'Baris'
+                        }}
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[920px] border-collapse text-left">
+                    <table
+                        class="w-full min-w-[920px] border-collapse text-left"
+                    >
                         <thead>
-                            <tr class="border-b border-slate-200 bg-white">
+                            <tr
+                                class="border-b border-slate-200 bg-white"
+                            >
                                 <th
                                     class="w-16 px-4 py-3 text-center text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400"
                                 >
@@ -285,7 +300,9 @@
                                 :key="index"
                                 class="transition-colors hover:bg-slate-50/60"
                             >
-                                <td class="px-4 py-4 align-top text-center">
+                                <td
+                                    class="px-4 py-4 text-center align-top"
+                                >
                                     <span
                                         class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-extrabold text-slate-500"
                                     >
@@ -298,7 +315,8 @@
                                         :for="`grup-${index}`"
                                         class="sr-only"
                                     >
-                                        Grup untuk baris {{ index + 1 }}
+                                        Grup untuk baris
+                                        {{ index + 1 }}
                                     </label>
 
                                     <select
@@ -307,9 +325,12 @@
                                         @change="resetBarang(item)"
                                         required
                                         :disabled="sedangProses"
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-blue-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                        class="w-full border-0 border-b border-slate-300 bg-transparent px-0 py-2.5 text-sm font-bold text-blue-700 outline-none transition-colors focus:border-blue-600 focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent"
                                     >
-                                        <option value="" disabled>
+                                        <option
+                                            value=""
+                                            disabled
+                                        >
                                             -- Pilih Grup --
                                         </option>
 
@@ -328,18 +349,25 @@
                                         :for="`barang-${index}`"
                                         class="sr-only"
                                     >
-                                        Barang untuk baris {{ index + 1 }}
+                                        Barang untuk baris
+                                        {{ index + 1 }}
                                     </label>
 
                                     <select
                                         :id="`barang-${index}`"
                                         v-model="item.barang_nama"
                                         @change="resetKemasan(item)"
-                                        :disabled="!item.stiker || sedangProses"
+                                        :disabled="
+                                            !item.stiker ||
+                                            sedangProses
+                                        "
                                         required
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                                        class="w-full border-0 border-b border-slate-300 bg-transparent px-0 py-2.5 text-sm font-bold text-slate-800 outline-none transition-colors focus:border-blue-600 focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-slate-400"
                                     >
-                                        <option value="" disabled>
+                                        <option
+                                            value=""
+                                            disabled
+                                        >
                                             {{
                                                 item.stiker
                                                     ? '-- Pilih Barang --'
@@ -357,7 +385,10 @@
                                     </select>
 
                                     <div
-                                        v-if="item.barang_nama && item.stiker"
+                                        v-if="
+                                            item.barang_nama &&
+                                            item.stiker
+                                        "
                                         class="mt-2 flex items-start gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-[10px] font-semibold leading-4 text-emerald-700"
                                     >
                                         <i
@@ -366,7 +397,9 @@
                                         ></i>
 
                                         <span>
-                                            {{ getInfoStokBarang(item) }}
+                                            {{
+                                                getInfoStokBarang(item)
+                                            }}
                                         </span>
                                     </div>
                                 </td>
@@ -376,16 +409,20 @@
                                         :for="`kemasan-${index}`"
                                         class="sr-only"
                                     >
-                                        Kemasan untuk baris {{ index + 1 }}
+                                        Kemasan untuk baris
+                                        {{ index + 1 }}
                                     </label>
 
                                     <select
                                         :id="`kemasan-${index}`"
                                         v-model="item.stok_terpilih"
                                         @change="hitungOtomatis(item)"
-                                        :disabled="!item.barang_nama || sedangProses"
+                                        :disabled="
+                                            !item.barang_nama ||
+                                            sedangProses
+                                        "
                                         required
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                                        class="w-full border-0 border-b border-slate-300 bg-transparent px-0 py-2.5 text-sm font-bold text-slate-800 outline-none transition-colors focus:border-blue-600 focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-slate-400"
                                     >
                                         <option
                                             :value="null"
@@ -395,7 +432,12 @@
                                         </option>
 
                                         <option
-                                            v-for="(kemasan, idx) in getKemasanTersedia(item)"
+                                            v-for="(
+                                                kemasan,
+                                                idx
+                                            ) in getKemasanTersedia(
+                                                item
+                                            )"
                                             :key="idx"
                                             :value="kemasan"
                                         >
@@ -413,27 +455,37 @@
                                     </select>
                                 </td>
 
-                                <td class="px-3 py-3 align-top">
+                                <td
+                                    class="px-3 py-3 align-top"
+                                >
                                     <label
                                         :for="`qty-${index}`"
                                         class="sr-only"
                                     >
-                                        Qty kirim untuk baris {{ index + 1 }}
+                                        Qty kirim untuk baris
+                                        {{ index + 1 }}
                                     </label>
 
                                     <input
                                         :id="`qty-${index}`"
                                         type="number"
                                         v-model="item.total_unit"
-                                        @input="kalkulasiBerat(item)"
+                                        @input="
+                                            kalkulasiBerat(item)
+                                        "
                                         min="1"
-                                        :disabled="!item.stok_terpilih || sedangProses"
+                                        :disabled="
+                                            !item.stok_terpilih ||
+                                            sedangProses
+                                        "
                                         required
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center text-sm font-extrabold text-blue-600 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                                        class="w-full border-0 border-b border-slate-300 bg-transparent px-0 py-2.5 text-center text-sm font-extrabold text-blue-600 outline-none transition-colors focus:border-blue-600 focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-slate-400"
                                     />
                                 </td>
 
-                                <td class="px-4 py-3 text-right align-top">
+                                <td
+                                    class="px-4 py-3 text-right align-top"
+                                >
                                     <div
                                         class="mt-2 whitespace-nowrap text-sm font-extrabold text-slate-700"
                                     >
@@ -445,9 +497,13 @@
                                     </div>
                                 </td>
 
-                                <td class="px-3 py-3 text-center align-top">
+                                <td
+                                    class="px-3 py-3 text-center align-top"
+                                >
                                     <button
-                                        v-if="form.items.length > 1"
+                                        v-if="
+                                            form.items.length > 1
+                                        "
                                         type="button"
                                         :disabled="sedangProses"
                                         :aria-label="`Hapus baris barang ${index + 1}`"
@@ -472,7 +528,10 @@
                     <button
                         type="button"
                         @click="tambahItem"
-                        :disabled="sedangProses || sedangMuatStok"
+                        :disabled="
+                            sedangProses ||
+                            sedangMuatStok
+                        "
                         class="mx-auto flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold text-blue-600 transition-all hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <span
@@ -498,7 +557,11 @@
 
                 <button
                     type="submit"
-                    :disabled="sedangProses || sedangMuatStok || form.items.length === 0"
+                    :disabled="
+                        sedangProses ||
+                        sedangMuatStok ||
+                        form.items.length === 0
+                    "
                     :aria-busy="sedangProses"
                     class="group flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-slate-900/10 transition-all hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-slate-300 disabled:shadow-none sm:w-auto sm:px-8"
                 >

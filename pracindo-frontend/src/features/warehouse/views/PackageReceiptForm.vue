@@ -1,6 +1,5 @@
 <template>
     <div class="w-full min-w-0 animate-fade-in relative">
-
         <template v-if="hasil">
             <section class="bg-white border border-emerald-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
                 <div class="p-5 md:p-7 bg-gradient-to-br from-emerald-50 to-white border-b border-emerald-100">
@@ -305,7 +304,7 @@
                                 </label>
 
                                 <div class="relative">
-                                    <i class="pi pi-truck absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                    <i class="pi pi-truck absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
 
                                     <input
                                         id="surat-jalan"
@@ -315,7 +314,7 @@
                                         autocomplete="off"
                                         required
                                         placeholder="Nomor surat jalan supplier"
-                                        class="w-full h-11 pl-10 pr-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                        class="input-underline pl-6"
                                     />
                                 </div>
                             </div>
@@ -330,14 +329,14 @@
                                 </label>
 
                                 <div class="relative">
-                                    <i class="pi pi-calendar absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                    <i class="pi pi-calendar absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
 
                                     <input
                                         id="tanggal-terima"
                                         v-model="form.tanggal"
                                         type="date"
                                         required
-                                        class="w-full h-11 pl-10 pr-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                        class="input-underline pl-6"
                                     />
                                 </div>
                             </div>
@@ -359,7 +358,7 @@
                                     maxlength="500"
                                     rows="3"
                                     placeholder="Catatan tambahan penerimaan kemasan..."
-                                    class="w-full px-3.5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 resize-none focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                    class="input-underline resize-none"
                                 ></textarea>
 
                                 <div class="flex justify-end">
@@ -536,7 +535,7 @@
                                                     inputmode="numeric"
                                                     placeholder="0"
                                                     @input="hitungOtomatis(r)"
-                                                    class="w-full h-9 px-2 rounded-lg bg-white border border-slate-200 text-xs text-right font-semibold focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                                    class="input-underline text-right font-semibold"
                                                 />
 
                                                 <span class="text-[8px] text-slate-400 block text-right mt-1">
@@ -557,7 +556,7 @@
                                                     inputmode="numeric"
                                                     placeholder="0"
                                                     @input="hitungOtomatis(r)"
-                                                    class="w-full h-9 px-2 rounded-lg bg-white border border-slate-200 text-xs text-right font-semibold focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                                                    class="input-underline text-right font-semibold"
                                                 />
 
                                                 <span class="text-[8px] text-slate-400 block text-right mt-1">
@@ -588,10 +587,10 @@
                                             :readonly="r.tipe_input === 'PACK'"
                                             :class="
                                                 r.tipe_input === 'PACK'
-                                                    ? 'bg-slate-100 text-slate-700 border-slate-200 cursor-not-allowed'
-                                                    : 'bg-emerald-50/40 text-emerald-700 border-emerald-200'
+                                                    ? 'input-readonly'
+                                                    : 'input-emerald'
                                             "
-                                            class="w-full h-10 px-2.5 rounded-lg text-xs text-right font-black focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all"
+                                            class="input-underline text-right font-black"
                                         />
 
                                         <span
@@ -610,7 +609,7 @@
                                             step="1"
                                             inputmode="numeric"
                                             placeholder="0"
-                                            class="w-full h-10 px-2.5 rounded-lg bg-rose-50/30 border border-rose-200 text-xs text-right font-black text-rose-600 focus:outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-50 transition-all"
+                                            class="input-underline input-rose text-right font-black"
                                         />
                                     </td>
 
@@ -742,7 +741,7 @@
                                                 inputmode="numeric"
                                                 placeholder="0"
                                                 @input="hitungOtomatis(r)"
-                                                class="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-right font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                                                class="input-underline text-right font-bold"
                                             />
                                         </div>
 
@@ -763,7 +762,7 @@
                                                 inputmode="numeric"
                                                 placeholder="0"
                                                 @input="hitungOtomatis(r)"
-                                                class="w-full h-11 px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-right font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
+                                                class="input-underline text-right font-bold"
                                             />
                                         </div>
 
@@ -799,7 +798,7 @@
                                         :max="r.sisa_qty"
                                         inputmode="numeric"
                                         placeholder="Masukkan jumlah unit"
-                                        class="w-full h-12 px-3 rounded-xl bg-emerald-50/40 border border-emerald-200 text-sm text-right font-black text-emerald-700 focus:outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+                                        class="input-underline input-emerald text-right font-black"
                                     />
                                 </div>
 
@@ -826,7 +825,7 @@
                                             step="1"
                                             inputmode="numeric"
                                             placeholder="0"
-                                            class="w-full mt-1 h-8 bg-transparent text-sm text-right font-black text-rose-600 focus:outline-none"
+                                            class="input-underline input-rose mt-1 text-right font-black"
                                         />
                                     </div>
                                 </div>
@@ -908,7 +907,7 @@
                                             rows="3"
                                             required
                                             placeholder="Jelaskan alasan barang ditolak..."
-                                            class="w-full px-3 py-2.5 rounded-xl bg-white border border-rose-200 text-sm text-slate-700 placeholder:text-slate-400 resize-none focus:outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50"
+                                            class="input-underline input-rose resize-none"
                                         ></textarea>
                                     </div>
                                 </transition>
@@ -1533,6 +1532,73 @@ onMounted(() => {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+.input-underline {
+    width: 100%;
+    height: 2.75rem;
+    border: 0;
+    border-bottom: 2px solid #cbd5e1;
+    border-radius: 0;
+    background: transparent;
+    padding: 0.5rem 0.25rem;
+    color: #334155;
+    outline: none;
+    box-shadow: none;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.input-underline::placeholder {
+    color: #94a3b8;
+}
+
+.input-underline:focus {
+    border-bottom-color: #334155;
+    outline: none;
+    box-shadow: none;
+}
+
+.input-underline:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.input-underline.input-emerald {
+    border-bottom-color: #86efac;
+    color: #047857;
+    background: transparent;
+}
+
+.input-underline.input-emerald:focus {
+    border-bottom-color: #10b981;
+}
+
+.input-underline.input-rose {
+    border-bottom-color: #fda4af;
+    color: #e11d48;
+    background: transparent;
+}
+
+.input-underline.input-rose:focus {
+    border-bottom-color: #f43f5e;
+}
+
+.input-underline.input-readonly {
+    border-bottom-color: #cbd5e1;
+    background: transparent;
+    color: #475569;
+    cursor: not-allowed;
+}
+
+textarea.input-underline {
+    height: auto;
+    min-height: 5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1.5;
 }
 
 input:focus,

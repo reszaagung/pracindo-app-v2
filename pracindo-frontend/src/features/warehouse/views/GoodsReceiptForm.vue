@@ -1,14 +1,11 @@
-<!-- features/warehouse/views/GoodsReceiptForm.vue -->
 <template>
     <div class="w-full min-w-0 animate-fade-in relative">
 
-        <!-- =========================================================
-             STATE: BERHASIL DISIMPAN
-        ========================================================== -->
+        
         <template v-if="hasil">
             <section class="w-full bg-white border border-emerald-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
 
-                <!-- Success Header -->
+                
                 <div class="p-5 md:p-7 bg-gradient-to-br from-emerald-50 to-white border-b border-emerald-100">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 shrink-0 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
@@ -36,7 +33,7 @@
 
                 <div class="p-5 md:p-7 space-y-6">
 
-                    <!-- Nomor Dokumen -->
+                    
                     <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 md:p-5">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
@@ -55,7 +52,7 @@
                         </div>
                     </div>
 
-                    <!-- Selisih -->
+                    
                     <div v-if="hasil.laporan_selisih?.length">
                         <div class="flex items-start gap-3 mb-3">
                             <div class="w-8 h-8 shrink-0 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
@@ -114,7 +111,7 @@
                         </div>
                     </div>
 
-                    <!-- Actions -->
+                    
                     <div class="pt-5 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
                         <router-link
                             v-if="hasil.penerimaan?.id"
@@ -138,9 +135,7 @@
             </section>
         </template>
 
-        <!-- =========================================================
-             STATE: FORM
-        ========================================================== -->
+        
         <form
             v-else
             @submit.prevent="kirim"
@@ -148,9 +143,7 @@
             novalidate
         >
 
-            <!-- =====================================================
-                 STEP 1 - REFERENSI
-            ====================================================== -->
+            
             <section class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
 
                 <div class="px-4 py-4 md:px-6 md:py-5 border-b border-slate-100 flex items-center gap-3">
@@ -171,7 +164,7 @@
 
                 <div class="p-4 md:p-6 space-y-5">
 
-                    <!-- PO -->
+                    
                     <div class="space-y-2">
                         <label
                             for="po-penerimaan"
@@ -216,7 +209,7 @@
                         </p>
                     </div>
 
-                    <!-- Selected PO Summary -->
+                    
                     <transition name="slide-fade">
                         <div
                             v-if="poTerpilih"
@@ -277,7 +270,7 @@
                         </div>
                     </transition>
 
-                    <!-- Document Inputs -->
+                    
                     <transition name="slide-fade">
                         <div
                             v-if="poTerpilih"
@@ -303,7 +296,7 @@
                                         maxlength="100"
                                         required
                                         placeholder="Nomor surat jalan supplier"
-                                        class="w-full h-11 pl-10 pr-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                        class="input-underline pl-10 pr-3"
                                     />
                                 </div>
                             </div>
@@ -325,7 +318,7 @@
                                         v-model="form.tanggal"
                                         type="date"
                                         required
-                                        class="w-full h-11 pl-10 pr-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                        class="input-underline pl-10 pr-3"
                                     />
                                 </div>
                             </div>
@@ -347,7 +340,7 @@
                                     rows="3"
                                     maxlength="500"
                                     placeholder="Catatan tambahan untuk transaksi penerimaan..."
-                                    class="w-full px-3.5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 resize-none focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                    class="input-underline px-1 py-3 resize-none"
                                 ></textarea>
 
                                 <div class="flex justify-end">
@@ -361,9 +354,7 @@
                 </div>
             </section>
 
-            <!-- =====================================================
-                 STEP 2 - FISIK
-            ====================================================== -->
+            
             <section
                 v-if="poTerpilih"
                 class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden animate-fade-in"
@@ -386,7 +377,7 @@
                             </div>
                         </div>
 
-                        <!-- Mini summary -->
+                        
                         <div class="grid grid-cols-3 gap-2 md:min-w-[340px]">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5">
                                 <p class="text-[9px] uppercase font-bold tracking-wider text-slate-400">
@@ -420,9 +411,7 @@
 
                 <div class="p-3 md:p-5">
 
-                    <!-- =================================================
-                         DESKTOP
-                    ================================================== -->
+                    
                     <div class="hidden lg:block overflow-x-auto custom-scrollbar">
                         <table class="w-full min-w-[1100px] text-left border-collapse">
                             <thead>
@@ -471,7 +460,7 @@
                                     :key="r.po_item_id"
                                     class="group hover:bg-slate-50/60 transition-colors"
                                 >
-                                    <!-- Produk -->
+                                    
                                     <td class="px-3 py-4 align-top">
                                         <div class="flex items-start gap-2.5">
                                             <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
@@ -502,14 +491,14 @@
                                         </div>
                                     </td>
 
-                                    <!-- Sisa -->
+                                    
                                     <td class="px-2 py-4 align-top text-right">
                                         <span class="text-xs font-bold text-slate-600">
                                             {{ angka(r.sisa_qty, 3) }}
                                         </span>
                                     </td>
 
-                                    <!-- Kemasan -->
+                                    
                                     <td class="px-2 py-4 align-top">
                                         <select
                                             v-model="r.jenis_kemasan"
@@ -525,7 +514,7 @@
                                         </select>
                                     </td>
 
-                                    <!-- Koli -->
+                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-if="r.jenis_kemasan !== 'CURAH'"
@@ -535,7 +524,7 @@
                                             step="1"
                                             required
                                             inputmode="numeric"
-                                            class="w-full h-9 px-2 rounded-lg bg-white border border-slate-200 text-xs text-right font-semibold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all"
+                                            class="input-underline h-9 px-1 text-right font-semibold"
                                         />
 
                                         <span
@@ -546,7 +535,7 @@
                                         </span>
                                     </td>
 
-                                    <!-- Isi/Koli -->
+                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-if="r.jenis_kemasan !== 'CURAH'"
@@ -556,7 +545,7 @@
                                             step="0.001"
                                             required
                                             inputmode="decimal"
-                                            class="w-full h-9 px-2 rounded-lg bg-white border border-slate-200 text-xs text-right font-semibold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all"
+                                            class="input-underline h-9 px-1 text-right font-semibold"
                                         />
 
                                         <span
@@ -567,7 +556,7 @@
                                         </span>
                                     </td>
 
-                                    <!-- Deklarasi -->
+                                    
                                     <td class="px-2 py-4 align-top text-right">
                                         <span
                                             v-if="deklarasi(r) != null"
@@ -584,7 +573,7 @@
                                         </span>
                                     </td>
 
-                                    <!-- Diterima -->
+                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-model.number="r.qty_diterima"
@@ -593,11 +582,11 @@
                                             step="0.001"
                                             :max="r.sisa_qty"
                                             inputmode="decimal"
-                                            class="w-full h-9 px-2 rounded-lg bg-emerald-50/50 border border-emerald-200 text-xs text-right font-bold text-emerald-700 focus:outline-none focus:bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all"
+                                            class="input-underline input-emerald h-9 px-1 text-right font-bold"
                                         />
                                     </td>
 
-                                    <!-- Ditolak -->
+                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-model.number="r.qty_ditolak"
@@ -605,11 +594,11 @@
                                             min="0"
                                             step="0.001"
                                             inputmode="decimal"
-                                            class="w-full h-9 px-2 rounded-lg bg-rose-50/50 border border-rose-200 text-xs text-right font-bold text-rose-600 focus:outline-none focus:bg-white focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition-all"
+                                            class="input-underline input-rose h-9 px-1 text-right font-bold"
                                         />
                                     </td>
 
-                                    <!-- Selisih -->
+                                    
                                     <td class="px-3 py-4 align-top text-right">
                                         <template v-if="selisih(r) != null">
                                             <span
@@ -637,16 +626,14 @@
                         </table>
                     </div>
 
-                    <!-- =================================================
-                         MOBILE / TABLET
-                    ================================================== -->
+                    
                     <div class="lg:hidden space-y-4">
                         <article
                             v-for="r in baris"
                             :key="'mobile-' + r.po_item_id"
                             class="rounded-2xl border border-slate-200 bg-slate-50/50 overflow-hidden"
                         >
-                            <!-- Item Header -->
+                            
                             <div class="p-4 bg-white border-b border-slate-100">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex items-start gap-3 min-w-0">
@@ -688,7 +675,7 @@
 
                             <div class="p-4 space-y-4">
 
-                                <!-- Kemasan -->
+                                
                                 <div class="space-y-1.5">
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                         Jenis Kemasan
@@ -708,7 +695,7 @@
                                     </select>
                                 </div>
 
-                                <!-- Koli / Isi -->
+                                
                                 <div
                                     v-if="r.jenis_kemasan !== 'CURAH'"
                                     class="grid grid-cols-2 gap-3"
@@ -725,7 +712,7 @@
                                             step="1"
                                             required
                                             inputmode="numeric"
-                                            class="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-sm text-right font-bold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            class="input-underline h-11 px-1 text-right font-bold"
                                         />
                                     </div>
 
@@ -741,12 +728,12 @@
                                             step="0.001"
                                             required
                                             inputmode="decimal"
-                                            class="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-sm text-right font-bold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                            class="input-underline h-11 px-1 text-right font-bold"
                                         />
                                     </div>
                                 </div>
 
-                                <!-- Deklarasi -->
+                                
                                 <div class="flex items-center justify-between gap-4 px-3 py-3 rounded-xl bg-white border border-slate-200">
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                         Deklarasi
@@ -757,7 +744,7 @@
                                     </span>
                                 </div>
 
-                                <!-- Qty -->
+                                
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="space-y-1.5">
                                         <label class="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
@@ -771,7 +758,7 @@
                                             step="0.001"
                                             :max="r.sisa_qty"
                                             inputmode="decimal"
-                                            class="w-full h-12 px-3 rounded-xl bg-emerald-50/40 border border-emerald-200 text-sm text-right font-black text-emerald-700 focus:outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 transition-all"
+                                            class="input-underline input-emerald h-12 px-1 text-right font-black"
                                         />
                                     </div>
 
@@ -786,12 +773,12 @@
                                             min="0"
                                             step="0.001"
                                             inputmode="decimal"
-                                            class="w-full h-12 px-3 rounded-xl bg-rose-50/40 border border-rose-200 text-sm text-right font-black text-rose-600 focus:outline-none focus:bg-white focus:border-rose-400 focus:ring-4 focus:ring-rose-50 transition-all"
+                                            class="input-underline input-rose h-12 px-1 text-right font-black"
                                         />
                                     </div>
                                 </div>
 
-                                <!-- Selisih -->
+                                
                                 <div
                                     v-if="selisih(r) != null"
                                     class="rounded-xl border px-3 py-3"
@@ -842,7 +829,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Alasan Tolak -->
+                                
                                 <transition name="slide-fade">
                                     <div
                                         v-if="Number(r.qty_ditolak) > 0"
@@ -859,7 +846,7 @@
                                             maxlength="300"
                                             required
                                             placeholder="Jelaskan alasan barang ditolak..."
-                                            class="w-full px-3 py-2.5 rounded-xl bg-white border border-rose-200 text-sm text-slate-700 placeholder:text-slate-400 resize-none focus:outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50 transition-all"
+                                            class="input-underline input-rose px-1 py-2.5 resize-none"
                                         ></textarea>
                                     </div>
                                 </transition>
@@ -867,12 +854,10 @@
                         </article>
                     </div>
 
-                    <!-- =================================================
-                         VALIDATION / WARNING
-                    ================================================== -->
+                    
                     <div class="mt-5 space-y-3">
 
-                        <!-- Tolerance -->
+                        
                         <div
                             v-for="r in barisMelebihiToleransi"
                             :key="'tol-' + r.po_item_id"
@@ -889,7 +874,7 @@
                             </div>
                         </div>
 
-                        <!-- Over PO -->
+                        
                         <div
                             v-for="r in barisLewatSisa"
                             :key="'lewat-' + r.po_item_id"
@@ -907,7 +892,7 @@
                             </div>
                         </div>
 
-                        <!-- Missing reasons -->
+                        
                         <div
                             v-for="r in barisTanpaAlasan"
                             :key="'alasan-' + r.po_item_id"
@@ -924,9 +909,7 @@
                         </div>
                     </div>
 
-                    <!-- =================================================
-                         GLOBAL ERROR
-                    ================================================== -->
+                    
                     <transition name="slide-fade">
                         <div
                             v-if="pesanError"
@@ -950,9 +933,7 @@
                 </div>
             </section>
 
-            <!-- =====================================================
-                 STEP 3 - RINGKASAN
-            ====================================================== -->
+            
             <section
                 v-if="poTerpilih"
                 class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
@@ -1058,9 +1039,7 @@
                 </div>
             </section>
 
-            <!-- =====================================================
-                 ACTION BAR DESKTOP
-            ====================================================== -->
+            
             <div
                 v-if="poTerpilih"
                 class="hidden lg:flex sticky bottom-4 z-20 items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-3.5 shadow-xl shadow-slate-900/10"
@@ -1105,9 +1084,7 @@
                 </div>
             </div>
 
-            <!-- =====================================================
-                 ACTION BAR MOBILE
-            ====================================================== -->
+            
             <div
                 v-if="poTerpilih"
                 class="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]"
@@ -1206,10 +1183,6 @@ const poTerpilih = computed(() => {
     ) ?? null
 })
 
-/* =========================================================
-   SUMMARY
-========================================================= */
-
 const totalSisa = computed(() => {
     return baris.value.reduce(
         (total, r) => total + Math.max(Number(r.sisa_qty) || 0, 0),
@@ -1237,10 +1210,6 @@ const jumlahItemDiisi = computed(() => {
     ).length
 })
 
-/* =========================================================
-   WATCH PO
-========================================================= */
-
 watch(poTerpilih, (po) => {
     pesanError.value = ''
 
@@ -1258,10 +1227,6 @@ watch(poTerpilih, (po) => {
         alasan_tolak: '',
     }))
 })
-
-/* =========================================================
-   DECLARATION
-========================================================= */
 
 const deklarasi = (r) => {
     if (
@@ -1281,10 +1246,6 @@ const deklarasi = (r) => {
 
     return koli * isi
 }
-
-/* =========================================================
-   SELISIH
-========================================================= */
 
 const selisih = (r) => {
     const d = deklarasi(r)
@@ -1323,10 +1284,6 @@ const melebihiToleransi = (r) => {
         Math.abs(p) > 0.5
     )
 }
-
-/* =========================================================
-   VALIDATION
-========================================================= */
 
 const barisMelebihiToleransi = computed(() => {
     return baris.value.filter(melebihiToleransi)
@@ -1373,10 +1330,6 @@ const statusBaris = (r) => {
     return 'empty'
 }
 
-/* =========================================================
-   VALIDATION FORM
-========================================================= */
-
 const validasiForm = () => {
     if (!poTerpilih.value) {
         return 'Silakan pilih Purchase Order terlebih dahulu.'
@@ -1412,10 +1365,6 @@ const validasiForm = () => {
 
     return ''
 }
-
-/* =========================================================
-   SUBMIT
-========================================================= */
 
 const kirim = async () => {
     if (sedangProses.value) {
@@ -1485,10 +1434,6 @@ const kirim = async () => {
         'Penerimaan gagal disimpan. Silakan periksa kembali data Anda.'
 }
 
-/* =========================================================
-   LIFECYCLE
-========================================================= */
-
 onMounted(() => {
     setNavInfo(
         'Penerimaan Barang Baru',
@@ -1504,6 +1449,52 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.input-underline {
+    width: 100%;
+    border: 0;
+    border-bottom: 2px solid #cbd5e1;
+    border-radius: 0;
+    background: transparent;
+    color: #334155;
+    outline: none;
+    box-shadow: none;
+    transition: border-color 0.2s ease;
+}
+
+.input-underline::placeholder {
+    color: #94a3b8;
+}
+
+.input-underline:focus {
+    border-bottom-color: #475569;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.input-underline.input-emerald {
+    border-bottom-color: #a7f3d0;
+    color: #047857;
+}
+
+.input-underline.input-emerald:focus {
+    border-bottom-color: #10b981;
+}
+
+.input-underline.input-rose {
+    border-bottom-color: #fecdd3;
+    color: #e11d48;
+}
+
+.input-underline.input-rose:focus {
+    border-bottom-color: #f43f5e;
+}
+
+.input-underline:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .animate-fade-in {
     animation: fadeIn 0.25s ease-out forwards;
 }

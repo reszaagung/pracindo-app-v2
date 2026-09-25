@@ -368,9 +368,7 @@
                                         "
                                         class="py-2.5 -mb-[2px] text-xs font-black flex items-center justify-center gap-2 transition"
                                     >
-                                        <i
-                                            class="pi pi-briefcase text-[10px]"
-                                        ></i>
+                                        <i class="pi pi-briefcase text-[10px]"></i>
                                         Via Sales
                                     </button>
                                 </div>
@@ -486,9 +484,7 @@
                         <div
                             class="px-5 py-4 border-t border-slate-200 bg-slate-50"
                         >
-                            <div
-                                class="flex items-end justify-between gap-4"
-                            >
+                            <div class="flex items-end justify-between gap-4">
                                 <div>
                                     <p
                                         class="text-[10px] uppercase tracking-[0.18em] font-black text-slate-400"

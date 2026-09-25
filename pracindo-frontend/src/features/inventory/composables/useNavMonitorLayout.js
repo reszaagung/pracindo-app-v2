@@ -11,7 +11,6 @@ export function useNavMonitorLayout() {
             rute: '/inventory',
             activate: true,
         },
-
         {
             id: 'tangki',
             label: 'Monitor Tangki',
@@ -23,23 +22,27 @@ export function useNavMonitorLayout() {
             id: 'klaim-distribusi',
             label: 'Transaksi & Klaim Pool',
             ikon: 'pi-truck',
-            rute: '/inventory/distribusi',
+            rute: '/inventory/klaim',
             activate: true,
         },
     ]
 
     const aktif = (ruteTujuan) => {
-        if (!route) return false
+        if (!ruteTujuan) {
+            return false
+        }
 
         if (ruteTujuan === '/inventory') {
             return (
                 route.path === '/inventory' ||
-                route.path.startsWith('/inventory/stok')
+                route.path.startsWith('/inventory/stok/')
             )
         }
 
-        return route.path === ruteTujuan ||
-               route.path.startsWith(`${ruteTujuan}/`)
+        return (
+            route.path === ruteTujuan ||
+            route.path.startsWith(`${ruteTujuan}/`)
+        )
     }
 
     return {
@@ -47,3 +50,4 @@ export function useNavMonitorLayout() {
         aktif,
     }
 }
+

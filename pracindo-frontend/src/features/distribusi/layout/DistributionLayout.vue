@@ -23,16 +23,6 @@
                     </span>
                 </div>
             </div>
-
-            <button
-                type="button"
-                @click="kembali"
-                aria-label="Kembali ke Dashboard Utama"
-                title="Dashboard Utama"
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 active:translate-y-0 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
-            >
-                <i class="pi pi-home text-sm" aria-hidden="true"></i>
-            </button>
         </header>
 
         <aside

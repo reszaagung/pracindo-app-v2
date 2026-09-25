@@ -1,5 +1,6 @@
+```vue
 <template>
-  <component :is="layoutAktif" />
+    <component :is="layoutAktif" />
 </template>
 
 <script setup>
@@ -9,27 +10,23 @@ import MobileWarehouseMainLayout from './MobileWarehouseMainLayout.vue'
 
 const layoutAktif = shallowRef(DesktopWarehouseMainLayout)
 
+let mediaQuery = null
+
 const cekLayar = () => {
-  if (window.innerWidth < 1024) {
-    layoutAktif.value = MobileWarehouseMainLayout
-  } else {
-    layoutAktif.value = DesktopWarehouseMainLayout
-  }
+    layoutAktif.value = window.innerWidth < 1024
+        ? MobileWarehouseMainLayout
+        : DesktopWarehouseMainLayout
 }
 
 onMounted(() => {
-  cekLayar()
-  window.addEventListener('resize', cekLayar)
+    mediaQuery = window.matchMedia('(max-width: 1023px)')
+    cekLayar()
+    mediaQuery.addEventListener('change', cekLayar)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', cekLayar)
+    mediaQuery?.removeEventListener('change', cekLayar)
+    mediaQuery = null
 })
 </script>
-
-<style>
-.fade-enter-active, .fade-leave-active { transition: opacity .15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-</style>
+```
