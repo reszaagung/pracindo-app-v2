@@ -6,29 +6,6 @@
             class="relative z-20 m-4 flex h-[calc(100vh-2rem)] w-[88px] flex-shrink-0 flex-col items-center justify-between rounded-3xl border border-slate-100 bg-white/95 py-6 shadow-[0_8px_30px_rgb(15,23,42,0.04)] backdrop-blur-xl"
         >
             <div class="flex w-full flex-col items-center gap-8">
-                <div class="group relative flex flex-col items-center">
-                    <button
-                        type="button"
-                        @click="kembali"
-                        :disabled="isLoggingOut"
-                        aria-label="Kembali ke halaman sebelumnya"
-                        title="Kembali"
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <i
-                            class="pi pi-arrow-left text-xl text-white transition-transform duration-200 group-hover:scale-110"
-                            aria-hidden="true"
-                        ></i>
-                    </button>
-
-                    <span
-                        class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                        aria-hidden="true"
-                    >
-                        Kembali
-                    </span>
-                </div>
-
                 <nav
                     class="flex w-full flex-col gap-3 px-4"
                     aria-label="Navigasi transaksi akunting"

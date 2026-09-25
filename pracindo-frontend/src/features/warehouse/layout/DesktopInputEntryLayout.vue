@@ -1,34 +1,10 @@
 <template>
-    <div
-        class="relative flex h-screen w-full overflow-hidden bg-[#F8FAFC] font-sans text-slate-700"
-    >
+    <div class="relative flex h-screen w-full overflow-hidden bg-[#F8FAFC] font-sans text-slate-700">
         <aside
             class="relative z-20 m-4 flex h-[calc(100vh-2rem)] w-[88px] flex-shrink-0 flex-col items-center justify-between rounded-3xl border border-slate-100 bg-white/95 py-6 shadow-[0_8px_30px_rgb(15,23,42,0.04)] backdrop-blur-xl"
         >
-            <div class="flex w-full flex-col items-center gap-8">
-                <div class="group relative flex flex-col items-center">
-                    <button
-                        type="button"
-                        @click="kembali"
-                        :disabled="isLoggingOut"
-                        aria-label="Kembali ke halaman sebelumnya"
-                        title="Kembali"
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <i
-                            class="pi pi-arrow-left text-xl text-white transition-transform duration-200 group-hover:scale-110"
-                            aria-hidden="true"
-                        ></i>
-                    </button>
-
-                    <span
-                        class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                        aria-hidden="true"
-                    >
-                        Kembali
-                    </span>
-                </div>
-
+            <!-- BAGIAN ATAS: Navigasi Modul -->
+            <div class="flex w-full flex-col items-center">
                 <nav
                     class="flex w-full flex-col gap-3 px-4"
                     aria-label="Navigasi Input Entry Warehouse"
@@ -37,42 +13,24 @@
                         v-for="menu in menus"
                         :key="menu.id"
                         type="button"
-                        :disabled="
-                            !menu.activate ||
-                            isLoggingOut
-                        "
-                        :aria-current="
-                            aktif(menu.rute)
-                                ? 'page'
-                                : undefined
-                        "
-                        :aria-label="
-                            menu.activate
-                                ? menu.label
-                                : `${menu.label} - Segera`
-                        "
-                        :title="
-                            menu.activate
-                                ? menu.label
-                                : `${menu.label} - Segera`
-                        "
+                        :disabled="!menu.activate || isLoggingOut"
+                        :aria-current="menuAktifId === menu.id ? 'page' : undefined"
+                        :aria-label="menu.activate ? menu.label : `${menu.label} - Segera`"
+                        :title="menu.activate ? menu.label : `${menu.label} - Segera`"
                         @click="klikMenu(menu)"
                         class="group relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
                         :class="
                             menu.activate
-                                ? aktif(menu.rute)
+                                ? menuAktifId === menu.id
                                     ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15'
                                     : 'text-slate-400 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-700'
                                 : 'cursor-default text-slate-300'
                         "
                     >
+                        <!-- Penanda Aktif (Garis Vertikal) -->
                         <span
                             class="absolute -left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-all duration-200"
-                            :class="
-                                aktif(menu.rute)
-                                    ? 'bg-slate-900 opacity-100'
-                                    : 'bg-transparent opacity-0'
-                            "
+                            :class="menuAktifId === menu.id ? 'bg-slate-900 opacity-100' : 'bg-transparent opacity-0'"
                             aria-hidden="true"
                         ></span>
 
@@ -80,21 +38,18 @@
                             :class="[
                                 'pi',
                                 menu.ikon,
-                                'text-xl',
-                                'transition-transform duration-200',
-                                menu.activate
-                                    ? 'group-hover:scale-110'
-                                    : ''
+                                'text-xl transition-transform duration-200',
+                                menu.activate ? 'group-hover:scale-110 group-focus-visible:scale-110' : ''
                             ]"
                             aria-hidden="true"
                         ></i>
 
+                        <!-- Tooltip CSS -->
                         <span
-                            class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-bold text-white opacity-0 shadow-xl shadow-slate-900/10 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                            class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-bold text-white opacity-0 shadow-xl shadow-slate-900/10 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100"
                             aria-hidden="true"
                         >
                             {{ menu.label }}
-
                             <template v-if="!menu.activate">
                                 · segera
                             </template>
@@ -103,24 +58,32 @@
                 </nav>
             </div>
 
+            <!-- BAGIAN BAWAH: Dashboard & Logout -->
             <div class="flex flex-col items-center gap-4">
                 <div class="group relative flex flex-col items-center">
                     <button
                         type="button"
                         @click="keDashboard"
                         :disabled="isLoggingOut"
+                        :aria-current="route.path === '/' ? 'page' : undefined"
                         aria-label="Kembali ke Dashboard"
                         title="Dashboard"
-                        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 shadow-sm transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="
+                            route.path === '/'
+                                ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15 border-transparent'
+                                : 'bg-white hover:border-slate-400 hover:bg-slate-50'
+                        "
                     >
                         <i
-                            class="pi pi-home text-slate-400 transition-colors duration-200 group-hover:text-slate-600"
+                            class="pi pi-home transition-colors duration-200"
+                            :class="route.path === '/' ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'"
                             aria-hidden="true"
                         ></i>
                     </button>
 
                     <span
-                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
+                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 translate-y-1 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
                         aria-hidden="true"
                     >
                         Ke Dashboard
@@ -151,7 +114,7 @@
                     </button>
 
                     <span
-                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
+                        class="pointer-events-none absolute -top-10 z-50 whitespace-nowrap rounded-lg bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 translate-y-1 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
                         aria-hidden="true"
                     >
                         {{ isLoggingOut ? 'Keluar...' : 'Keluar' }}
@@ -160,21 +123,12 @@
             </div>
         </aside>
 
-        <main
-            class="custom-scrollbar min-w-0 flex-1 overflow-y-auto p-8"
-        >
-            <div
-                class="mx-auto min-h-full w-full max-w-[1480px]"
-            >
-                <router-view v-slot="{ Component, route }">
-                    <transition
-                        name="fade"
-                        mode="out-in"
-                    >
-                        <div
-                            :key="route.fullPath"
-                            class="min-h-full w-full"
-                        >
+        <!-- KONTEN UTAMA -->
+        <main class="custom-scrollbar min-w-0 flex-1 overflow-y-auto p-8">
+            <div class="mx-auto min-h-full w-full max-w-[1480px]">
+                <router-view v-slot="{ Component, route: viewRoute }">
+                    <transition name="fade" mode="out-in">
+                        <div :key="viewRoute.fullPath" class="min-h-full w-full">
                             <component :is="Component" />
                         </div>
                     </transition>
@@ -185,68 +139,61 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useNavInputEntry } from '../composables/useNavInputEntry'
 
 const route = useRoute()
 const router = useRouter()
-
 const { logout } = useAuth()
 
-const {
-    menus,
-    aktif
-} = useNavInputEntry()
+// Tidak perlu mendestrukturisasi fungsi `aktif` lagi
+const { menus } = useNavInputEntry()
 
 const isLoggingOut = ref(false)
 
-const kembali = async () => {
-    if (isLoggingOut.value) {
-        return
+// Logika penentuan menu aktif yang spesifik
+const menuAktifId = computed(() => {
+    const currentPath = route.path.replace(/\/+$/, '') || '/'
+    let kandidat = null
+    let panjangTerbaik = -1
+
+    const daftarMenu = Array.isArray(menus?.value)
+        ? menus.value
+        : (Array.isArray(menus) ? menus : [])
+
+    for (const menu of daftarMenu) {
+        if (!menu?.activate || !menu?.rute) continue
+
+        const target = String(menu.rute).split('?')[0].replace(/\/+$/, '') || '/'
+
+        if (target === '/') continue
+
+        const cocok = currentPath === target || currentPath.startsWith(`${target}/`)
+
+        if (cocok && target.length > panjangTerbaik) {
+            kandidat = menu.id
+            panjangTerbaik = target.length
+        }
     }
 
-    if (window.history.length > 1) {
-        router.back()
-    } else {
-        await router.push('/warehouse')
-    }
-}
+    return kandidat
+})
 
 const keDashboard = async () => {
-    if (isLoggingOut.value) {
-        return
-    }
-
-    if (route.path === '/') {
-        return
-    }
-
+    if (isLoggingOut.value || route.path === '/') return
     await router.push('/')
 }
 
 const klikMenu = async (menu) => {
-    if (
-        !menu?.activate ||
-        !menu?.rute ||
-        isLoggingOut.value
-    ) {
-        return
-    }
-
-    if (route.path === menu.rute) {
-        return
-    }
-
+    if (!menu?.activate || !menu?.rute || isLoggingOut.value) return
+    if (route.path === menu.rute) return
     await router.push(menu.rute)
 }
 
 const keluar = async () => {
-    if (isLoggingOut.value) {
-        return
-    }
-
+    if (isLoggingOut.value) return
     isLoggingOut.value = true
 
     try {
@@ -261,9 +208,7 @@ const keluar = async () => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-    transition:
-        opacity 0.2s ease,
-        transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .fade-enter-from {

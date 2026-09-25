@@ -20,12 +20,7 @@
                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-600 shadow-sm transition-all duration-200 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95"
                 >
                     <i
-                        :class="
-                            sidebarAktif
-                                ? 'pi pi-times'
-                                : 'pi pi-bars'
-                        "
-                        class="text-lg"
+                        class="pi pi-bars text-lg"
                         aria-hidden="true"
                     ></i>
                 </button>
@@ -60,6 +55,9 @@
             </button>
         </header>
 
+        <!-- =========================================================
+             MOBILE OVERLAY
+        ========================================================== -->
         <Transition name="overlay">
             <button
                 v-if="sidebarAktif"
@@ -70,6 +68,9 @@
             ></button>
         </Transition>
 
+        <!-- =========================================================
+             SIDEBAR
+        ========================================================== -->
         <aside
             ref="sidebarRef"
             id="input-entry-sidebar"
@@ -91,30 +92,29 @@
                 Navigasi Input Entry Warehouse
             </h2>
 
+            <!-- =====================================================
+                 NAVIGASI ATAS
+            ====================================================== -->
             <div class="flex w-full flex-col items-center">
-                <div class="mb-5 w-full px-4">
-                    <button
-                        type="button"
-                        @click="tutupDiMobile"
-                        aria-label="Tutup menu navigasi"
-                        title="Tutup"
-                        class="flex h-10 w-full items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all duration-200 hover:bg-slate-200 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95"
-                    >
-                        <i
-                            class="pi pi-times text-sm"
-                            aria-hidden="true"
-                        ></i>
-                    </button>
-                </div>
-
-                <div class="mb-5 group relative">
+                <!-- Dashboard -->
+                <div class="mb-6 group relative">
                     <button
                         type="button"
                         @click="keDashboard"
                         :disabled="isLoggingOut"
+                        :aria-current="
+                            dashboardAktif
+                                ? 'page'
+                                : undefined
+                        "
                         aria-label="Ke Dashboard"
                         title="Dashboard"
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="
+                            dashboardAktif
+                                ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15'
+                                : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'
+                        "
                     >
                         <i
                             class="pi pi-home text-lg"
@@ -126,10 +126,11 @@
                         class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
                         aria-hidden="true"
                     >
-                        Ke Dashboard
+                        Dashboard
                     </span>
                 </div>
 
+                <!-- Menu -->
                 <nav
                     class="flex w-full flex-col gap-3 px-4"
                     aria-label="Navigasi Input Entry Warehouse"
@@ -138,9 +139,12 @@
                         v-for="menu in menus"
                         :key="menu.id"
                         type="button"
-                        :disabled="!menu.activate || isLoggingOut"
+                        :disabled="
+                            !menu.activate ||
+                            isLoggingOut
+                        "
                         :aria-current="
-                            aktif(menu.rute)
+                            menuAktifId === menu.id
                                 ? 'page'
                                 : undefined
                         "
@@ -158,7 +162,7 @@
                         class="group relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed"
                         :class="
                             menu.activate
-                                ? aktif(menu.rute)
+                                ? menuAktifId === menu.id
                                     ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15'
                                     : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'
                                 : 'cursor-default text-slate-300'
@@ -190,6 +194,9 @@
                 </nav>
             </div>
 
+            <!-- =====================================================
+                 LOGOUT
+            ====================================================== -->
             <div class="group relative">
                 <button
                     type="button"
@@ -222,17 +229,20 @@
             </div>
         </aside>
 
+        <!-- =========================================================
+             CONTENT
+        ========================================================== -->
         <main
             class="custom-scrollbar min-w-0 flex-1 overflow-y-auto px-4 pb-6 pt-20 md:px-6 md:pt-24"
         >
             <div class="mx-auto min-h-full w-full">
-                <router-view v-slot="{ Component, route }">
+                <router-view v-slot="{ Component, route: viewRoute }">
                     <transition
                         name="fade"
                         mode="out-in"
                     >
                         <div
-                            :key="route.fullPath"
+                            :key="viewRoute.fullPath"
                             class="w-full"
                         >
                             <component :is="Component" />
@@ -245,8 +255,19 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    ref,
+    watch,
+} from 'vue'
+
+import {
+    useRoute,
+    useRouter,
+} from 'vue-router'
+
 import { useAuth } from '@/composables/useAuth'
 import { useLayout } from '@/composables/useLayout'
 
@@ -258,12 +279,113 @@ const { logout } = useAuth()
 const {
     sidebarAktif,
     toggleSidebar,
-    tutupDiMobile
+    tutupDiMobile,
+    menus: layoutMenus,
 } = useLayout()
 
 const menuTrigger = ref(null)
 const sidebarRef = ref(null)
 const isLoggingOut = ref(false)
+
+/*
+ * Jangan membuat menu baru di sini.
+ * useLayout menjadi sumber daftar menu.
+ */
+const menus = computed(() => {
+    return Array.isArray(layoutMenus?.value)
+        ? layoutMenus.value
+        : Array.isArray(layoutMenus)
+            ? layoutMenus
+            : []
+})
+
+/*
+ * Dashboard hanya aktif tepat pada root.
+ */
+const dashboardAktif = computed(() => {
+    return route.path === '/'
+})
+
+/*
+ * Tentukan SATU menu aktif.
+ *
+ * Route:
+ *   /warehouse/input/receipt
+ *
+ * Akan cocok dengan:
+ *   /warehouse/input/receipt
+ *   /warehouse/input/receipt/123
+ *
+ * Tetapi kalau ada dua route induk yang sama-sama cocok,
+ * hanya route yang PALING SPESIFIK yang aktif.
+ */
+const menuAktifId = computed(() => {
+    const currentPath =
+        route.path.replace(/\/+$/, '') || '/'
+
+    let kandidat = null
+    let panjangTerbaik = -1
+
+    for (const menu of menus.value) {
+        if (
+            !menu?.activate ||
+            !menu?.rute
+        ) {
+            continue
+        }
+
+        const target =
+            String(menu.rute)
+                .split('?')[0]
+                .replace(/\/+$/, '') || '/'
+
+        if (target === '/') {
+            continue
+        }
+
+        const cocok =
+            currentPath === target ||
+            currentPath.startsWith(`${target}/`)
+
+        if (!cocok) {
+            continue
+        }
+
+        if (target.length > panjangTerbaik) {
+            kandidat = menu.id
+            panjangTerbaik = target.length
+        }
+    }
+
+    return kandidat
+})
+
+/*
+ * Fungsi tetap disediakan untuk kebutuhan komponen/template
+ * lain yang masih menggunakan aktif(rute).
+ */
+const aktif = (rute) => {
+    const target =
+        String(rute || '')
+            .split('?')[0]
+            .replace(/\/+$/, '') || '/'
+
+    const currentPath =
+        route.path.replace(/\/+$/, '') || '/'
+
+    if (target === '/') {
+        return currentPath === '/'
+    }
+
+    return (
+        currentPath === target ||
+        currentPath.startsWith(`${target}/`)
+    )
+}
+
+/* =========================================================
+   FOCUS MANAGEMENT
+========================================================= */
 
 const getFocusableElements = () => {
     if (!sidebarRef.value) {
@@ -274,7 +396,9 @@ const getFocusableElements = () => {
         sidebarRef.value.querySelectorAll(
             'button:not([disabled]), a[href]:not([aria-hidden="true"])'
         )
-    ).filter((element) => element.offsetParent !== null)
+    ).filter(
+        (element) => element.offsetParent !== null
+    )
 }
 
 const handleKeydown = (event) => {
@@ -320,8 +444,14 @@ const handleKeydown = (event) => {
     }
 }
 
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
 const keDashboard = async () => {
-    if (isLoggingOut.value) return
+    if (isLoggingOut.value) {
+        return
+    }
 
     tutupDiMobile()
 
@@ -350,8 +480,14 @@ const klikMenu = async (menu) => {
     tutupDiMobile()
 }
 
+/* =========================================================
+   LOGOUT
+========================================================= */
+
 const keluar = async () => {
-    if (isLoggingOut.value) return
+    if (isLoggingOut.value) {
+        return
+    }
 
     isLoggingOut.value = true
 
@@ -363,13 +499,18 @@ const keluar = async () => {
     }
 }
 
+/* =========================================================
+   SIDEBAR STATE
+========================================================= */
+
 watch(
     () => sidebarAktif.value,
     async (open) => {
         if (open) {
             await nextTick()
 
-            const elements = getFocusableElements()
+            const elements =
+                getFocusableElements()
 
             elements[0]?.focus()
 
@@ -384,6 +525,7 @@ watch(
             )
 
             await nextTick()
+
             menuTrigger.value?.focus()
         }
     }

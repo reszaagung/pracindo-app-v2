@@ -43,10 +43,10 @@
                             readonly
                             :class="
                                 isNamaHasilReadonly
-                                    ? 'bg-slate-100 text-slate-600 cursor-not-allowed'
-                                    : 'bg-slate-50'
+                                    ? 'text-slate-500 cursor-not-allowed'
+                                    : 'text-slate-700'
                             "
-                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+                            class="input-underline py-2.5"
                         />
                     </label>
 
@@ -59,35 +59,42 @@
                             Tangki Tujuan
                         </span>
 
-                        <div class="flex items-center gap-2 w-full">
-                            <select
-                                v-model="form.tangki_tujuan"
-                                @change="saatTangkiTujuanDipilih"
-                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
-                            >
-                                <option value="" disabled>
-                                    Pilih tangki tujuan
-                                </option>
-
-                                <option
-                                    v-for="t in daftarTangkiTujuan"
-                                    :key="t.id"
-                                    :value="t.id"
+                        <div class="flex items-end gap-2 w-full min-w-0">
+                            <div class="relative flex-1 min-w-0">
+                                <select
+                                    v-model="form.tangki_tujuan"
+                                    @change="saatTangkiTujuanDipilih"
+                                    class="input-underline select-underline w-full py-2.5 pr-6 cursor-pointer"
                                 >
-                                    {{ t.kode }}
-                                    —
-                                    {{
-                                        t.nama_hasil ||
-                                        t.isi_saat_ini ||
-                                        'Kosong'
-                                    }}
-                                </option>
-                            </select>
+                                    <option
+                                        value=""
+                                        disabled
+                                    >
+                                        Pilih tangki tujuan
+                                    </option>
+
+                                    <option
+                                        v-for="t in daftarTangkiTujuan"
+                                        :key="t.id"
+                                        :value="t.id"
+                                    >
+                                        {{ t.kode }}
+                                        —
+                                        {{
+                                            t.nama_hasil ||
+                                            t.isi_saat_ini ||
+                                            'Kosong'
+                                        }}
+                                    </option>
+                                </select>
+
+                                <i class="pi pi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
+                            </div>
 
                             <button
                                 type="button"
-                                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
-                                style="flex: 0 0 42px; width: 42px; height: 42px"
+                                class="shrink-0 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
+                                style="width: 42px; height: 42px"
                                 title="Tambah tangki blending"
                                 @click="tambahTangkiBaruPrompt"
                             >
@@ -110,18 +117,18 @@
                             Batch ID
                         </span>
 
-                        <div class="flex items-center gap-2 w-full">
+                        <div class="flex items-end gap-2 w-full min-w-0">
                             <input
                                 v-model="form.batch"
                                 type="text"
                                 placeholder="PRD-BLD-0001"
-                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+                                class="input-underline flex-1 min-w-0 py-2.5"
                             />
 
                             <button
                                 type="button"
-                                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                style="flex: 0 0 65px; width: 65px; height: 42px"
+                                class="shrink-0 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                style="width: 65px; height: 42px"
                                 :disabled="!form.tangki_tujuan"
                                 @click="generateNomorBatch"
                             >
@@ -144,7 +151,7 @@
                             type="number"
                             step="0.001"
                             min="0"
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors"
+                            class="input-underline py-2.5"
                         />
                     </label>
                 </div>
@@ -211,39 +218,41 @@
                                 class="hover:bg-slate-50/50 transition-colors"
                             >
                                 <td class="px-4 py-2">
-                                    <select
-                                        v-model="row.tangki_asal"
-                                        @change="saatTangkiAsalDipilih(row)"
-                                        class="w-full min-w-[220px] px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                                    >
-                                        <option
-                                            value=""
-                                            disabled
+                                    <div class="relative min-w-[220px]">
+                                        <select
+                                            v-model="row.tangki_asal"
+                                            @change="saatTangkiAsalDipilih(row)"
+                                            class="input-underline select-underline w-full py-1.5 pr-6 text-sm cursor-pointer"
                                         >
-                                            Pilih tangki sumber
-                                        </option>
+                                            <option
+                                                value=""
+                                                disabled
+                                            >
+                                                Pilih tangki sumber
+                                            </option>
 
-                                        <option
-                                            v-for="t in opsiTangkiSumber"
-                                            :key="t.id"
-                                            :value="t.id"
-                                            :disabled="t.disabled"
-                                        >
-                                            {{ t.kode }}
-                                            —
-                                            {{ t.nama_hasil || '-' }}
-                                            —
-                                            {{ formatKg(t.saldo_kg) }}
-                                            Kg
-                                        </option>
-                                    </select>
+                                            <option
+                                                v-for="t in opsiTangkiSumber"
+                                                :key="t.id"
+                                                :value="t.id"
+                                                :disabled="t.disabled"
+                                            >
+                                                {{ t.kode }}
+                                                —
+                                                {{ t.nama_hasil || '-' }}
+                                                —
+                                                {{ formatKg(t.saldo_kg) }}
+                                                Kg
+                                            </option>
+                                        </select>
+
+                                        <i class="pi pi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-2">
                                     <div class="min-w-[180px]">
-                                        <div
-                                            class="font-semibold text-slate-700"
-                                        >
+                                        <div class="font-semibold text-slate-700">
                                             {{
                                                 row.nama_hasil ||
                                                 '-'
@@ -273,9 +282,7 @@
                                         {{ formatKg(row.tersedia) }}
                                     </span>
 
-                                    <span
-                                        class="text-[10px] text-slate-400 ml-1"
-                                    >
+                                    <span class="text-[10px] text-slate-400 ml-1">
                                         Kg
                                     </span>
                                 </td>
@@ -285,9 +292,7 @@
                                 >
                                     {{ formatRupiah(row.harga) }}
 
-                                    <span
-                                        class="block text-[9px] text-slate-400"
-                                    >
+                                    <span class="block text-[9px] text-slate-400">
                                         / Kg
                                     </span>
                                 </td>
@@ -300,7 +305,7 @@
                                         step="0.001"
                                         min="0"
                                         :max="row.tersedia"
-                                        class="w-full min-w-[120px] px-1 py-1.5 bg-transparent border-0 border-b-2 border-slate-300 rounded-none text-sm text-right focus:outline-none focus:ring-0 focus:border-purple-500 transition-colors"
+                                        class="input-underline min-w-[120px] py-1.5 text-right text-sm"
                                     />
                                 </td>
 
@@ -386,9 +391,7 @@
                     </h3>
                 </div>
 
-                <div
-                    class="overflow-x-auto border-y border-slate-100"
-                >
+                <div class="overflow-x-auto border-y border-slate-100">
                     <table
                         class="w-full text-sm text-left whitespace-nowrap"
                     >
@@ -431,45 +434,49 @@
                                 class="hover:bg-slate-50/50 transition-colors"
                             >
                                 <td class="px-4 py-2">
-                                    <select
-                                        v-model="row.raw"
-                                        @change="
-                                            perbaruiTelemetriBom(row);
-                                            cekBahanDuplikat(row)
-                                        "
-                                        class="w-full min-w-[180px] px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                                    >
-                                        <option
-                                            value=""
-                                            disabled
-                                        >
-                                            Pilih bahan baku
-                                        </option>
-
-                                        <option
-                                            v-for="r in daftarRaw"
-                                            :key="r.raw"
-                                            :value="r.raw"
-                                            :disabled="
-                                                bomRows.some(
-                                                    b =>
-                                                        String(b.raw) ===
-                                                            String(r.raw) &&
-                                                        b._id !== row._id
-                                                )
+                                    <div class="relative min-w-[180px]">
+                                        <select
+                                            v-model="row.raw"
+                                            @change="
+                                                perbaruiTelemetriBom(row);
+                                                cekBahanDuplikat(row)
                                             "
+                                            class="input-underline select-underline w-full py-1.5 pr-6 text-sm cursor-pointer"
                                         >
-                                            {{ r.produk_kode }}
-                                            -
-                                            {{ r.produk_nama }}
-                                            ({{
-                                                formatKg(
-                                                    r.qty_kg
-                                                )
-                                            }}
-                                            Kg)
-                                        </option>
-                                    </select>
+                                            <option
+                                                value=""
+                                                disabled
+                                            >
+                                                Pilih bahan baku
+                                            </option>
+
+                                            <option
+                                                v-for="r in daftarRaw"
+                                                :key="r.raw"
+                                                :value="r.raw"
+                                                :disabled="
+                                                    bomRows.some(
+                                                        b =>
+                                                            String(b.raw) ===
+                                                                String(r.raw) &&
+                                                            b._id !== row._id
+                                                    )
+                                                "
+                                            >
+                                                {{ r.produk_kode }}
+                                                -
+                                                {{ r.produk_nama }}
+                                                ({{
+                                                    formatKg(
+                                                        r.qty_kg
+                                                    )
+                                                }}
+                                                Kg)
+                                            </option>
+                                        </select>
+
+                                        <i class="pi pi-chevron-down absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
+                                    </div>
                                 </td>
 
                                 <td class="px-4 py-2">
@@ -479,7 +486,7 @@
                                         inputmode="decimal"
                                         step="0.001"
                                         min="0"
-                                        class="w-full min-w-[100px] px-1 py-1.5 bg-transparent border-0 border-b-2 border-slate-300 rounded-none text-sm focus:outline-none focus:ring-0 focus:border-purple-500 transition-colors"
+                                        class="input-underline min-w-[100px] py-1.5 text-right text-sm"
                                     />
                                 </td>
 
@@ -626,7 +633,6 @@
         </template>
     </div>
 </template>
-
 
 <script setup>
 import {
@@ -830,3 +836,75 @@ function cekBahanDuplikat(row) {
     }
 }
 </script>
+
+<style scoped>
+.input-underline {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-bottom: 2px solid #cbd5e1;
+    border-radius: 0;
+    background: transparent !important;
+    color: #334155;
+    outline: none !important;
+    box-shadow: none !important;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.input-underline:hover {
+    border-bottom-color: #94a3b8;
+}
+
+.input-underline:focus {
+    border-bottom-color: #475569;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.input-underline::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+.select-underline {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.select-underline:focus {
+    border-bottom-color: #475569;
+}
+
+.input-underline:disabled,
+.input-underline[readonly] {
+    background: transparent !important;
+}
+
+.input-underline[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.input-underline[type="number"]::-webkit-inner-spin-button,
+.input-underline[type="number"]::-webkit-outer-spin-button {
+    margin: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #94a3b8;
+}
+</style>

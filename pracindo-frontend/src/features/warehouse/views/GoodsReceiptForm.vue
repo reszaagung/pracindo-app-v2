@@ -1,11 +1,9 @@
 <template>
     <div class="w-full min-w-0 animate-fade-in relative">
 
-        
         <template v-if="hasil">
             <section class="w-full bg-white border border-emerald-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
 
-                
                 <div class="p-5 md:p-7 bg-gradient-to-br from-emerald-50 to-white border-b border-emerald-100">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 shrink-0 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
@@ -33,26 +31,24 @@
 
                 <div class="p-5 md:p-7 space-y-6">
 
-                    
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 md:p-5">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Nomor Dokumen Penerimaan
-                                </p>
+                        <div class="border-b-2 border-slate-200 pb-4 md:pb-5">
+                            <div class="flex items-end gap-4 md:gap-6">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Nomor Dokumen Penerimaan
+                                    </p>
 
-                                <p class="text-lg md:text-xl font-black text-slate-900 mt-1 break-all">
-                                    {{ hasil.penerimaan?.nomor || '-' }}
-                                </p>
-                            </div>
+                                    <div class="input-underline mt-1 py-1.5">
+                                        <p class="text-lg md:text-xl font-black text-slate-900 break-all">
+                                            {{ hasil.penerimaan?.nomor || '-' }}
+                                        </p>
+                                    </div>
+                                </div>
 
-                            <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                                <i class="pi pi-file-check"></i>
+                                <i class="pi pi-file-check shrink-0 mb-2 text-slate-400 text-lg md:text-xl"></i>
                             </div>
                         </div>
-                    </div>
 
-                    
                     <div v-if="hasil.laporan_selisih?.length">
                         <div class="flex items-start gap-3 mb-3">
                             <div class="w-8 h-8 shrink-0 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
@@ -111,7 +107,6 @@
                         </div>
                     </div>
 
-                    
                     <div class="pt-5 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
                         <router-link
                             v-if="hasil.penerimaan?.id"
@@ -135,7 +130,6 @@
             </section>
         </template>
 
-        
         <form
             v-else
             @submit.prevent="kirim"
@@ -143,7 +137,6 @@
             novalidate
         >
 
-            
             <section class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
 
                 <div class="px-4 py-4 md:px-6 md:py-5 border-b border-slate-100 flex items-center gap-3">
@@ -164,7 +157,6 @@
 
                 <div class="p-4 md:p-6 space-y-5">
 
-                    
                     <div class="space-y-2">
                         <label
                             for="po-penerimaan"
@@ -175,14 +167,14 @@
                         </label>
 
                         <div class="relative">
-                            <i class="pi pi-file-edit absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                            <i class="pi pi-file-edit absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none z-10"></i>
 
                             <select
                                 id="po-penerimaan"
                                 v-model="poIdTerpilih"
                                 :disabled="sedangProses"
                                 required
-                                class="w-full h-12 pl-11 pr-11 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 appearance-none cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                class="input-underline select-underline pl-11 pr-8 py-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 <option value="" disabled>
                                     Pilih PO supplier
@@ -197,7 +189,7 @@
                                 </option>
                             </select>
 
-                            <i class="pi pi-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <i class="pi pi-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                         </div>
 
                         <p
@@ -209,7 +201,6 @@
                         </p>
                     </div>
 
-                    
                     <transition name="slide-fade">
                         <div
                             v-if="poTerpilih"
@@ -241,6 +232,7 @@
                                         <p class="text-[9px] uppercase tracking-wider font-bold text-slate-400">
                                             Item
                                         </p>
+
                                         <p class="text-sm font-black text-slate-800 mt-1">
                                             {{ baris.length }}
                                         </p>
@@ -250,6 +242,7 @@
                                         <p class="text-[9px] uppercase tracking-wider font-bold text-slate-400">
                                             Sisa Qty
                                         </p>
+
                                         <p class="text-sm font-black text-slate-800 mt-1">
                                             {{ angka(totalSisa, 3) }}
                                         </p>
@@ -270,91 +263,91 @@
                         </div>
                     </transition>
 
-                    
                     <transition name="slide-fade">
-                        <div
-                            v-if="poTerpilih"
-                            class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                        >
-                            <div class="space-y-2">
-                                <label
-                                    for="surat-jalan"
-                                    class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
-                                >
-                                    No. Surat Jalan
-                                    <span class="text-rose-500">*</span>
-                                </label>
+                            <div
+                                v-if="poTerpilih"
+                                class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                            >
 
-                                <div class="relative">
-                                    <i class="pi pi-truck absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                <div class="space-y-2">
+                                    <label
+                                        for="surat-jalan"
+                                        class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
+                                    >
+                                        No. Surat Jalan
+                                        <span class="text-rose-500">*</span>
+                                    </label>
 
-                                    <input
-                                        id="surat-jalan"
-                                        v-model="form.no_surat_jalan"
-                                        type="text"
-                                        autocomplete="off"
-                                        maxlength="100"
-                                        required
-                                        placeholder="Nomor surat jalan supplier"
-                                        class="input-underline pl-10 pr-3"
-                                    />
+                                    <div class="relative">
+                                        <i class="pi pi-truck absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none z-10"></i>
+
+                                        <input
+                                            id="surat-jalan"
+                                            v-model="form.no_surat_jalan"
+                                            type="text"
+                                            autocomplete="off"
+                                            maxlength="100"
+                                            required
+                                            placeholder="Nomor surat jalan supplier"
+                                            class="input-underline pl-11 pr-3 py-2.5"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="space-y-2">
-                                <label
-                                    for="tanggal-terima"
-                                    class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Tanggal Terima
-                                    <span class="text-rose-500">*</span>
-                                </label>
+                                <div class="space-y-2">
+                                    <label
+                                        for="tanggal-terima"
+                                        class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
+                                    >
+                                        Tanggal Terima
+                                        <span class="text-rose-500">*</span>
+                                    </label>
 
-                                <div class="relative">
-                                    <i class="pi pi-calendar absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                                    <div class="flex items-end gap-4 md:gap-5">
+                                        <input
+                                            id="tanggal-terima"
+                                            v-model="form.tanggal"
+                                            type="date"
+                                            required
+                                            class="input-underline flex-1 min-w-0 py-2.5 cursor-pointer"
+                                        />
 
-                                    <input
-                                        id="tanggal-terima"
-                                        v-model="form.tanggal"
-                                        type="date"
-                                        required
-                                        class="input-underline pl-10 pr-3"
-                                    />
+                                        <i class="pi pi-calendar shrink-0 mb-2 text-slate-400 text-sm md:text-base"></i>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="space-y-2 md:col-span-2">
-                                <label
-                                    for="catatan"
-                                    class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
-                                >
-                                    Catatan
-                                    <span class="font-normal normal-case text-slate-400">
-                                        (Opsional)
-                                    </span>
-                                </label>
+                                <div class="space-y-2 md:col-span-2">
+                                    <label
+                                        for="catatan"
+                                        class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider"
+                                    >
+                                        Catatan
+                                        <span class="font-normal normal-case text-slate-400">
+                                            (Opsional)
+                                        </span>
+                                    </label>
 
-                                <textarea
-                                    id="catatan"
-                                    v-model="form.catatan"
-                                    rows="3"
-                                    maxlength="500"
-                                    placeholder="Catatan tambahan untuk transaksi penerimaan..."
-                                    class="input-underline px-1 py-3 resize-none"
-                                ></textarea>
+                                    <textarea
+                                        id="catatan"
+                                        v-model="form.catatan"
+                                        rows="3"
+                                        maxlength="500"
+                                        placeholder="Catatan tambahan untuk transaksi penerimaan..."
+                                        class="input-underline px-1 py-3 resize-none"
+                                    ></textarea>
 
-                                <div class="flex justify-end">
-                                    <span class="text-[10px] text-slate-400">
-                                        {{ form.catatan.length }}/500
-                                    </span>
+                                    <div class="flex justify-end">
+                                        <span class="text-[10px] text-slate-400">
+                                            {{ form.catatan.length }}/500
+                                        </span>
+                                    </div>
                                 </div>
+
                             </div>
-                        </div>
-                    </transition>
+                        </transition>
                 </div>
             </section>
 
-            
             <section
                 v-if="poTerpilih"
                 class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden animate-fade-in"
@@ -377,12 +370,12 @@
                             </div>
                         </div>
 
-                        
                         <div class="grid grid-cols-3 gap-2 md:min-w-[340px]">
                             <div class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5">
                                 <p class="text-[9px] uppercase font-bold tracking-wider text-slate-400">
                                     Diterima
                                 </p>
+
                                 <p class="text-xs md:text-sm font-black text-emerald-600 mt-0.5">
                                     {{ angka(totalDiterima, 3) }}
                                 </p>
@@ -392,6 +385,7 @@
                                 <p class="text-[9px] uppercase font-bold tracking-wider text-slate-400">
                                     Ditolak
                                 </p>
+
                                 <p class="text-xs md:text-sm font-black text-rose-600 mt-0.5">
                                     {{ angka(totalDitolak, 3) }}
                                 </p>
@@ -401,6 +395,7 @@
                                 <p class="text-[9px] uppercase font-bold tracking-wider text-slate-400">
                                     Item Diisi
                                 </p>
+
                                 <p class="text-xs md:text-sm font-black text-slate-800 mt-0.5">
                                     {{ jumlahItemDiisi }}/{{ baris.length }}
                                 </p>
@@ -411,7 +406,6 @@
 
                 <div class="p-3 md:p-5">
 
-                    
                     <div class="hidden lg:block overflow-x-auto custom-scrollbar">
                         <table class="w-full min-w-[1100px] text-left border-collapse">
                             <thead>
@@ -460,7 +454,6 @@
                                     :key="r.po_item_id"
                                     class="group hover:bg-slate-50/60 transition-colors"
                                 >
-                                    
                                     <td class="px-3 py-4 align-top">
                                         <div class="flex items-start gap-2.5">
                                             <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
@@ -491,18 +484,16 @@
                                         </div>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top text-right">
                                         <span class="text-xs font-bold text-slate-600">
                                             {{ angka(r.sisa_qty, 3) }}
                                         </span>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top">
                                         <select
                                             v-model="r.jenis_kemasan"
-                                            class="w-full h-9 px-2.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all"
+                                            class="input-underline select-underline h-9 px-1 pr-5 text-[11px] font-semibold text-slate-700 cursor-pointer"
                                         >
                                             <option
                                                 v-for="k in JENIS_KEMASAN"
@@ -514,7 +505,6 @@
                                         </select>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-if="r.jenis_kemasan !== 'CURAH'"
@@ -535,7 +525,6 @@
                                         </span>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-if="r.jenis_kemasan !== 'CURAH'"
@@ -556,11 +545,10 @@
                                         </span>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top text-right">
                                         <span
                                             v-if="deklarasi(r) != null"
-                                            class="inline-flex px-2 py-1 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-600"
+                                            class="text-xs font-bold text-slate-600"
                                         >
                                             {{ angka(deklarasi(r), 3) }}
                                         </span>
@@ -573,7 +561,6 @@
                                         </span>
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-model.number="r.qty_diterima"
@@ -586,7 +573,6 @@
                                         />
                                     </td>
 
-                                    
                                     <td class="px-2 py-4 align-top">
                                         <input
                                             v-model.number="r.qty_ditolak"
@@ -598,14 +584,15 @@
                                         />
                                     </td>
 
-                                    
                                     <td class="px-3 py-4 align-top text-right">
                                         <template v-if="selisih(r) != null">
                                             <span
-                                                class="inline-flex flex-col items-end px-2.5 py-1.5 rounded-lg border"
-                                                :class="melebihiToleransi(r)
-                                                    ? 'bg-rose-50 border-rose-100 text-rose-600'
-                                                    : 'bg-slate-50 border-slate-100 text-slate-700'"
+                                                class="inline-flex flex-col items-end"
+                                                :class="
+                                                    melebihiToleransi(r)
+                                                        ? 'text-rose-600'
+                                                        : 'text-slate-700'
+                                                "
                                             >
                                                 <span class="text-xs font-bold">
                                                     {{ angka(selisih(r), 3) }}
@@ -626,14 +613,12 @@
                         </table>
                     </div>
 
-                    
                     <div class="lg:hidden space-y-4">
                         <article
                             v-for="r in baris"
                             :key="'mobile-' + r.po_item_id"
                             class="rounded-2xl border border-slate-200 bg-slate-50/50 overflow-hidden"
                         >
-                            
                             <div class="p-4 bg-white border-b border-slate-100">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex items-start gap-3 min-w-0">
@@ -675,7 +660,6 @@
 
                             <div class="p-4 space-y-4">
 
-                                
                                 <div class="space-y-1.5">
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                         Jenis Kemasan
@@ -683,7 +667,7 @@
 
                                     <select
                                         v-model="r.jenis_kemasan"
-                                        class="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-700 focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all"
+                                        class="input-underline select-underline h-11 px-1 pr-6 text-sm font-semibold text-slate-700 cursor-pointer"
                                     >
                                         <option
                                             v-for="k in JENIS_KEMASAN"
@@ -695,7 +679,6 @@
                                     </select>
                                 </div>
 
-                                
                                 <div
                                     v-if="r.jenis_kemasan !== 'CURAH'"
                                     class="grid grid-cols-2 gap-3"
@@ -733,8 +716,7 @@
                                     </div>
                                 </div>
 
-                                
-                                <div class="flex items-center justify-between gap-4 px-3 py-3 rounded-xl bg-white border border-slate-200">
+                                <div class="flex items-center justify-between gap-4 px-1 py-2 border-b border-slate-100">
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                         Deklarasi
                                     </span>
@@ -744,7 +726,6 @@
                                     </span>
                                 </div>
 
-                                
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="space-y-1.5">
                                         <label class="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
@@ -778,30 +759,35 @@
                                     </div>
                                 </div>
 
-                                
                                 <div
                                     v-if="selisih(r) != null"
-                                    class="rounded-xl border px-3 py-3"
-                                    :class="melebihiToleransi(r)
-                                        ? 'bg-rose-50 border-rose-200'
-                                        : 'bg-white border-slate-200'"
+                                    class="px-1 py-3 border-b"
+                                    :class="
+                                        melebihiToleransi(r)
+                                            ? 'border-rose-200'
+                                            : 'border-slate-200'
+                                    "
                                 >
                                     <div class="flex items-center justify-between gap-3">
                                         <div>
                                             <p
                                                 class="text-[10px] font-bold uppercase tracking-wider"
-                                                :class="melebihiToleransi(r)
-                                                    ? 'text-rose-500'
-                                                    : 'text-slate-400'"
+                                                :class="
+                                                    melebihiToleransi(r)
+                                                        ? 'text-rose-500'
+                                                        : 'text-slate-400'
+                                                "
                                             >
                                                 Selisih
                                             </p>
 
                                             <p
                                                 class="text-xs font-medium mt-0.5"
-                                                :class="melebihiToleransi(r)
-                                                    ? 'text-rose-600'
-                                                    : 'text-slate-500'"
+                                                :class="
+                                                    melebihiToleransi(r)
+                                                        ? 'text-rose-600'
+                                                        : 'text-slate-500'
+                                                "
                                             >
                                                 Batas toleransi ±0,5%
                                             </p>
@@ -810,18 +796,22 @@
                                         <div class="text-right">
                                             <p
                                                 class="text-sm font-black"
-                                                :class="melebihiToleransi(r)
-                                                    ? 'text-rose-600'
-                                                    : 'text-slate-700'"
+                                                :class="
+                                                    melebihiToleransi(r)
+                                                        ? 'text-rose-600'
+                                                        : 'text-slate-700'
+                                                "
                                             >
                                                 {{ angka(selisih(r), 3) }}
                                             </p>
 
                                             <p
                                                 class="text-[10px] font-bold"
-                                                :class="melebihiToleransi(r)
-                                                    ? 'text-rose-500'
-                                                    : 'text-slate-400'"
+                                                :class="
+                                                    melebihiToleransi(r)
+                                                        ? 'text-rose-500'
+                                                        : 'text-slate-400'
+                                                "
                                             >
                                                 {{ angka(persenSelisih(r), 2) }}%
                                             </p>
@@ -829,7 +819,6 @@
                                     </div>
                                 </div>
 
-                                
                                 <transition name="slide-fade">
                                     <div
                                         v-if="Number(r.qty_ditolak) > 0"
@@ -854,10 +843,8 @@
                         </article>
                     </div>
 
-                    
                     <div class="mt-5 space-y-3">
 
-                        
                         <div
                             v-for="r in barisMelebihiToleransi"
                             :key="'tol-' + r.po_item_id"
@@ -874,7 +861,6 @@
                             </div>
                         </div>
 
-                        
                         <div
                             v-for="r in barisLewatSisa"
                             :key="'lewat-' + r.po_item_id"
@@ -892,7 +878,6 @@
                             </div>
                         </div>
 
-                        
                         <div
                             v-for="r in barisTanpaAlasan"
                             :key="'alasan-' + r.po_item_id"
@@ -909,7 +894,6 @@
                         </div>
                     </div>
 
-                    
                     <transition name="slide-fade">
                         <div
                             v-if="pesanError"
@@ -933,7 +917,6 @@
                 </div>
             </section>
 
-            
             <section
                 v-if="poTerpilih"
                 class="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
@@ -962,6 +945,7 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Item
                                 </span>
+
                                 <i class="pi pi-box text-slate-300 text-xs"></i>
                             </div>
 
@@ -979,6 +963,7 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
                                     Diterima
                                 </span>
+
                                 <i class="pi pi-check text-emerald-300 text-xs"></i>
                             </div>
 
@@ -996,6 +981,7 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-rose-500">
                                     Ditolak
                                 </span>
+
                                 <i class="pi pi-times text-rose-300 text-xs"></i>
                             </div>
 
@@ -1013,6 +999,7 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500">
                                     Selisih
                                 </span>
+
                                 <i class="pi pi-chart-line text-blue-300 text-xs"></i>
                             </div>
 
@@ -1039,7 +1026,6 @@
                 </div>
             </section>
 
-            
             <div
                 v-if="poTerpilih"
                 class="hidden lg:flex sticky bottom-4 z-20 items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-3.5 shadow-xl shadow-slate-900/10"
@@ -1084,7 +1070,6 @@
                 </div>
             </div>
 
-            
             <div
                 v-if="poTerpilih"
                 class="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-3 py-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-8px_24px_rgba(15,23,42,0.08)]"
@@ -1450,26 +1435,45 @@ onUnmounted(() => {
 
 <style scoped>
 .input-underline {
+    display: block;
     width: 100%;
+    min-width: 0;
     border: 0;
     border-bottom: 2px solid #cbd5e1;
     border-radius: 0;
-    background: transparent;
+    background: transparent !important;
     color: #334155;
-    outline: none;
-    box-shadow: none;
-    transition: border-color 0.2s ease;
+    outline: none !important;
+    box-shadow: none !important;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.input-underline:hover {
+    border-bottom-color: #94a3b8;
+}
+
+.input-underline:focus {
+    border-bottom-color: #334155;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .input-underline::placeholder {
     color: #94a3b8;
+    opacity: 1;
 }
 
-.input-underline:focus {
-    border-bottom-color: #475569;
-    outline: none;
-    box-shadow: none;
-    background: transparent;
+.select-underline {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.select-underline:focus {
+    border-bottom-color: #334155;
 }
 
 .input-underline.input-emerald {
@@ -1477,8 +1481,13 @@ onUnmounted(() => {
     color: #047857;
 }
 
+.input-underline.input-emerald:hover {
+    border-bottom-color: #6ee7b7;
+}
+
 .input-underline.input-emerald:focus {
     border-bottom-color: #10b981;
+    color: #047857;
 }
 
 .input-underline.input-rose {
@@ -1486,13 +1495,31 @@ onUnmounted(() => {
     color: #e11d48;
 }
 
+.input-underline.input-rose:hover {
+    border-bottom-color: #fda4af;
+}
+
 .input-underline.input-rose:focus {
     border-bottom-color: #f43f5e;
+    color: #be123c;
 }
 
 .input-underline:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    border-bottom-style: dashed;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #94a3b8;
 }
 
 .animate-fade-in {
@@ -1549,17 +1576,5 @@ onUnmounted(() => {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
-}
-
-input:focus,
-select:focus,
-textarea:focus,
-button:focus {
-    outline: none;
-}
-
-input::placeholder,
-textarea::placeholder {
-    color: #94a3b8;
 }
 </style>

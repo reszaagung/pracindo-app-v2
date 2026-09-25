@@ -1,7 +1,6 @@
 <template>
   <div class="space-y-4">
 
-    <!-- ERROR -->
     <div
       v-if="errorMsg"
       class="bg-red-50 text-red-600 border border-red-100 rounded-lg px-4 py-2.5 text-sm"
@@ -9,7 +8,6 @@
       {{ errorMsg }}
     </div>
 
-    <!-- VALIDATION ERROR -->
     <div
       v-if="validasiTangkiError"
       class="bg-amber-50 text-amber-700 border border-amber-100 rounded-lg px-4 py-2.5 text-sm"
@@ -17,7 +15,6 @@
       {{ validasiTangkiError }}
     </div>
 
-    <!-- LOADING -->
     <div
       v-if="loadingForm"
       class="flex justify-center items-center py-10 text-slate-400"
@@ -26,10 +23,6 @@
     </div>
 
     <template v-else>
-
-      <!-- =====================================================
-           TELEMETRI PRODUKSI
-      ====================================================== -->
 
       <div
         class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 w-full overflow-hidden"
@@ -44,7 +37,6 @@
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
         >
 
-          <!-- NAMA HASIL -->
           <label
             class="flex flex-col gap-1 w-full overflow-hidden"
           >
@@ -58,11 +50,10 @@
               v-model="form.nama_hasil"
               type="text"
               placeholder="mis. SUPER WHITE SPESIAL"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              class="input-underline py-2.5"
             />
           </label>
 
-          <!-- TANGKI TUJUAN -->
           <label
             class="flex flex-col gap-1 w-full overflow-hidden"
           >
@@ -73,13 +64,11 @@
             </span>
 
             <div
-              class="flex items-center gap-2 w-full flex-nowrap"
+              class="flex items-end gap-2 w-full min-w-0"
             >
-
               <select
                 v-model="form.tangki_tujuan"
-                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                style="flex: 1 1 auto; min-width: 0"
+                class="input-underline select-underline flex-1 min-w-0 py-2.5 pr-6 cursor-pointer"
               >
                 <option
                   value=""
@@ -105,26 +94,20 @@
 
               <button
                 type="button"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
-                style="flex: 0 0 42px; width: 42px; height: 42px"
+                class="shrink-0 w-[42px] h-[42px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center font-bold shadow-sm transition-colors"
                 title="Tambah tangki mixing baru"
                 @click="tambahTangkiBaruPrompt"
               >
                 +
               </button>
-
             </div>
 
-            <span
-              class="text-[10px] text-slate-400"
-            >
+            <span class="text-[10px] text-slate-400">
               Tangki tujuan Mixing wajib menggunakan kode
               <strong>TK-MIX-*</strong>.
             </span>
-
           </label>
 
-          <!-- BATCH -->
           <label
             class="flex flex-col gap-1 w-full overflow-hidden"
           >
@@ -135,20 +118,18 @@
             </span>
 
             <div
-              class="flex items-center gap-2 w-full flex-nowrap"
+              class="flex items-end gap-2 w-full min-w-0"
             >
               <input
                 v-model="form.batch"
                 type="text"
                 placeholder="PRD-MIX-0001"
-                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                style="flex: 1 1 auto; min-width: 0"
+                class="input-underline flex-1 min-w-0 py-2.5"
               />
 
               <button
                 type="button"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors disabled:opacity-50"
-                style="flex: 0 0 65px; width: 65px; height: 42px"
+                class="shrink-0 w-[65px] h-[42px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg flex items-center justify-center shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="!tangkiTujuanValid"
                 @click="generateNomorBatch"
               >
@@ -157,7 +138,6 @@
             </div>
           </label>
 
-          <!-- TEKOR -->
           <label
             class="flex flex-col gap-1 w-full overflow-hidden"
           >
@@ -172,16 +152,12 @@
               type="number"
               step="0.001"
               min="0"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              class="input-underline py-2.5"
             />
           </label>
 
         </div>
       </div>
-
-      <!-- =====================================================
-           BOM
-      ====================================================== -->
 
       <div
         class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full"
@@ -200,11 +176,9 @@
         <div
           class="overflow-x-auto border-y border-slate-100"
         >
-
           <table
             class="w-full text-sm text-left whitespace-nowrap"
           >
-
             <thead
               class="bg-slate-50 text-slate-500 text-[11px] uppercase font-semibold"
             >
@@ -238,25 +212,21 @@
             <tbody
               class="divide-y divide-slate-100 text-sm"
             >
-
               <tr
                 v-for="row in bomRows"
                 :key="row._id"
                 class="hover:bg-slate-50/50 transition-colors"
               >
 
-                <!-- BAHAN -->
                 <td class="px-4 py-2">
-
                   <select
                     v-model="row.raw"
                     @change="
                       perbaruiTelemetriBom(row);
                       cekBahanDuplikat(row)
                     "
-                    class="w-full min-w-[180px] px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    class="input-underline select-underline w-full min-w-[180px] py-1.5 pr-5 text-sm cursor-pointer"
                   >
-
                     <option
                       value=""
                       disabled
@@ -287,29 +257,22 @@
                       }}
                       Kg)
                     </option>
-
                   </select>
-
                 </td>
 
-                <!-- QTY -->
                 <td class="px-4 py-2">
-
                   <input
                     v-model.number="row.qty"
                     type="number"
                     step="0.001"
                     min="0"
-                    class="w-full min-w-[100px] px-2 py-1.5 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    class="input-underline w-full min-w-[100px] py-1.5 text-right text-sm"
                   />
-
                 </td>
 
-                <!-- SALDO -->
                 <td
                   class="px-4 py-2 text-right"
                 >
-
                   <span
                     class="font-medium"
                     :class="
@@ -325,10 +288,8 @@
                       )
                     }}
                   </span>
-
                 </td>
 
-                <!-- HARGA -->
                 <td
                   class="px-4 py-2 text-right text-slate-500"
                 >
@@ -339,7 +300,6 @@
                   }}
                 </td>
 
-                <!-- SUBTOTAL -->
                 <td
                   class="px-4 py-2 text-right font-semibold text-slate-700"
                 >
@@ -350,11 +310,9 @@
                   }}
                 </td>
 
-                <!-- AKSI -->
                 <td
                   class="px-4 py-2 text-center"
                 >
-
                   <button
                     type="button"
                     class="w-7 h-7 rounded-md flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 mx-auto transition-colors"
@@ -369,45 +327,31 @@
                       class="pi pi-trash text-xs"
                     ></i>
                   </button>
-
                 </td>
 
               </tr>
-
             </tbody>
-
           </table>
-
         </div>
 
         <div class="p-3 bg-slate-50/50">
-
           <button
             type="button"
             class="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
             @click="tambahBomRow"
           >
-
             <i
               class="pi pi-plus text-[10px]"
             ></i>
 
             Tambah Baris BOM
-
           </button>
-
         </div>
-
       </div>
-
-      <!-- =====================================================
-           PROYEKSI
-      ====================================================== -->
 
       <div
         class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-center sm:text-left"
       >
-
         <div class="text-blue-800">
           Proyeksi Yield:
 
@@ -433,12 +377,7 @@
             / Kg
           </strong>
         </div>
-
       </div>
-
-      <!-- =====================================================
-           PRATINJAU
-      ====================================================== -->
 
       <div
         v-if="pratinjau"
@@ -449,14 +388,9 @@
         />
       </div>
 
-      <!-- =====================================================
-           ACTION
-      ====================================================== -->
-
       <div
         class="flex flex-col sm:flex-row justify-end gap-2.5 pt-3 border-t border-slate-100"
       >
-
         <button
           type="button"
           class="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
@@ -493,7 +427,6 @@
               : 'Simpan & Posting'
           }}
         </button>
-
       </div>
 
     </template>
@@ -529,36 +462,23 @@ const {
   loadingForm,
   submitting,
   errorMsg,
-
   daftarTangki,
   daftarRaw,
-
   form,
   bomRows,
   pratinjau,
-
   proyeksiYield,
   proyeksiHargaRata,
-
   bukaFormBaru,
   bukaFormEdit,
-
   tambahTangkiBaru,
   generateNomorBatch,
-
   tambahBomRow,
   hapusBomRow,
-
   perbaruiTelemetriBom,
-
   mintaPratinjau,
   simpanDanPosting
 } = useMixingForm()
-
-// ===========================================================
-// TANGKI TUJUAN MIXING
-// HANYA TK-MIX-*
-// ===========================================================
 
 const daftarTangkiTujuan = computed(() => {
   return daftarTangki.value.filter(
@@ -579,10 +499,6 @@ const daftarTangkiTujuan = computed(() => {
   )
 })
 
-// ===========================================================
-// TANGKI TUJUAN YANG SEDANG DIPILIH
-// ===========================================================
-
 const tangkiTujuan = computed(() => {
   return daftarTangki.value.find(
     (tangki) =>
@@ -592,10 +508,6 @@ const tangkiTujuan = computed(() => {
       )
   )
 })
-
-// ===========================================================
-// VALIDASI KODE TANGKI TUJUAN
-// ===========================================================
 
 const tangkiTujuanValid = computed(() => {
   const tangki =
@@ -643,10 +555,6 @@ const validasiTangkiError = computed(() => {
   return ''
 })
 
-// ===========================================================
-// INIT
-// ===========================================================
-
 onMounted(() => {
   if (props.batchId) {
     bukaFormEdit(
@@ -656,10 +564,6 @@ onMounted(() => {
     bukaFormBaru()
   }
 })
-
-// ===========================================================
-// FORMAT KG
-// ===========================================================
 
 function formatKg(value) {
   return Number(
@@ -673,10 +577,6 @@ function formatKg(value) {
   )
 }
 
-// ===========================================================
-// FORMAT RUPIAH
-// ===========================================================
-
 function formatRupiah(value) {
   return `Rp ${Number(
     value || 0
@@ -688,10 +588,6 @@ function formatRupiah(value) {
     }
   )}`
 }
-
-// ===========================================================
-// TAMBAH TANGKI MIXING
-// ===========================================================
 
 async function tambahTangkiBaruPrompt() {
   const input =
@@ -733,10 +629,6 @@ async function tambahTangkiBaruPrompt() {
     dibuat.id
 }
 
-// ===========================================================
-// PRATINJAU
-// ===========================================================
-
 async function tanganiPratinjau() {
   if (
     !tangkiTujuanValid.value
@@ -746,10 +638,6 @@ async function tanganiPratinjau() {
 
   await mintaPratinjau()
 }
-
-// ===========================================================
-// SIMPAN
-// ===========================================================
 
 async function tanganiSimpanDanPosting() {
   if (
@@ -767,10 +655,6 @@ async function tanganiSimpanDanPosting() {
     emit('sukses')
   }
 }
-
-// ===========================================================
-// DUPLIKAT BOM
-// ===========================================================
 
 function cekBahanDuplikat(
   row
@@ -805,3 +689,69 @@ function cekBahanDuplikat(
   }
 }
 </script>
+
+<style scoped>
+.input-underline {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-bottom: 2px solid #cbd5e1;
+  border-radius: 0;
+  background: transparent !important;
+  color: #334155;
+  outline: none !important;
+  box-shadow: none !important;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.input-underline:hover {
+  border-bottom-color: #94a3b8;
+}
+
+.input-underline:focus {
+  border-bottom-color: #334155;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.input-underline::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.select-underline {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.select-underline:focus {
+  border-bottom-color: #334155;
+}
+
+.input-underline[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input-underline[type="number"]::-webkit-inner-spin-button,
+.input-underline[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+</style>

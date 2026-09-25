@@ -1,5 +1,4 @@
-import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref } from 'vue'
 
 const judulHeader = ref('Input Entry')
 const breadcrumb = ref('')
@@ -36,20 +35,6 @@ const menus = [
 ]
 
 export function useNavInputEntry() {
-    const route = useRoute()
-
-    const aktif = (path) => {
-        return computed(() => {
-            const currentPath = route.path
-            const normalizedPath = path.replace(/\/+$/, '')
-
-            return (
-                currentPath === normalizedPath ||
-                currentPath.startsWith(`${normalizedPath}/`)
-            )
-        })
-    }
-
     const setNavInfo = (judulBaru, breadcrumbBaru = '') => {
         judulHeader.value = judulBaru || 'Input Entry'
         breadcrumb.value = breadcrumbBaru || ''
@@ -62,7 +47,6 @@ export function useNavInputEntry() {
 
     return {
         menus,
-        aktif,
         judulHeader,
         breadcrumb,
         setNavInfo,

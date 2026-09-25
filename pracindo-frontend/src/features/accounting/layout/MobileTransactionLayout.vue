@@ -1,7 +1,5 @@
 <template>
-    <div
-        class="relative flex h-screen w-full overflow-hidden bg-[#F8FAFC] font-sans text-slate-700"
-    >
+    <div class="relative flex h-screen w-full overflow-hidden bg-[#F8FAFC] font-sans text-slate-700">
         <header
             class="fixed inset-x-0 top-0 z-[999] flex h-16 items-center justify-between border-b border-slate-100 bg-white/90 px-4 shadow-[0_4px_20px_rgba(15,23,42,0.04)] backdrop-blur-xl"
         >
@@ -31,33 +29,15 @@
                 </button>
 
                 <div class="min-w-0">
-                    <p
-                        class="text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400"
-                    >
+                    <p class="text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
                         Akunting
                     </p>
 
-                    <span
-                        class="block truncate text-[15px] font-extrabold tracking-tight text-slate-800"
-                    >
+                    <span class="block truncate text-[15px] font-extrabold tracking-tight text-slate-800">
                         Input Transaksi
                     </span>
                 </div>
             </div>
-
-            <button
-                type="button"
-                @click="kembali"
-                :disabled="isLoggingOut"
-                aria-label="Kembali ke halaman sebelumnya"
-                title="Kembali"
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-                <i
-                    class="pi pi-arrow-left text-sm"
-                    aria-hidden="true"
-                ></i>
-            </button>
         </header>
 
         <div
@@ -83,45 +63,16 @@
             aria-describedby="transaction-sidebar-description"
             :aria-hidden="!sidebarAktif ? 'true' : undefined"
         >
-            <h2
-                id="transaction-sidebar-title"
-                class="sr-only"
-            >
+            <h2 id="transaction-sidebar-title" class="sr-only">
                 Menu Navigasi Akunting
             </h2>
 
-            <p
-                id="transaction-sidebar-description"
-                class="sr-only"
-            >
+            <p id="transaction-sidebar-description" class="sr-only">
                 Gunakan menu navigasi untuk berpindah halaman transaksi akunting.
                 Tekan Escape untuk menutup menu.
             </p>
 
             <div class="flex w-full flex-col items-center gap-7">
-                <div class="group relative flex flex-col items-center">
-                    <button
-                        type="button"
-                        @click="kembali"
-                        :disabled="isLoggingOut"
-                        aria-label="Kembali ke halaman sebelumnya"
-                        title="Kembali"
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 shadow-md shadow-slate-900/10 transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <i
-                            class="pi pi-arrow-left text-xl text-white"
-                            aria-hidden="true"
-                        ></i>
-                    </button>
-
-                    <span
-                        class="pointer-events-none absolute left-16 top-1/2 z-50 -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                        aria-hidden="true"
-                    >
-                        Kembali
-                    </span>
-                </div>
-
                 <nav
                     class="flex w-full flex-col gap-3 px-4"
                     aria-label="Navigasi transaksi akunting"
@@ -131,21 +82,9 @@
                         :key="menu.id"
                         type="button"
                         :disabled="!menu.activate || isLoggingOut"
-                        :aria-current="
-                            aktif(menu.rute)
-                                ? 'page'
-                                : undefined
-                        "
-                        :aria-label="
-                            menu.activate
-                                ? menu.label
-                                : `${menu.label} - Segera`
-                        "
-                        :title="
-                            menu.activate
-                                ? menu.label
-                                : `${menu.label} - Segera`
-                        "
+                        :aria-current="aktif(menu.rute) ? 'page' : undefined"
+                        :aria-label="menu.activate ? menu.label : `${menu.label} - Segera`"
+                        :title="menu.activate ? menu.label : `${menu.label} - Segera`"
                         @click="klikMenu(menu)"
                         class="group relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
                         :class="
@@ -248,19 +187,11 @@
             </div>
         </aside>
 
-        <main
-            class="custom-scrollbar h-full min-w-0 flex-1 overflow-y-auto px-4 pb-6 pt-20 md:px-6 md:pb-8 md:pt-24"
-        >
+        <main class="custom-scrollbar h-full min-w-0 flex-1 overflow-y-auto px-4 pb-6 pt-20 md:px-6 md:pb-8 md:pt-24">
             <div class="mx-auto min-h-full w-full">
                 <router-view v-slot="{ Component }">
-                    <transition
-                        name="fade"
-                        mode="out-in"
-                    >
-                        <div
-                            :key="$route.fullPath"
-                            class="min-h-full w-full"
-                        >
+                    <transition name="fade" mode="out-in">
+                        <div :key="$route.fullPath" class="min-h-full w-full">
                             <component :is="Component" />
                         </div>
                     </transition>
@@ -338,22 +269,15 @@ const handleSidebarKeydown = (event) => {
     }
 
     const firstElement = focusableElements[0]
-    const lastElement =
-        focusableElements[focusableElements.length - 1]
+    const lastElement = focusableElements[focusableElements.length - 1]
 
-    if (
-        event.shiftKey &&
-        document.activeElement === firstElement
-    ) {
+    if (event.shiftKey && document.activeElement === firstElement) {
         event.preventDefault()
         lastElement.focus()
         return
     }
 
-    if (
-        !event.shiftKey &&
-        document.activeElement === lastElement
-    ) {
+    if (!event.shiftKey && document.activeElement === lastElement) {
         event.preventDefault()
         firstElement.focus()
     }
@@ -372,22 +296,13 @@ const focusSidebar = async () => {
         focusableElements[0].focus()
     }
 
-    document.addEventListener(
-        'keydown',
-        handleSidebarKeydown
-    )
+    document.addEventListener('keydown', handleSidebarKeydown)
 }
 
 const releaseSidebarFocus = async () => {
-    document.removeEventListener(
-        'keydown',
-        handleSidebarKeydown
-    )
+    document.removeEventListener('keydown', handleSidebarKeydown)
 
-    if (
-        isMobile.value &&
-        !sidebarAktif.value
-    ) {
+    if (isMobile.value && !sidebarAktif.value) {
         await nextTick()
         menuTrigger.value?.focus()
     }
@@ -416,11 +331,7 @@ const keDashboard = async () => {
 }
 
 const klikMenu = async (menu) => {
-    if (
-        !menu?.activate ||
-        !menu?.rute ||
-        isLoggingOut.value
-    ) {
+    if (!menu?.activate || !menu?.rute || isLoggingOut.value) {
         return
     }
 
@@ -447,10 +358,7 @@ const keluar = async () => {
 }
 
 watch(
-    () => [
-        sidebarAktif.value,
-        isMobile.value
-    ],
+    () => [sidebarAktif.value, isMobile.value],
     ([sidebarOpen, mobile]) => {
         if (mobile && sidebarOpen) {
             focusSidebar()
@@ -470,10 +378,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
-    document.removeEventListener(
-        'keydown',
-        handleSidebarKeydown
-    )
+    document.removeEventListener('keydown', handleSidebarKeydown)
 })
 </script>
 

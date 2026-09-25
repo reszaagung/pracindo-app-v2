@@ -1,5 +1,3 @@
-import ModulLayout from '@/features/warehouse/layout/WarehouseModuleLayout.vue'
-
 export default [
   {
     path: '/warehouse',
